@@ -1,0 +1,42 @@
+name: Nouvelle filière / New trade
+description: Proposer un métier pour le jeu, le développer ou le confier · Suggest a trade for the game, build it or hand it over
+title: "Nouvelle filière : "
+labels: ["filière"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Merci ! Quelques mots suffisent, on en reparle ensuite ici.
+        Thanks! A few words are enough, we'll talk it over here.
+
+        Pour la marche à suivre : [Ajouter une filière](https://github.com/proprioz/mini-future-me/blob/main/docs/adding-a-trade.fr.md) · [Adding a trade](https://github.com/proprioz/mini-future-me/blob/main/docs/adding-a-trade.md)
+  - type: input
+    id: trade
+    attributes:
+      label: Métier / Trade
+      description: Le métier et sa formation (par ex. cuisinier·ère CFC). · The trade and its training.
+    validations:
+      required: true
+  - type: input
+    id: school
+    attributes:
+      label: École ou organisation / School or organisation
+    validations:
+      required: false
+  - type: dropdown
+    id: who
+    attributes:
+      label: Qui la développe ? / Who builds it?
+      options:
+        - Nous, avec ou sans IA / We do, with or without AI
+        - Nous aimerions la confier au créateur du jeu (sur devis) / We'd like the game's creator to build it (on quotation)
+        - Pas encore décidé / Not decided yet
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: Idées / Ideas
+      description: Les gestes du métier qui plairaient aux visiteurs, l'objet que l'avatar pourrait tenir, la date du salon… · Job gestures visitors would enjoy, the object the avatar could hold, the fair's date…
+    validations:
+      required: false

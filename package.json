@@ -1,0 +1,58 @@
+{
+  "name": "mini-future-me",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Jeu 3D de stand pour découvrir un métier : ton avatar fait les tâches d'un·e professionnel·le, puis repart avec son affiche. / A 3D booth game to discover a trade.",
+  "license": "GPL-3.0-or-later",
+  "author": "Pascal Montandon",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/proprioz/mini-future-me.git"
+  },
+  "type": "module",
+  "packageManager": "pnpm@12.6.0",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "server": "node --watch server/index.ts",
+    "start": "vite build && node server/index.ts",
+    "essai": "vite build --outDir dist-essai --emptyOutDir && DIST=dist-essai PORT=3100 node server/index.ts",
+    "profils": "node tools/typical-looks.ts",
+    "portraits": "node tools/compare-portraits.ts",
+    "apercu": "node tools/apercu-fiches.ts",
+    "icons": "node tools/build-icons.ts",
+    "typecheck": "tsc",
+    "lint:css": "stylelint \"src/**/*.css\"",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "check": "tsc && stylelint \"src/**/*.css\" && vitest run && playwright test",
+    "postinstall": "node scripts/copy-vendor-assets.ts"
+  },
+  "dependencies": {
+    "@fontsource-variable/fredoka": "^5.3.0",
+    "@fontsource-variable/nunito": "^5.3.0",
+    "@mediapipe/tasks-vision": "^1.1.1",
+    "@phosphor-icons/core": "^2.1.1",
+    "@vladmandic/face-api": "^1.7.15",
+    "express": "^5.3.0",
+    "jspdf": "^4.2.1",
+    "qrcode": "^1.5.4",
+    "three": "^0.186.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.1",
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.6.5",
+    "@types/qrcode": "^1.5.6",
+    "@types/three": "^0.186.0",
+    "playwright-core": "^1.64.1",
+    "stylelint": "^17.16.0",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.5",
+    "vitest": "^5.0.5"
+  }
+}

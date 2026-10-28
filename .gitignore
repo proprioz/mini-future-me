@@ -1,0 +1,20 @@
+node_modules
+dist
+dist-essai
+.DS_Store
+.playwright-mcp
+public/mediapipe/wasm
+public/face-api
+
+# Settings and files of each stand (see .env.example)
+*.local
+.claude/settings.local.json
+public/school/
+docs/sources/
+
+# Test portraits: the photos stay on the PC (see public/portraits/README.txt)
+public/portraits/Personne_*/
+
+# Test reports (pnpm test:e2e)
+test-results/
+playwright-report/

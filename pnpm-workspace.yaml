@@ -1,0 +1,4 @@
+allowBuilds:
+  core-js: false
+# Scripts run the same on Windows (cmd), macOS and Linux: `DIST=… PORT=… node …` in pnpm essai.
+shellEmulator: true

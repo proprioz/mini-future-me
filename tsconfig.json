@@ -1,0 +1,23 @@
+{
+  // Type checking only (`pnpm typecheck`): Vite builds the game and Node 24 runs the server and the
+  // tools straight from the .ts files, by stripping the types. So only erasable syntax (no enums, no
+  // parameter properties), and imports written with their .ts extension.
+  "compilerOptions": {
+    "target": "es2023",
+    "lib": ["es2023", "dom", "dom.iterable"],
+    "module": "preserve",
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "rewriteRelativeImportExtensions": false,
+    "erasableSyntaxOnly": true,
+    "verbatimModuleSyntax": true,
+    "resolveJsonModule": true,
+    "noEmit": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "types": ["node", "vite/client"],
+    // The tools loaded in the browser import from the site root, like Vite serves it.
+    "paths": { "/src/*": ["./src/*"], "/tools/*": ["./tools/*"] }
+  },
+  "include": ["src", "server", "tools", "scripts", "tests", "vite.config.ts", "vitest.config.ts", "playwright.config.ts"]
+}

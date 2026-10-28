@@ -1,0 +1,882 @@
+/* The media trade's mini-games, loaded with the trade (index.ts). Same tokens as src/style.css. */
+
+/* ---------- 📷 Product shoot ---------- */
+
+.shoot-viewfinder {
+  position: relative;
+  border: 0.625rem solid var(--ink);
+  border-radius: 1.375rem;
+  box-shadow: 0 0.375rem 0 rgba(var(--shadow), 0.25);
+  cursor: grab;
+}
+
+.shoot-viewfinder canvas {
+  width: 100%;
+  border-radius: 0;
+}
+
+/* The viewfinder keeps the canvas ratio while shrinking. */
+.mg-fit > .shoot-viewfinder {
+  width: min(100%, (100cqh - 1.25rem) * 1.5 + 1.25rem);
+}
+
+.mg-visual:has(.shoot-viewfinder) .mg-fit {
+  container-type: size;
+}
+
+.shoot-viewfinder:is([data-phase='light'], [data-phase='focus']) {
+  cursor: default;
+}
+
+.shoot-viewfinder[data-phase='key'] {
+  cursor: crosshair;
+}
+
+/* A finger showing the drag until the visitor's first touch. */
+.mg-drag-hint {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  font-size: 4rem;
+  line-height: 1;
+  filter: drop-shadow(0 0.25rem 0.375rem rgba(var(--shadow), 0.4));
+  pointer-events: none;
+  animation: drag-hint 2.4s ease-in-out infinite;
+}
+
+@keyframes drag-hint {
+  0%,
+  15% {
+    transform: translate(-50%, 0) scale(1);
+    opacity: 0;
+  }
+  25% {
+    transform: translate(-50%, 0) scale(0.9);
+    opacity: 1;
+  }
+  70% {
+    transform: translate(60%, -60%) scale(0.9);
+    opacity: 1;
+  }
+  85%,
+  100% {
+    transform: translate(60%, -60%) scale(1);
+    opacity: 0;
+  }
+}
+
+/* For the keying: a finger tapping the green screen. */
+.mg-drag-hint.tap {
+  left: 14%;
+  top: 18%;
+  animation: tap-hint 1.4s ease-in-out infinite;
+}
+
+@keyframes tap-hint {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(0.85) translateY(0.25rem);
+  }
+}
+
+.shoot-flash {
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.shoot-flash.flash {
+  animation: flash 0.5s ease-out;
+}
+
+@keyframes flash {
+  0% {
+    opacity: 1;
+  }
+}
+
+/* Light switch, then the power slider (greyed out while the light is off). */
+.shoot-light {
+  display: grid;
+  gap: 1rem;
+}
+
+.shoot-light[hidden] {
+  display: none;
+}
+
+.shoot-switch {
+  justify-self: start;
+}
+
+.shoot-switch[aria-pressed='true'] {
+  --lip: var(--sun-dark);
+  background: var(--sun);
+  color: var(--ink);
+  text-shadow: none;
+}
+
+.shoot-light .mg-slider:has(input:disabled) {
+  opacity: 0.45;
+}
+
+.shoot-light .mg-slider input:disabled {
+  cursor: not-allowed;
+}
+
+.shoot-focus[hidden] {
+  display: none;
+}
+
+/* ---------- 💻 Photo retouch ---------- */
+
+.retouch-visual {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 0.625rem;
+  padding: 0.875rem;
+}
+
+.retouch-visual figure {
+  position: relative;
+  margin: 0;
+}
+
+.retouch-visual figcaption {
+  position: absolute;
+  left: 0.625rem;
+  top: 0.625rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  font-weight: 900;
+  font-size: 0.875rem;
+}
+
+.retouch-ref {
+  justify-self: start;
+  width: min(42%, 18.75rem);
+}
+
+.retouch-ref canvas {
+  width: 100%;
+  box-shadow: 0 0 0 0.25rem #3ee68a;
+}
+
+.retouch-work {
+  min-height: 0;
+}
+
+.retouch-work .mg-fit {
+  inset: 0;
+}
+
+.retouch-work figcaption {
+  z-index: 1;
+}
+
+/* Backdrop thumbnails, a row of four: the chosen one gets the teal selection ring. */
+.retouch-backdrops {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.retouch-backdrop {
+  padding: 0;
+  border: 0.1875rem solid transparent;
+  border-radius: 0.75rem;
+  background: none;
+  overflow: hidden;
+  cursor: pointer;
+  box-shadow: 0 0.1875rem 0 rgba(var(--shadow), 0.2);
+}
+
+.retouch-backdrop canvas {
+  display: block;
+  width: 100%;
+}
+
+.retouch-backdrop[aria-pressed='true'] {
+  border-color: var(--teal);
+  box-shadow: 0 0 0 0.1875rem rgba(29, 179, 166, 0.3);
+}
+
+.retouch-meter {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.375rem;
+  font-weight: 800;
+}
+
+.retouch-bar {
+  grid-column: 1 / -1;
+  height: 1rem;
+  border-radius: 0.5rem;
+  background: var(--foam);
+  overflow: hidden;
+}
+
+.retouch-bar span {
+  display: block;
+  height: 100%;
+  border-radius: 0.5rem;
+  background: var(--coral);
+  transition: width 0.15s, background 0.3s;
+}
+
+.retouch-bar span.good {
+  background: #3ee68a;
+}
+
+.retouch-score {
+  grid-row: 1;
+  grid-column: 2;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+}
+
+/* ---------- 🎨 Poster layout ---------- */
+
+.layout-visual {
+  display: grid;
+  grid-template-columns: 8.125rem minmax(0, 1fr);
+  gap: 0.875rem;
+  padding: 0.875rem;
+}
+
+.layout-tray {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.layout-stage {
+  position: relative;
+  min-height: 0;
+  container-type: size;
+}
+
+.poster {
+  --bg: #ffc83d;
+  --ink: #fff;
+  position: absolute;
+  inset: 0;
+  width: min(100cqw, 100cqh / 1.414);
+  margin: auto;
+  aspect-ratio: 1 / 1.414;
+  border-radius: 0.375rem;
+  background: var(--bg);
+  box-shadow: 0 0.375rem 1.125rem rgba(var(--shadow), 0.22);
+  transition: background 0.2s;
+}
+
+.poster-slot {
+  position: absolute;
+  border: 0.1875rem dashed rgba(30, 58, 76, 0.3);
+  border-radius: 0.5rem;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.poster-slot.filled {
+  border-color: transparent;
+}
+
+.poster.show-guides .poster-slot {
+  border-color: rgba(255, 101, 132, 0.75);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.poster.show-guides .poster-slot.hover {
+  border-style: solid;
+  border-color: var(--coral);
+  background: rgba(255, 101, 132, 0.15);
+}
+
+.poster-el {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 4.75rem;
+  border-radius: 0.75rem;
+  background: var(--paper);
+  box-shadow: 0 0.25rem 0 var(--line);
+  color: var(--ink);
+  container-type: size;
+  cursor: grab;
+  touch-action: none;
+  overflow: hidden;
+}
+
+.layout-tray .poster-el {
+  padding: 0.375rem 0.375rem 1.375rem;
+}
+
+.pe-label {
+  position: absolute;
+  bottom: 0.1875rem;
+  font-weight: 900;
+  font-size: 0.75rem;
+}
+
+.poster .poster-el {
+  position: absolute;
+  background: none;
+  box-shadow: none;
+  color: var(--ink);
+}
+
+.poster .pe-label {
+  display: none;
+}
+
+.poster-el.dragging {
+  opacity: 0.3;
+}
+
+/* Picked with a tap, waiting for a tap on its place. */
+.poster-el.picked {
+  outline: 0.25rem solid var(--coral);
+  outline-offset: 2px;
+  animation: hud-pulse 1.2s ease-in-out infinite;
+}
+
+.poster-ghost {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 10;
+  opacity: 0.9;
+  pointer-events: none;
+  box-shadow: 0 0.75rem 1.875rem rgba(var(--shadow), 0.35);
+}
+
+.poster-el canvas {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 0.5rem;
+}
+
+.poster .poster-el canvas {
+  border: max(0.1875rem, 1.2cqmin) solid #fff;
+}
+
+.pe-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: min(70cqh, 19cqw);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.pe-infos {
+  font-weight: 900;
+  font-size: min(24cqh, 9.5cqw);
+  line-height: 1.2;
+  text-align: center;
+}
+
+.pe-logo {
+  display: grid;
+  place-items: center;
+  height: 90cqh;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--coral);
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 55cqh;
+}
+
+.poster .pe-logo b {
+  font-weight: 600;
+}
+
+.layout-colors {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.5rem 0.75rem;
+  align-items: center;
+  font-weight: 800;
+}
+
+.layout-swatches {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.layout-swatch {
+  width: 2.375rem;
+  height: 2.375rem;
+  border: 0.25rem solid #fff;
+  border-radius: 50%;
+  background: var(--c);
+  box-shadow: 0 0 0 2px rgba(var(--shadow), 0.18);
+  cursor: pointer;
+}
+
+.layout-swatch.selected {
+  box-shadow: 0 0 0 0.25rem var(--teal);
+  transform: scale(1.1);
+}
+
+.layout-rules {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-weight: 700;
+  font-size: 0.9375rem;
+}
+
+.layout-rules li {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.4375rem 0.625rem;
+  border-radius: 0.75rem;
+  background: var(--mist);
+  transition: background 0.2s;
+}
+
+.layout-rules li::before {
+  content: '';
+  flex: none;
+  width: 1.1em;
+  height: 1.1em;
+  margin-top: 0.15em;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 2px var(--ink-soft);
+}
+
+.layout-rules li.ok {
+  background: #dcf8e8;
+}
+
+.layout-rules li.ok::before {
+  background: #17a35a var(--check) center / 60% no-repeat;
+  box-shadow: none;
+}
+
+/* ---------- 🖨️ Pro print ---------- */
+
+.print-visual {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 0.625rem;
+  padding: 0.875rem;
+}
+
+.print-table {
+  position: relative;
+  min-height: 0;
+  container-type: size;
+  overflow: hidden;
+}
+
+.print-sheet {
+  --scale: 1;
+  position: absolute;
+  inset: 0;
+  width: calc(min(100cqw, 100cqh / 1.414) * var(--scale));
+  margin: auto;
+  aspect-ratio: 1 / 1.414;
+  transition: width 0.3s;
+}
+
+.print-sheet canvas {
+  width: 100%;
+  height: 100%;
+  border-radius: 2px;
+  box-shadow: 0 0.5rem 1.25rem rgba(var(--shadow), 0.25);
+}
+
+.print-sheet.printed {
+  animation: print-out 1.6s ease-out;
+}
+
+@keyframes print-out {
+  0% {
+    transform: translateY(-110%);
+    clip-path: inset(100% 0 0 0);
+  }
+  80% {
+    transform: translateY(0);
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+.print-caption {
+  color: var(--ink-soft);
+  font-weight: 800;
+  text-align: center;
+}
+
+.print-info {
+  min-height: 4.2em;
+  margin: 0;
+  padding: 0.625rem 0.875rem;
+  border-radius: 0.875rem;
+  background: var(--mist);
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.print-info:empty {
+  visibility: hidden;
+}
+
+/* ---------- 📱 Social publish ---------- */
+
+/* Six supports in a grid; each cell sizes its mock-up to the room left, keeping the support's shape. */
+.pub-stage {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  width: 100%;
+  height: 100%;
+  container-type: size;
+}
+
+.pub-cell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.375rem;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  transition: opacity 0.4s;
+}
+
+.pub-device {
+  display: grid;
+  place-items: center;
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  container-type: size;
+}
+
+.pub-device > * {
+  grid-area: 1 / 1;
+  width: min(100cqw, 100cqh * var(--aspect));
+  height: auto;
+  aspect-ratio: var(--aspect);
+}
+
+.pub-ghost {
+  position: relative;
+  display: grid;
+  place-items: center;
+  border: 0.1875rem dashed var(--line);
+  border-radius: 0.875rem;
+  color: var(--ink-soft);
+  font-size: min(2.5rem, 30cqw);
+  transition: background 0.15s, border-color 0.15s, color 0.15s, opacity 0.3s;
+}
+
+.pub-stage:not(.diffusing) .pub-cell:hover .pub-ghost {
+  border-color: var(--aqua);
+}
+
+.pub-cell.selected .pub-ghost {
+  border-style: solid;
+  border-color: var(--teal);
+  background: #d6f3ee;
+  color: var(--ink);
+}
+
+.pub-cell.selected .pub-ghost::after {
+  content: '';
+  position: absolute;
+  top: -0.625rem;
+  right: -0.625rem;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  background: var(--teal) var(--check) center / 60% no-repeat;
+  box-shadow: 0 0.125rem 0 var(--teal-dark);
+}
+
+.pub-ghost .icon {
+  width: 1em;
+  height: 1em;
+}
+
+.pub-device canvas {
+  visibility: hidden;
+}
+
+.pub-name {
+  max-width: 100%;
+  font-family: var(--font-display);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Room for the specs is kept from the start, so nothing moves when they show. */
+.pub-specs {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-content: flex-start;
+  gap: 0.25rem;
+  min-height: 3.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pub-specs li {
+  padding: 0.125rem 0.5rem;
+  border-radius: 1rem;
+  background: var(--paper);
+  box-shadow: 0 0.125rem 0 var(--line);
+  font-size: 0.8125rem;
+  font-weight: 800;
+  white-space: nowrap;
+  visibility: hidden;
+}
+
+.pub-specs li:first-child {
+  background: var(--teal);
+  box-shadow: 0 0.125rem 0 var(--teal-dark);
+  color: #fff;
+}
+
+/* Diffusion: the visual pops up in the middle, a copy flies to each support and is redone there. */
+.pub-stage.diffusing .pub-cell:not(.selected) {
+  opacity: 0.25;
+}
+
+.pub-stage.diffusing .pub-cell:not(.rendered) {
+  pointer-events: none;
+}
+
+.pub-master {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  height: min(64cqh, 42cqw);
+  aspect-ratio: 1 / 1.4142;
+  border: 0.375rem solid var(--paper);
+  border-radius: 1.125rem;
+  background: var(--paper);
+  box-shadow: 0 0.375rem 0 var(--line), 0 1rem 2.5rem rgba(var(--shadow), 0.3);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -50%) scale(0.6);
+  transition: opacity 0.35s, transform 0.45s cubic-bezier(0.3, 1.5, 0.5, 1);
+}
+
+.pub-master canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 0.75rem;
+}
+
+.pub-stage.diffusing .pub-master {
+  opacity: 1;
+  transform: translate(-50%, -50%);
+}
+
+.pub-stage.sent .pub-master {
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.5);
+  transition-duration: 0.5s;
+}
+
+.pub-fly {
+  position: absolute;
+  z-index: 1;
+  border-radius: 0.5rem;
+  object-fit: cover;
+  box-shadow: 0 0.5rem 1.5rem rgba(var(--shadow), 0.3);
+  pointer-events: none;
+}
+
+.pub-cell.rendered .pub-ghost {
+  opacity: 0;
+}
+
+.pub-cell.rendered canvas {
+  visibility: visible;
+  animation: pub-render 0.6s ease-out both;
+}
+
+@keyframes pub-render {
+  from {
+    clip-path: inset(0 0 100% 0);
+  }
+  to {
+    clip-path: inset(0);
+  }
+}
+
+.pub-cell.rendered .pub-specs li {
+  visibility: visible;
+  animation: pub-spec 0.4s cubic-bezier(0.3, 1.6, 0.5, 1) both;
+  animation-delay: calc(0.45s + var(--i) * 0.18s);
+}
+
+@keyframes pub-spec {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem) scale(0.6);
+  }
+}
+
+/* Bubbles on hover or touch: while choosing, what to watch for on a support; once made, why each
+   setting of its format is so (with a "?" by its name). */
+.pub-why {
+  display: none;
+  place-items: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-left: 0.375rem;
+  border-radius: 50%;
+  background: var(--coral);
+  box-shadow: 0 0.125rem 0 var(--coral-dark);
+  color: #fff;
+  vertical-align: 0.0625rem;
+  --icon-tint: transparent;
+}
+
+.pub-why .icon {
+  width: 0.8125rem;
+  height: 0.8125rem;
+  vertical-align: 0;
+}
+
+.pub-cell.rendered .pub-why {
+  display: inline-grid;
+  animation: pub-spec 0.4s cubic-bezier(0.3, 1.6, 0.5, 1) 1.1s both;
+}
+
+.pub-tip {
+  position: absolute;
+  top: -0.25rem;
+  left: -0.375rem;
+  right: -0.375rem;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem 0.875rem;
+  border-radius: 1rem;
+  background: var(--paper);
+  box-shadow: 0 0.25rem 0 var(--line), 0 0.75rem 2rem rgba(var(--shadow), 0.3);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.3;
+  text-align: left;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(0.375rem) scale(0.96);
+  transition: opacity 0.2s, transform 0.2s, visibility 0s 0.2s;
+}
+
+.pub-tip b {
+  display: block;
+  color: var(--teal-dark);
+  font-family: var(--font-display);
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.pub-tip-care b {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.pub-tip-care span {
+  padding-left: 0.625rem;
+  border-left: 0.1875rem solid var(--aqua);
+}
+
+.pub-stage:not(.diffusing) .pub-cell.open .pub-tip-care,
+.pub-cell.rendered.open .pub-tip-why {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+@media (hover: hover) {
+  .pub-stage:not(.diffusing) .pub-cell:hover .pub-tip-care,
+  .pub-cell.rendered:hover .pub-tip-why {
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    transition: opacity 0.2s, transform 0.2s;
+  }
+}
+
+/* The same choices in the side panel, grouped by kind of support. */
+.pub-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border: 0;
+  border-radius: 0.875rem;
+  background: var(--mist);
+  box-shadow: 0 0.1875rem 0 var(--foam);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 1.0625rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.pub-toggle::after {
+  content: '';
+  width: 1.375rem;
+  height: 1.375rem;
+  margin-left: auto;
+  border: 0.1875rem solid var(--line);
+  border-radius: 50%;
+  background: var(--paper);
+}
+
+.pub-toggle.selected {
+  background: var(--teal);
+  box-shadow: 0 0.1875rem 0 var(--teal-dark);
+  color: #fff;
+}
+
+.pub-toggle.selected .icon {
+  --icon-tint: rgba(255, 255, 255, 0.35);
+}
+
+.pub-toggle.selected::after {
+  border-color: #fff;
+  background: var(--teal-dark) var(--check) center / 60% no-repeat;
+}
+
+.pub-toggle:disabled {
+  cursor: default;
+}
