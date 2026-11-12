@@ -81,7 +81,7 @@ Les domaines (`skills.ts`, les mêmes que le chapitre Métier des coulisses) : P
 - [x] **4. Mini-jeux** : les 5 tâches, une par une, avec les domaines du métier dans le HUD
 - [x] **5. Studio d'affiche** : choix du décor, de la pose et de l'expression, puis export PNG/PDF
 - [x] **6. Serveur local + QR code** : envoi, URL sur le réseau local, nettoyage automatique
-- [x] **7. Mode borne** : écran d'accueil, consentement, inactivité qui ramène à l'accueil, réinitialisation, sons, transitions
+- [x] **7. Mode borne** : écran d'accueil, consentement, pause en cas d'inactivité (« Es-tu là ? »), réinitialisation, sons, transitions
 - [x] **8. Plusieurs filières** : un module par filière, choix sur l'accueil, objet tenu sur l'affiche, guide « Ajouter une filière »
 - [x] **9. Open source** : licence GPL-3.0, école et portraits hors du dépôt, docs en anglais et en français
 - [ ] **10. Une deuxième filière**

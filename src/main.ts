@@ -33,8 +33,8 @@ declare global {
   }
 }
 
-// On the stand, inactivity sends back to the welcome screen. In development only with ?borne, since
-// it reloads the page (and would do so under the devtools).
+// On the stand, inactivity pauses the game on "Es-tu là ?". In development only with ?borne, so that
+// the card doesn't pop up under the devtools or in the end-to-end tests.
 kiosk.install(document.body, { idle: !import.meta.env.DEV || new URLSearchParams(location.search).has('borne') });
 
 // The trades the stand shows: all loaded now, « Dans les coulisses » explains each one's job.
@@ -53,7 +53,7 @@ document.querySelector<HTMLLinkElement>('link[rel="icon"]')!.href = `data:image/
 kiosk.startWatching();
 let scanned: Partial<Look> | null = null;
 if (start === 'photos') {
-  // The file picker and the analysis need no touch: more time before "Tu es encore là ?".
+  // The file picker and the analysis need no touch: more time before "Es-tu là ?".
   const done = kiosk.extend(150);
   scanned = await scan.run();
   done();

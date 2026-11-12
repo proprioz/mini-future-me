@@ -110,9 +110,9 @@ msedge --kiosk http://localhost:3000 --edge-kiosk-type=fullscreen --no-first-run
 - **Photos**: one front photo is enough; both profiles and the back can be added (1 to 4 photos), sorted
   into their slot automatically from the face they show. How to take and erase them:
   [Visitors' photos](#visitors-photos).
-- **Inactivity**: after 60 s without a touch, "Tu es encore là ?" with a 10 s countdown, then back to the
-  welcome screen. More time while choosing and analysing photos, and on the poster card (3 min, to scan
-  the QR code).
+- **Inactivity**: after 60 s without a touch, the game pauses on "Es-tu là ?"; "Je suis là" picks it up
+  where it was. It never restarts by itself. More time while choosing and analysing photos, and on the
+  poster card (3 min, to scan the QR code).
 - **End of game**: "J'ai fini !" on the poster card (two taps).
 - **Reset**: the page reloads, so everything is forgotten (avatar, first name, domains won, scan
   measurements). Posters already sent stay on the server until they are erased (30 min).
@@ -160,7 +160,7 @@ pnpm server   # the booth server (Vite forwards /api to it), restarted on every 
 ```
 
 Without `pnpm server`, everything works except the QR code (the export card then offers printing and
-files). In development, inactivity is off (it would reload the page under the devtools): open
+files). In development, the inactivity pause is off (it would interrupt work in the devtools): open
 http://localhost:5173/?borne to test it.
 
 To contribute, read [CONTRIBUTING.md](CONTRIBUTING.md); to add a trade,

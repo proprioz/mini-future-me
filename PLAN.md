@@ -150,7 +150,7 @@ pose.
 - [x] **4. Mini-games**: the 5 tasks, one by one, with the domains of the job in the HUD
 - [x] **5. Poster studio**: choice of decor, pose and expression, then PNG/PDF export
 - [x] **6. Local server + QR code**: upload, URL on the local network, automatic clean-up
-- [x] **7. Kiosk mode**: welcome screen, consent, inactivity back to the welcome screen, reset, sounds, transitions
+- [x] **7. Kiosk mode**: welcome screen, consent, pause on inactivity ("Es-tu là ?"), reset, sounds, transitions
 - [x] **8. Several trades**: one module per trade, choice on the welcome screen, object held on the poster, "Adding a trade" guide
 - [x] **9. Open source**: GPL-3.0 license, school and portraits out of the repository, docs in English and French
 - [ ] **10. A second trade**

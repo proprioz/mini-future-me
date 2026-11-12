@@ -110,9 +110,9 @@ msedge --kiosk http://localhost:3000 --edge-kiosk-type=fullscreen --no-first-run
 - **Photos** : une photo de face suffit, on peut ajouter les deux profils et le dos (1 à 4 photos), rangés
   automatiquement à leur place d'après le visage qu'ils montrent. Comment les prendre et les effacer :
   [Photos des visiteurs](#photos-des-visiteurs).
-- **Inactivité** : après 60 s sans toucher l'écran, « Tu es encore là ? » avec un compte à rebours de 10 s,
-  puis retour à l'accueil. Plus de temps pendant le choix des photos et leur analyse, et sur la carte de
-  l'affiche (3 min, le temps de scanner le QR code).
+- **Inactivité** : après 60 s sans toucher l'écran, le jeu se met en pause sur « Es-tu là ? » ; « Je suis
+  là » le reprend là où il en était. Il ne recommence jamais tout seul. Plus de temps pendant le choix des
+  photos et leur analyse, et sur la carte de l'affiche (3 min, le temps de scanner le QR code).
 - **Fin de partie** : « J'ai fini ! » sur la carte de l'affiche (deux taps).
 - **Réinitialisation** : la page est rechargée, donc tout est oublié (avatar, prénom, domaines gagnés, mesures du
   scan). Les affiches déjà envoyées restent sur le serveur jusqu'à leur effacement (30 min).
@@ -162,7 +162,7 @@ pnpm server   # le serveur du stand (Vite lui transmet /api), relancé à chaque
 ```
 
 Sans `pnpm server`, tout marche sauf le QR code (la carte d'export propose alors l'impression et les fichiers).
-En développement, l'inactivité est désactivée (elle rechargerait la page sous les devtools) :
+En développement, la pause d'inactivité est désactivée (elle interromprait le travail sous les devtools) :
 ouvrir http://localhost:5173/?borne pour la tester.
 
 Pour contribuer, lire [CONTRIBUTING.fr.md](CONTRIBUTING.fr.md) ; pour ajouter une filière,

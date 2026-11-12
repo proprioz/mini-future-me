@@ -1,11 +1,10 @@
 import { sound } from './sound.ts';
 import { icon } from '../ui/icons.ts';
 
-// Kiosk mode for the stand: back to the welcome screen when nobody plays any more, a full reset
-// between two visitors, a hidden reset for the staff, and a soft click on every button.
+// Kiosk mode for the stand: a pause when nobody plays any more, a full reset between two visitors,
+// a hidden reset for the staff, and a soft click on every button.
 
-const IDLE_SECONDS = 60; // without any touch, before "Tu es encore là ?"
-const WARNING_SECONDS = 10; // countdown on that card before the reset
+const IDLE_SECONDS = 60; // without any touch, before the game pauses on "Es-tu là ?"
 const STAFF_TAPS = 5; // quick taps in the top-left corner reset the game right away
 const STAFF_WINDOW = 2500; // ms
 const CORNER = 64; // px
@@ -19,7 +18,6 @@ class Kiosk {
   idleEnabled!: boolean;
   veil!: HTMLDivElement;
   warning!: HTMLDivElement;
-  countdownEl!: HTMLElement;
 
   constructor() {
     this.watching = false;
@@ -28,7 +26,7 @@ class Kiosk {
     this.staffTaps = [];
   }
 
-  /** Sets up the overlays and listeners. `idle`: whether inactivity sends back to the welcome screen. */
+  /** Sets up the overlays and listeners. `idle`: whether inactivity pauses the game. */
   install(root: HTMLElement, { idle = true }: { idle?: boolean } = {}): void {
     this.idleEnabled = idle;
     this.veil = document.createElement('div');
@@ -37,16 +35,15 @@ class Kiosk {
     this.warning.className = 'kiosk-warning';
     this.warning.hidden = true;
     this.warning.innerHTML = `
-      <section class="kiosk-warning-card" role="alertdialog" aria-label="Tu es encore là ?">
+      <section class="kiosk-warning-card" role="alertdialog" aria-label="Es-tu là ?">
         <div class="kiosk-warning-icon" aria-hidden="true">${icon('eyes')}</div>
-        <h1>Tu es encore là ?</h1>
-        <p>Le jeu recommence dans</p>
-        <div class="kiosk-countdown" aria-live="polite"></div>
-        <button class="btn btn-primary">Je continue !</button>
+        <h1>Es-tu là ?</h1>
+        <p>Le jeu est en pause.</p>
+        <button class="btn btn-primary">Je suis là</button>
       </section>`;
     root.append(this.warning, this.veil);
-    this.countdownEl = this.warning.querySelector<HTMLElement>('.kiosk-countdown')!;
-    // Dismissed on click (not on pointerdown), so that the tap ends on the card and doesn't go
+    // The card covers the whole screen until the visitor answers, so nothing can be touched behind
+    // it. Dismissed on click (not on pointerdown), so that the tap ends on the card and doesn't go
     // through to whatever button lies under it.
     this.warning.addEventListener('click', () => {
       this.warning.hidden = true;
@@ -63,7 +60,7 @@ class Kiosk {
     setInterval(() => this.check(), 250);
   }
 
-  /** From now on, inactivity counts (the welcome screen itself never times out). */
+  /** From now on, inactivity counts (the welcome screen itself never pauses). */
   startWatching(): void {
     this.watching = this.idleEnabled;
     this.poke();
@@ -90,20 +87,12 @@ class Kiosk {
     return Math.max(IDLE_SECONDS, ...[...this.extensions].map((e) => e.seconds));
   }
 
+  /** Pauses the game on "Es-tu là ?" once nobody has touched it for `limit` seconds. */
   check(): void {
-    if (!this.watching) return;
-    const idle = (performance.now() - this.lastActivity) / 1000 - this.limit;
-    if (idle < 0) return;
-    const left = Math.ceil(WARNING_SECONDS - idle);
-    if (left <= 0) {
-      this.reset();
-      return;
-    }
-    if (this.warning.hidden) this.warning.hidden = false;
-    if (this.countdownEl.textContent !== String(left)) {
-      this.countdownEl.textContent = String(left);
-      sound.play('tick');
-    }
+    if (!this.watching || !this.warning.hidden) return;
+    if ((performance.now() - this.lastActivity) / 1000 < this.limit) return;
+    this.warning.hidden = false;
+    sound.play('pop');
   }
 
   staffCorner(event: PointerEvent): void {

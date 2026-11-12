@@ -48,9 +48,9 @@ async function play(page: Page, next: ReturnType<Page['locator']>) {
   }).toPass({ timeout: 20_000 });
 }
 
-/** From the welcome screen to the office, creating the avatar by hand. */
-async function startByHand(page: Page, trade: string) {
-  await page.goto(`/?filiere=${trade}`);
+/** From the welcome screen to the office, creating the avatar by hand. `borne`: with the inactivity pause. */
+async function startByHand(page: Page, trade: string, { borne = false } = {}) {
+  await page.goto(`/?filiere=${trade}${borne ? '&borne' : ''}`);
   const manual = page.locator('[data-choice="manual"]:visible');
   // With the scan, a consent card first; without it, straight to the avatar creator.
   const done = page.locator('[data-action="done"]:visible');
@@ -116,6 +116,33 @@ test('a whole visit for every trade, offline', async ({ page }) => {
       await expect(page.locator('.welcome-play')).toBeVisible();
     });
   }
+  checks.expectClean();
+});
+
+test('inactivity pauses the game, which goes on where it was', async ({ page }) => {
+  const checks = watch(page);
+  const [id] = await tradeIds(page);
+  await startByHand(page, id, { borne: true });
+  await recordMiniGames(page);
+  const task = await page.evaluate(() => window.studio.trades[0].tasks[0].id);
+  await page.evaluate((id) => void window.studio.game!.openTask(id), task);
+  await page.evaluate(() => window.miniGame!.end(true));
+  await page.locator('.mg-result [data-action="back"]').click();
+
+  // Nobody has touched the screen for ten minutes: the game pauses, and stays paused.
+  let reloaded = false;
+  page.on('load', () => (reloaded = true));
+  await page.evaluate(() => (window.studio.kiosk.lastActivity -= 10 * 60_000));
+  const card = page.getByRole('alertdialog', { name: 'Es-tu là ?' });
+  await expect(card).toBeVisible();
+  await page.mouse.move(300, 300); // moving around doesn't answer the card
+  await page.waitForTimeout(1500);
+  await expect(card).toBeVisible();
+  expect(reloaded).toBe(false);
+
+  await card.getByRole('button', { name: 'Je suis là' }).click();
+  await expect(card).toBeHidden();
+  expect(await page.evaluate(() => [...window.studio.game!.done])).toEqual([task]);
   checks.expectClean();
 });
 
