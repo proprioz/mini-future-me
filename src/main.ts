@@ -9,7 +9,6 @@ import { PosterStudio } from './ui/PosterStudio.ts';
 import { WelcomeScreen } from './ui/WelcomeScreen.ts';
 import { DEFAULT_LOOK, type Look } from './character/Character.ts';
 import { kiosk } from './kiosk/kiosk.ts';
-import { wonSkills } from './game/skills.ts';
 import { enabledTrades, loadTrade } from './trades/index.ts';
 import { setTrade } from './trades/current.ts';
 import { logoSvg } from './ui/icons.ts';
@@ -75,6 +74,6 @@ game.hud.onAction('poster', async () => {
   game.stop();
   game.hud.highlight('poster', false);
   const made = trade.creation.from(game.results);
-  await posterStudio.open({ look: game.player.look, skills: wonSkills(game.done), made });
+  await posterStudio.open({ look: game.player.look, made });
   game.start();
 });

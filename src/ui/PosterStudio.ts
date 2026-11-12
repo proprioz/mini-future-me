@@ -4,16 +4,14 @@ import { Thumbnailer } from '../render/Thumbnailer.ts';
 import { fontsReady } from './fonts.ts';
 import { paintDecor, W, H } from '../poster/decors.ts';
 import { PosterRenderer, type PosterSettings } from '../poster/PosterRenderer.ts';
-import { studioDecors, studioPoses } from '../poster/unlocks.ts';
+import { studioDecors, studioPoses } from '../poster/studio.ts';
 import { saveServedBy, savedServedBy } from '../poster/school.ts';
 import { ExportCard } from './ExportCard.ts';
-import { skillById } from '../game/skills.ts';
 import { trade } from '../trades/current.ts';
 import { icon } from './icons.ts';
 import type { IconName } from './iconPaths.ts';
 import type { Look } from '../character/Character.ts';
 import type { Expression } from '../character/FaceTexture.ts';
-import type { Skill } from '../trades/types.ts';
 
 /** The studio's choices: `pose` stays null until the visitor picks one (see `current`). */
 export type StudioSettings = Omit<PosterSettings, 'pose'> & { pose: string | null };
@@ -26,11 +24,10 @@ interface Tab {
   label: string;
 }
 
-/** An option of a list of choices; `skill`: the domain that unlocks it. */
+/** An option of a list of choices. */
 interface Choice {
   id: string;
   label: string;
-  skill?: string;
 }
 
 const THUMB_SIZE = 168;
@@ -63,13 +60,12 @@ function defaultSettings(): Omit<StudioSettings, 'servedBy'> {
 
 /**
  * Full-screen "Ton affiche" studio: the A4 poster in live preview, and tabs to pick the decor, the
- * pose, the expression and the text. Each domain of the job won in the office unlocks decors or poses.
- * `open({ look, skills, made })` resolves when the visitor goes back to the office; `made` is what the
+ * pose, the expression and the text, all free at any time of the visit.
+ * `open({ look, made })` resolves when the visitor goes back to the office; `made` is what the
  * visitor made in the office (`trade().creation.from(results)`), which the character then holds.
  */
 export class PosterStudio {
   settings: StudioSettings;
-  skills: Set<string>;
   look: Look | null;
   made: object | null;
   tab: Tab;
@@ -86,7 +82,6 @@ export class PosterStudio {
 
   constructor(root: HTMLElement) {
     this.settings = { ...defaultSettings(), servedBy: savedServedBy() };
-    this.skills = new Set<string>(); // ids of the domains won (skills.ts)
     this.look = null;
     this.made = null;
     this.tab = TABS[0];
@@ -137,7 +132,7 @@ export class PosterStudio {
     });
     this.bodyEl.addEventListener('click', (e) => {
       const option = (e.target as Element).closest<HTMLButtonElement>('[data-value]');
-      if (option && !option.disabled) this.change({ [option.dataset.key!]: option.dataset.value });
+      if (option) this.change({ [option.dataset.key!]: option.dataset.value });
     });
     this.bodyEl.addEventListener('input', (e) => {
       if ((e.target as HTMLInputElement).name === 'name') this.settings.name = (e.target as HTMLInputElement).value;
@@ -169,9 +164,8 @@ export class PosterStudio {
     this.previewEl.addEventListener('pointercancel', endDrag);
   }
 
-  async open({ look, skills, made = null }: { look: Look; skills: Set<string>; made?: object | null }) {
+  async open({ look, made = null }: { look: Look; made?: object | null }) {
     this.look = look;
-    this.skills = skills;
     this.poster.character.setLook(look);
     await Promise.all([fontsReady(), this.poster.ready]);
     if (made !== this.made) {
@@ -181,9 +175,6 @@ export class PosterStudio {
       setCreation(this.poster.character, held);
       setCreation(this.thumbnailer.character, held);
     }
-    // A choice locked again (new visitor) falls back to the default one.
-    if (!this.isUnlocked(studioDecors().find((d) => d.id === this.settings.decor))) this.settings.decor = defaultSettings().decor;
-    if (!this.poses.some((p) => p.id === this.settings.pose)) this.settings.pose = null;
     this.showTab(this.tab);
 
     this.el.hidden = false;
@@ -204,11 +195,6 @@ export class PosterStudio {
     }, 350);
     this.resolve?.();
     this.resolve = null;
-  }
-
-  /** The poses on offer: unlocked ones, and those that need the visitor's object only when there is one. */
-  get poses() {
-    return studioPoses().filter((pose) => this.isUnlocked(pose) && (!pose.needsCreation || this.made));
   }
 
   /** The visitor's choices, with the default pose filled in. */
@@ -253,10 +239,6 @@ export class PosterStudio {
     this.canvas.style.height = `${height}px`;
   }
 
-  isUnlocked(option: { skill?: string } | undefined) {
-    return !option?.skill || this.skills.has(option.skill);
-  }
-
   change(changes: Partial<StudioSettings>) {
     Object.assign(this.settings, changes);
     this.refreshSelection();
@@ -276,13 +258,13 @@ export class PosterStudio {
     this.queueThumbs();
   }
 
-  // One list per tab: the tab already names it. Locked options show the domain that unlocks them.
+  // One list per tab: the tab already names it.
   decorHtml() {
     return `<div class="creator-field">${this.choicesHtml('decor', studioDecors(), 'tall')}</div>`;
   }
 
   poseHtml() {
-    return `<div class="creator-field">${this.choicesHtml('pose', studioPoses().filter((p) => !p.needsCreation || this.made))}</div>`;
+    return `<div class="creator-field">${this.choicesHtml('pose', studioPoses())}</div>`;
   }
 
   expressionHtml() {
@@ -310,16 +292,11 @@ export class PosterStudio {
   }
 
   choicesHtml(key: string, options: Choice[], shape = '') {
-    return `<div class="choices ${shape}">${options.map((option) => {
-      const locked = !this.isUnlocked(option);
-      const skill = (locked && skillById(option.skill!)) as Skill; // only read when locked
-      return `
-        <button class="choice${locked ? ' locked' : ''}" data-key="${key}" data-value="${option.id}" ${locked ? 'disabled' : ''}>
+    return `<div class="choices ${shape}">${options.map((option) => `
+        <button class="choice" data-key="${key}" data-value="${option.id}">
           <canvas width="${shape === 'tall' ? 120 : THUMB_SIZE}" height="${shape === 'tall' ? 170 : THUMB_SIZE}"></canvas>
           <span>${option.label}</span>
-          ${locked ? `<span class="choice-lock" title="${skill.label}">${icon('lock-simple')} ${icon(skill.icon, { tint: skill.tint })}</span>` : ''}
-        </button>`;
-    }).join('')}</div>`;
+        </button>`).join('')}</div>`;
   }
 
   refreshSelection() {

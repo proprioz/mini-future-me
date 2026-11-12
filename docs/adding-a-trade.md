@@ -53,7 +53,7 @@ and `pnpm typecheck` point out a missing field or a wrong pictogram name.
 | `finalSkill` | id of the domain won with the whole order (shown on the last win screen) |
 | `buildStations(ctx)` | builds the work stations in the office (see 4) |
 | `creation` | the object the avatar holds on the poster (see 5) |
-| `studio` | `decors`, `poses`, `unlocks`, `titles`, optionally `defaultDecor` (see 6) |
+| `studio` | `decors`, `poses`, `titles`, optionally `defaultDecor` (see 6) |
 | `poster.caption` | the line under the visitor's name on the poster |
 | `about.chapter` | the "Le métier" chapter of "Dans les coulisses", same shape as the common chapters of `src/ui/AboutPanel.ts` |
 | `phone.fact` | a word about the job on the phone page of the poster, after the job's name |
@@ -98,7 +98,9 @@ the left wall from z = 3 (the cork board and its sideboard are at z = 1–2), an
 `creation` has three fields:
 
 - `from(results)`: what the visitor made, from the tasks' results, or `null` if not made yet (the poses then
-  hold nothing, and "Fier·ère" is not offered).
+  hold nothing). Every pose is offered from the start, so the shared "Fier·ère" (`proud`, which holds only
+  the object) needs a version of your own that holds something else until then: media's `PROUD` in
+  `src/trades/mediamatique/poses.ts` shows the camera.
 - `mesh(data)`: builds the object, a `THREE.Object3D` centred on its middle, with
   `userData.size = { w, h, d }` in world units (the avatar's legs are about 0.4 long). It is called again
   whenever the prop is rebuilt: cache what is costly to draw.
@@ -112,7 +114,6 @@ the left wall from z = 3 (the cork board and its sideboard are at z = 1–2), an
 - `decors` and `poses`: lists, in order, of ids of the shared ones (`src/poster/decors.ts`: lagoon, party,
   city, premiere; `src/character/poses.ts`: proud, wave, cheer, hero) or of the trade's own objects, in the
   same format (the media trade adds a "Studio photo" decor and a "Photographe" pose).
-- `unlocks`: by decor or pose id, the id of the domain to win first; the others are free.
 - `titles`: the titles over the avatar, `{ id, lines: [line 1, line 2] }`; the first is the default.
 - `defaultDecor`: id of the decor shown first (the first one otherwise).
 

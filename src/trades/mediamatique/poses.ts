@@ -1,7 +1,9 @@
+import { POSES } from '../../character/poses.ts';
 import type { Pose } from '../../character/poses.ts';
 
-// The media trade's own pose for the poster, in the format of the shared ones (character/poses.ts):
-// a camera in both hands, or in one hand with the poster in the other.
+// The media trade's own poses for the poster, in the format of the shared ones (character/poses.ts).
+
+// Photographe: a camera in both hands, or in one hand with the poster in the other.
 export const PHOTOGRAPHER: Pose = {
   id: 'photographer', label: 'Photographe',
   leftArm: { fwd: 0.55, out: -0.1, bend: 1.35, bendOut: -0.55 },
@@ -15,4 +17,14 @@ export const PHOTOGRAPHER: Pose = {
       creation: { hand: 'right', grip: [0.55, 0.8], depth: 0.03, tilt: -0.1, turn: 0.15 },
     },
   },
+};
+
+// Fier·ère, offered from the start: the shared pose shows the poster laid out in both hands, and holds
+// the camera the same way until the poster is made.
+const shared = POSES.find((pose) => pose.id === 'proud')!;
+export const PROUD: Pose = {
+  ...shared,
+  needsCreation: false,
+  props: { camera: { hand: 'both', depth: 0.02 } },
+  withCreation: { props: shared.props },
 };

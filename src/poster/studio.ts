@@ -5,16 +5,14 @@ import type { Decor } from './decors.ts';
 import type { Pose } from '../character/poses.ts';
 
 // The decors and poses the trade offers for the poster (`trade().studio.decors` / `.poses`), in order:
-// ids of the shared ones (decors.ts, poses.ts) or the trade's own objects. `trade().studio.unlocks`
-// gives, by id, the domain of the job to win in the office first (an id of `trade().skills`); the
-// others are free from the start.
+// ids of the shared ones (decors.ts, poses.ts) or the trade's own objects. All of them are free from
+// the start: the poster can be made at any time of the visit.
 
-function offer<T extends { id: string; skill?: string }>(list: (string | T)[], shared: T[]): T[] {
-  const { unlocks = {} } = trade().studio;
+function offer<T extends { id: string }>(list: (string | T)[], shared: T[]): T[] {
   return list.map((entry) => {
     const option = typeof entry === 'string' ? shared.find((o) => o.id === entry) : entry;
     if (!option) throw new Error(`Option du studio inconnue : ${entry}`);
-    return unlocks[option.id] ? { ...option, skill: unlocks[option.id] } : option;
+    return option;
   });
 }
 
@@ -27,20 +25,12 @@ function options(): { decors: Decor[]; poses: Pose[] } {
   return offered;
 }
 
-/** The trade's poster decors, each { id, label, draw, skill? }. */
+/** The trade's poster decors, each { id, label, draw }. */
 export function studioDecors() {
   return options().decors;
 }
 
-/** The trade's poses, each a pose of poses.ts with `skill` when a domain unlocks it. */
+/** The trade's poses, each a pose of poses.ts. */
 export function studioPoses() {
   return options().poses;
-}
-
-/** What winning the domain `skill` unlocks, e.g. [{ kind: 'décor', label: 'Fête' }]. */
-export function unlockedBy(skill: string) {
-  return [
-    ...studioDecors().map((decor) => ({ ...decor, kind: 'décor' })),
-    ...studioPoses().map((pose) => ({ ...pose, kind: 'pose' })),
-  ].filter((unlock) => unlock.skill === skill);
 }

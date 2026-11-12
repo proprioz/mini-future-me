@@ -66,6 +66,11 @@ photos to the poster, and whom to ask.
 These rules hold for every trade. The avatar walks to the station (A*), plays an animation, then the
 mini-game opens over the office.
 
+Orders are played in the client's order: only the next one can be played, and the ones already done can
+be played again. A station whose orders all come later has a faded badge and, when touched, says which
+order comes first ("D'abord : Shooting produit, à l'appareil photo"); on the cork board the later orders
+show a padlock. The poster, on the other hand, can be made at any time, with every decor and pose.
+
 Guidance: a big badge floats above each station (✓ once its mission is done; the next order bounces in
 coral with its name) and the station of the next order glows softly. Stations are big, and an invisible
 zone around each one widens the click target. The "Y aller ▶" button at the bottom of the screen goes
@@ -82,7 +87,7 @@ The cork board 📌, common to every trade, shows the tasks as "client orders" (
 The tasks win **domains of competence** from the trade's training plan, each with its pictogram and its
 colour. In the HUD, each domain's ring fills with every task, and the pictogram takes its colour once the
 domain is won; touching a badge says its name. The win screen shows the domain trained (and the trade's
-final domain after the last order). Each domain won unlocks decors or poses for the poster.
+final domain after the last order).
 
 ## Media trade: Mini Future Me Médiamaticien·ne
 
@@ -112,8 +117,7 @@ also be played by touching an element, then its place.
 
 The domains (`skills.ts`, the same as the job chapter behind the scenes): Produire des contenus (shoot and
 retouch), Concevoir des visuels (layout), Marketing et communication (publishing and printing), and Mener
-des projets, won once the client's whole campaign is done. They unlock: Photographe (content), Fête
-(design), Ville la nuit (marketing), Grande première and Héroïque (projects). On the poster, the avatar
+des projets, won once the client's whole campaign is done. On the poster, the avatar
 holds the poster it laid out; the trade adds the "Studio photo" decor (the default) and the "Photographe"
 pose.
 
@@ -124,15 +128,15 @@ pose.
 - The avatar holds the object made in the office (the trade's `creation`: a 3D object and its size; in
   media, the poster laid out in the layout task, redrawn on a canvas by `drawDesign()` of
   `PosterLayout.ts`). Each pose holds it its own way (`withCreation` in `poses.ts`, which the trade can
-  adjust pose by pose with `creation.holds`): with both hands for "Fier·ère" (the default pose, offered
-  only once the object exists), in one hand at the side for "Coucou", "Photographe" (the camera in the
-  other hand) and "Héroïque", held up at arm's length for "Youpi !". Without an object made, the poses
-  stay empty-handed.
-- Shared decors and poses (`decors.ts`, `poses.ts`); each trade picks its own, adds some if needed, and
-  says which domain unlocks each one (the trade's `studio`). The titles above the avatar and the caption
+  adjust pose by pose with `creation.holds`): with both hands for "Fier·ère" (the default pose once the
+  object exists; before that, in media, it shows the camera in both hands), in one hand at the side for "Coucou", "Photographe" (the camera in the
+  other hand) and "Héroïque", held up at arm's length for "Youpi !". Without an object made, the other poses
+  stay empty-handed. Every pose is offered from the start.
+- Shared decors and poses (`decors.ts`, `poses.ts`); each trade picks its own and adds some if needed
+  (the trade's `studio`), all free from the start. The titles above the avatar and the caption
   under the name come from the trade too.
 - High-definition off-screen rendering (A4 at 300 dpi ≈ 2480×3508), then a 2D canvas for the name and the
-  frame. The domains won in the office are not on the poster (they only unlock decors and poses).
+  frame. The domains won in the office are not on the poster.
 - A two-block footer at the bottom of every poster. Left, the visit: "Tu as été servi·e par" followed by
   the names of the booth team, then today's date (without names: "Affiche créée le" and the date).
   Right, the booth's school: its logo (`public/school/logo.svg`, or its name), "Infos sur la formation et

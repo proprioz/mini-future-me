@@ -60,8 +60,6 @@ export interface Studio {
   decors: (string | Decor)[];
   /** Ids of the shared poses (character/poses.ts) or the trade's own. */
   poses: (string | Pose)[];
-  /** By decor or pose id, the id of the skill to win first. */
-  unlocks?: Record<string, string>;
   /** Titles over the avatar; the first is the default. */
   titles: PosterTitle[];
   defaultDecor?: string;

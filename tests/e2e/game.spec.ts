@@ -88,6 +88,30 @@ test('a whole visit for every trade, offline', async ({ page }) => {
       await recordMiniGames(page);
       const tasks = await page.evaluate(() => window.studio.trades[0].tasks.map(({ id, win }) => ({ id, win })));
       const skills = await page.evaluate(() => window.studio.trades[0].skills.length);
+      const { decors, poses } = await page.evaluate(() => {
+        const { studio } = window.studio.trades[0];
+        return { decors: studio.decors.length, poses: studio.poses.length };
+      });
+
+      // The poster can be made before any order, with every decor and pose on offer.
+      await page.locator('.hud [data-action="poster"]').click();
+      await expect(page.locator('.studio .choice[data-key="decor"]')).toHaveCount(decors);
+      await page.locator('.studio [data-tab="pose"]').click();
+      await expect(page.locator('.studio .choice[data-key="pose"]')).toHaveCount(poses);
+      await expect(page.locator('.studio .choice:disabled')).toHaveCount(0);
+      await page.locator('.studio [data-action="back"]').click();
+      await expect(page.locator('.studio')).toBeHidden();
+
+      // Orders are played in order: a station whose orders all come later names the next one, and
+      // the cork board locks every order after the first.
+      await page.locator('.pin[data-state="locked"]').first().click();
+      await expect(page.locator('.hud-toast')).toContainText('D’abord', { timeout: 15_000 });
+      await expect(page.locator('.minigame')).toHaveCount(0);
+      await page.locator('.pin[aria-label="Commandes"]').click();
+      await expect(page.locator('.board-task')).toHaveCount(tasks.length, { timeout: 15_000 });
+      await expect(page.locator('.board-task:disabled')).toHaveCount(tasks.length - 1);
+      await page.locator('.board .mg-close').click();
+      await expect(page.locator('.minigame')).toHaveCount(0);
 
       for (const task of tasks) {
         await page.evaluate((id) => void window.studio.game!.openTask(id), task.id);

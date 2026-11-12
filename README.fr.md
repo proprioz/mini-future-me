@@ -194,7 +194,7 @@ src/
   character/              avatar chibi procédural : corps, tête, visage dessiné, cheveux, barbes, accessoires,
                           options et fréquences (population.ts), poses de l'affiche
   scan/                   analyse des photos (MediaPipe, modèle âge/genre local) → options les plus proches
-  poster/                 l'affiche A4 : décors, rendu, déblocages, école, exports
+  poster/                 l'affiche A4 : décors, rendu, offre du studio, école, exports
   kiosk/                  mode borne : inactivité, réinitialisation, sons
   render/                 matériaux toon, palette, scène du perso, vignettes
   ui/                     écrans et HUD (accueil, scan, création du perso, studio d'affiche, coulisses…)

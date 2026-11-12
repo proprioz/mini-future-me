@@ -7,11 +7,12 @@ import type { Character } from './Character.ts';
 // Angles in radians. Arms: `out` raises the arm sideways, `fwd` forwards; `bendOut` and `bend` fold the
 // elbow the same ways (negative = inwards). Legs: `out` spreads them, `fwd` lifts them, `knee` folds back.
 // `left` is the character's left (+X), seen on the right of the poster.
-// These poses are shared by every trade: a trade picks the ones it offers and the domain that unlocks
-// each (`studio` in the trade's module), and may add its own (Photographe, in media).
+// These poses are shared by every trade: a trade picks the ones it offers (`studio` in the trade's
+// module), and may add its own (Photographe, in media).
 // `props`: what the hands hold (see `hold()`). Once the visitor has made the trade's object (its
 // `creation`, see `setCreation()`), every pose holds it: `withCreation` then replaces the arms and props
-// it lists. `needsCreation`: the pose only exists with the object.
+// it lists. `needsCreation`: the pose holds nothing without the object, so a trade offers it only with
+// something else to hold until then (media: the camera, in its own poses.ts).
 /** Angles of an arm, in radians (see above). */
 export interface ArmPose { out?: number; fwd?: number; bendOut?: number; bend?: number }
 export interface LegPose { out?: number; fwd?: number; knee?: number }
@@ -42,8 +43,6 @@ export interface Pose extends PoseJoints {
   label: string;
   needsCreation?: boolean;
   withCreation?: PoseJoints;
-  /** Id of the skill that unlocks it, set by poster/unlocks.ts from the trade's `studio.unlocks`. */
-  skill?: string;
 }
 
 export const POSES: Pose[] = [

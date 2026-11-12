@@ -9,6 +9,8 @@ export interface TaskBoardOptions {
   subtitle: string;
   tasks: Task[];
   done: Set<string>;
+  /** The order to do now; those after it are locked (orders are played in order). */
+  next: Task | null;
 }
 
 /**
@@ -22,7 +24,9 @@ export class TaskBoard {
     this.root = root;
   }
 
-  open({ icon, title, subtitle, tasks, done }: TaskBoardOptions) {
+  open({ icon, title, subtitle, tasks, done, next }: TaskBoardOptions) {
+    const locked = (task: Task) => !done.has(task.id) && task !== next;
+    const status = (task: Task) => done.has(task.id) ? iconSvg(skillOf(task)!.icon) : locked(task) ? iconSvg('lock-simple') : 'À faire';
     const el = document.createElement('div');
     el.className = 'minigame board';
     el.innerHTML = `
@@ -34,10 +38,10 @@ export class TaskBoard {
         </header>
         <div class="board-list">
           ${tasks.map((task) => `
-            <button class="board-task ${done.has(task.id) ? 'done' : ''}" data-task="${task.id}">
+            <button class="board-task ${done.has(task.id) ? 'done' : locked(task) ? 'locked' : ''}" data-task="${task.id}" ${locked(task) ? 'disabled' : ''}>
               <span class="board-icon">${iconSvg(task.icon)}</span>
               <span class="board-text"><b>${task.title}</b><small>${task.where}</small></span>
-              <span class="board-status">${done.has(task.id) ? iconSvg(skillOf(task)!.icon) : 'À faire'}</span>
+              <span class="board-status">${status(task)}</span>
             </button>`).join('')}
         </div>
       </section>`;

@@ -192,7 +192,7 @@ src/
   character/              procedural chibi avatar: body, head, drawn face, hair, beards, accessories,
                           options and frequencies (population.ts), poster poses
   scan/                   photo analysis (MediaPipe, local age/gender model) → closest options
-  poster/                 the A4 poster: decors, rendering, unlocks, school, exports
+  poster/                 the A4 poster: decors, rendering, studio offer, school, exports
   kiosk/                  kiosk mode: inactivity, reset, sounds
   render/                 toon materials, palette, avatar stage, thumbnails
   ui/                     screens and HUD (welcome, scan, avatar creator, poster studio, behind the scenes…)

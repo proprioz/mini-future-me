@@ -6,8 +6,8 @@ import { MiniGame } from '../../src/minigames/MiniGame.ts';
 import { DECORS } from '../../src/poster/decors.ts';
 import { POSES } from '../../src/character/poses.ts';
 import { ICON_PATHS } from '../../src/ui/iconPaths.ts';
-import { skillOf, wonSkills } from '../../src/game/skills.ts';
-import { studioDecors, studioPoses } from '../../src/poster/unlocks.ts';
+import { skillById, skillOf, skillProgress } from '../../src/game/skills.ts';
+import { studioDecors, studioPoses } from '../../src/poster/studio.ts';
 
 // The contract of docs/adding-a-trade.md, checked on every trade of src/trades/index.ts: what the
 // types can't tell (ids that must match each other, a domain for every task…). The stations are
@@ -54,9 +54,8 @@ describe.each(TRADES)('filière $id', (entry) => {
     setTrade({ ...entry, name: '', title: '', ...trade } as Trade);
     for (const task of trade.tasks) expect(skillOf(task), task.id).toBeDefined();
     expect(ids(trade.skills)).toContain(trade.finalSkill);
-    expect(wonSkills(new Set()).size).toBe(0);
-    expect(wonSkills(new Set(tasks))).toEqual(new Set(ids(trade.skills)));
-    expect([...wonSkills(new Set(tasks.slice(0, -1)))]).not.toContain(trade.finalSkill);
+    for (const skill of trade.skills) expect(skillProgress(skill, new Set(tasks)), skill.id).toBe(1);
+    expect(skillProgress(skillById(trade.finalSkill)!, new Set(tasks.slice(0, -1)))).toBeLessThan(1);
   });
 
   test('poster studio', () => {
@@ -72,15 +71,9 @@ describe.each(TRADES)('filière $id', (entry) => {
     expect(studioDecors()).toHaveLength(decors.length);
     expect(studioPoses()).toHaveLength(poses.length);
 
-    for (const [id, skill] of Object.entries(studio.unlocks ?? {})) {
-      expect([...decors, ...poses], `unlocks.${id}`).toContain(id);
-      expect(ids(trade.skills), `unlocks.${id}`).toContain(skill);
-    }
-    // The decor shown first is free, and so is a pose that needs nothing made.
-    const firstDecor = studio.defaultDecor ?? decors[0];
-    expect(decors).toContain(firstDecor);
-    expect(studio.unlocks ?? {}).not.toHaveProperty(firstDecor);
-    expect(studioPoses().some((pose) => !pose.skill && !pose.needsCreation)).toBe(true);
+    // The poster can be made at any time, with every pose: none waits for the object made.
+    expect(decors).toContain(studio.defaultDecor ?? decors[0]);
+    expect(studioPoses().filter((pose) => pose.needsCreation).map((pose) => pose.id)).toEqual([]);
 
     expect(studio.titles.length).toBeGreaterThan(0);
     expect(new Set(ids(studio.titles)).size).toBe(studio.titles.length);

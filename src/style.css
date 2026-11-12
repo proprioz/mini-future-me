@@ -434,6 +434,11 @@ body {
   background: var(--teal) var(--check) center / 0.8125rem no-repeat;
 }
 
+/* All its orders come later: the badge fades. */
+.pin[data-state='locked'] .pin-icon {
+  opacity: 0.4;
+}
+
 .pin.hovered {
   background: var(--mist);
   border-top-color: var(--mist);
@@ -1600,6 +1605,25 @@ button {
   text-shadow: 0 2px 0 var(--sun-dark);
 }
 
+/* An order after the next one: played once the ones before it are done. */
+.board-task.locked {
+  cursor: not-allowed;
+  color: var(--ink-soft);
+}
+
+.board-task.locked:active {
+  transform: none;
+}
+
+.board-task.locked .board-icon {
+  opacity: 0.45;
+}
+
+.board-task.locked .board-status {
+  background: var(--ink-soft);
+  font-size: 1.125rem;
+}
+
 /* ---------- Poster studio (shares the creator layout) ---------- */
 
 .studio-preview {
@@ -1638,30 +1662,6 @@ button {
   aspect-ratio: 1000 / 1414;
   margin-bottom: 0.25rem;
   border-radius: 0.625rem;
-}
-
-.choice.locked {
-  position: relative;
-  cursor: not-allowed;
-  color: var(--ink-soft);
-}
-
-.choice.locked canvas {
-  opacity: 0.45;
-  filter: grayscale(0.8);
-}
-
-.choice-lock {
-  position: absolute;
-  top: 0.5rem;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 0.1875rem 0.625rem;
-  border-radius: 999px;
-  background: var(--ink);
-  color: #fff;
-  font-size: 0.8125rem;
-  white-space: nowrap;
 }
 
 .studio-input {

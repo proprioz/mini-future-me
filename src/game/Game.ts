@@ -9,7 +9,6 @@ import { TaskBoard } from '../ui/TaskBoard.ts';
 import { StationPins } from '../ui/StationPins.ts';
 import { skillOf } from './skills.ts';
 import { trade } from '../trades/current.ts';
-import { unlockedBy } from '../poster/unlocks.ts';
 import { sound } from '../kiosk/sound.ts';
 import { icon } from '../ui/icons.ts';
 import type { Tile } from './Grid.ts';
@@ -187,16 +186,26 @@ export class Game {
   }
 
   /**
-   * A station goes straight to its next order. The cork board lists every order, and a station whose
-   * orders are all delivered (in media, the laptop has three) asks which one to play again.
+   * Orders are played in campaign order. The station of the next order goes straight to it; another
+   * station replays its delivered orders (asking which one when it has several, like the laptop in
+   * media), or names the next order when it has none yet. The cork board lists every order, the later
+   * ones locked.
    */
   async openItem(item: Interactable): Promise<void> {
     if (this.busy) return;
     const orders = item.id === 'orders';
-    const tasks = orders ? this.tasks : this.tasks.filter((t) => t.item === item.id);
-    const todo = !orders && tasks.find((t) => !this.done.has(t.id));
-    if (todo || tasks.length === 1) {
-      this.playTask(todo || tasks[0]);
+    const next = this.nextTask();
+    if (!orders && next?.item === item.id) {
+      this.playTask(next);
+      return;
+    }
+    const tasks = orders ? this.tasks : this.tasks.filter((t) => t.item === item.id && this.done.has(t.id));
+    if (!tasks.length) {
+      if (next) this.hud.toast(`${icon('lock-simple')} D’abord : ${next.title}, ${next.where}`);
+      return;
+    }
+    if (!orders && tasks.length === 1) {
+      this.playTask(tasks[0]);
       return;
     }
     this.clearHover();
@@ -207,6 +216,7 @@ export class Game {
       subtitle: orders ? `${this.done.size}/${this.tasks.length} réussies` : 'Rejouer',
       tasks,
       done: this.done,
+      next,
     });
     this.busy = false;
     if (!task) return;
@@ -246,13 +256,11 @@ export class Game {
       sound.play('fanfare');
       this.hud.highlight('poster');
     } else {
-      // The domain the task trains: won, with what it unlocks for the poster, or how far it is.
+      // The domain the task trains: won, or how far it is.
       const skill = skillOf(task)!;
       const count = skill.tasks.filter((id) => this.done.has(id)).length;
-      const won = count === skill.tasks.length;
-      const unlocks = won ? unlockedBy(skill.id).map((u) => `${u.kind} « ${u.label} »`).join(', ') : '';
-      const status = won ? `Domaine gagné : ${skill.label}` : `${skill.label} ${count}/${skill.tasks.length}`;
-      this.hud.toast(`${icon(skill.icon)} ${status}${unlocks ? ` · Débloqué : ${unlocks}` : ''}`, 4500);
+      const status = count === skill.tasks.length ? `Domaine gagné : ${skill.label}` : `${skill.label} ${count}/${skill.tasks.length}`;
+      this.hud.toast(`${icon(skill.icon)} ${status}`, 4500);
     }
     if (game.goNext) {
       if (last) this.hud.trigger('poster');
@@ -268,7 +276,8 @@ export class Game {
     for (const item of this.room.interactables) {
       const tasks = this.tasks.filter((t) => t.item === item.id);
       if (item.id === next?.item) this.pins.set(item.id, 'next', next.title);
-      else this.pins.set(item.id, tasks.length && tasks.every((t) => this.done.has(t.id)) ? 'done' : 'todo');
+      else if (tasks.length && tasks.every((t) => this.done.has(t.id))) this.pins.set(item.id, 'done');
+      else this.pins.set(item.id, tasks.length && !tasks.some((t) => this.done.has(t.id)) ? 'locked' : 'todo');
     }
     this.hud.setMission(next ? {
       icon: next.icon,

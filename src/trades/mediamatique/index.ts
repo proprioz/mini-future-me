@@ -4,7 +4,7 @@ import { SKILLS } from './skills.ts';
 import { buildStations } from './stations.ts';
 import { creation } from './creation.ts';
 import { STUDIO } from './decors.ts';
-import { PHOTOGRAPHER } from './poses.ts';
+import { PHOTOGRAPHER, PROUD } from './poses.ts';
 import { JOB_CHAPTER } from './about.ts';
 import type { TradeModule } from '../types.ts';
 
@@ -30,12 +30,11 @@ export default {
   // What the character holds on the poster: the poster laid out in the layout task.
   creation,
 
-  // The poster studio: decors and poses on offer (ids of the shared ones, or the trade's own), the
-  // domain that unlocks each, and the titles over the character.
+  // The poster studio: decors and poses on offer (ids of the shared ones, or the trade's own), and the
+  // titles over the character.
   studio: {
     decors: [STUDIO, 'lagoon', 'party', 'city', 'premiere'],
-    poses: ['proud', 'wave', 'cheer', PHOTOGRAPHER, 'hero'],
-    unlocks: { party: 'design', city: 'marketing', premiere: 'projects', photographer: 'content', hero: 'projects' },
+    poses: [PROUD, 'wave', 'cheer', PHOTOGRAPHER, 'hero'],
     titles: [
       { id: 'pro', lines: ['Futur·e', 'médiamaticien·ne'] },
       { id: 'star', lines: ['Star', 'du studio'] },

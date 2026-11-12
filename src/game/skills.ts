@@ -12,11 +12,6 @@ export function skillProgress(skill: Skill, done: Set<string>) {
   return skill.tasks.filter((id) => done.has(id)).length / skill.tasks.length;
 }
 
-/** Ids of the skills whose tasks are all in `done`. */
-export function wonSkills(done: Set<string>) {
-  return new Set(trade().skills.filter((skill) => skillProgress(skill, done) === 1).map((skill) => skill.id));
-}
-
 /** The domain a task trains, the one shown on its win screen and order card. */
 export function skillOf(task: Task) {
   return trade().skills.find((skill) => skill.tasks.includes(task.id));

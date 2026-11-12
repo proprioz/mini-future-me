@@ -4,7 +4,7 @@ import { applyPose } from '../character/poses.ts';
 import { CharacterStage } from '../render/CharacterStage.ts';
 import { PALETTE as C } from '../render/palette.ts';
 import { FEET_Y, paintDecor, W, H } from './decors.ts';
-import { studioDecors, studioPoses } from './unlocks.ts';
+import { studioDecors, studioPoses } from './studio.ts';
 import { SCHOOL, drawSchoolQr, loadLogo } from './school.ts';
 import { trade } from '../trades/current.ts';
 import { GAME } from '../trades/index.ts';

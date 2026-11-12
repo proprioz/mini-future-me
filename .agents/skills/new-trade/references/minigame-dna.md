@@ -56,8 +56,8 @@ trade really needs one (no audio files).
 
 A game that makes something sets `this.result` before `this.end(true)`; later tasks read
 `this.results[taskId]`, and `creation.from(results)` turns it into the held object. When a later task
-needs an earlier result that was not played yet, use a sensible default (media: `DEFAULT_DESIGN`), so
-the orders can be played in any order from the cork board.
+needs an earlier result, use a sensible default all the same (media: `DEFAULT_DESIGN`): the visitor plays
+the orders in order, but a task can be opened alone from the devtools (`studio.game.openTask(id)`).
 
 ## Texts
 

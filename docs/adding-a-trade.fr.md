@@ -54,7 +54,7 @@ Essaie-la avec http://localhost:5173/?filiere=cuisine, et sur le stand avec `VIT
 | `finalSkill` | id du domaine gagné avec toute la commande (montré sur le dernier écran de victoire) |
 | `buildStations(ctx)` | construit les postes de travail dans le bureau (voir 4) |
 | `creation` | l'objet que l'avatar tient sur l'affiche (voir 5) |
-| `studio` | `decors`, `poses`, `unlocks`, `titles`, et si besoin `defaultDecor` (voir 6) |
+| `studio` | `decors`, `poses`, `titles`, et si besoin `defaultDecor` (voir 6) |
 | `poster.caption` | la ligne sous le prénom sur l'affiche |
 | `about.chapter` | le chapitre « Le métier » de « Dans les coulisses », de même forme que les chapitres communs de `src/ui/AboutPanel.ts` |
 | `phone.fact` | un mot sur le métier sur la page téléphone de l'affiche, après le nom du métier |
@@ -100,7 +100,10 @@ coup d'œil.
 `creation` a trois champs :
 
 - `from(results)` : ce que le visiteur a fabriqué, d'après les résultats des tâches, ou `null` s'il ne l'a pas
-  encore fait (les poses ne tiennent alors rien, et « Fier·ère » n'est pas proposée).
+  encore fait (les poses ne tiennent alors rien). Toutes les poses sont proposées dès le début : la pose
+  commune « Fier·ère » (`proud`, qui ne tient que l'objet) demande donc une version à toi qui tient autre
+  chose en attendant ; le `PROUD` de la médiamatique, dans `src/trades/mediamatique/poses.ts`, montre
+  l'appareil photo.
 - `mesh(data)` : construit l'objet, un `THREE.Object3D` centré sur son milieu, avec
   `userData.size = { w, h, d }` en unités du monde (les jambes de l'avatar mesurent environ 0,4). Il est
   rappelé à chaque reconstruction de l'objet : garde en cache ce qui est coûteux à dessiner.
@@ -114,7 +117,6 @@ coup d'œil.
 - `decors` et `poses` : listes, dans l'ordre, d'ids des décors et poses communs (`src/poster/decors.ts` :
   lagoon, party, city, premiere ; `src/character/poses.ts` : proud, wave, cheer, hero) ou d'objets propres
   à la filière, au même format (la médiamatique ajoute un décor « Studio photo » et une pose « Photographe »).
-- `unlocks` : par id de décor ou de pose, l'id du domaine à gagner d'abord ; les autres sont libres.
 - `titles` : les titres au-dessus de l'avatar, `{ id, lines: [ligne 1, ligne 2] }` ; le premier est celui par défaut.
 - `defaultDecor` : id du décor montré d'abord (sinon le premier).
 

@@ -4,7 +4,7 @@ import type { Interactable } from '../game/Room.ts';
 
 const point = new THREE.Vector3();
 
-export type PinState = 'todo' | 'next' | 'done';
+export type PinState = 'todo' | 'next' | 'done' | 'locked';
 
 interface Pin {
   item: Interactable;
@@ -38,7 +38,7 @@ export class StationPins {
     this.setHovered(null);
   }
 
-  /** `state`: 'todo', 'next' (the order to do now), 'done' (all its orders delivered). */
+  /** `state`: 'todo', 'next' (the order to do now), 'done' (all its orders delivered), 'locked' (all its orders come later). */
   set(id: string, state: PinState, label?: string) {
     const entry = this.pins.find((p) => p.item.id === id)!;
     entry.pin.dataset.state = state;

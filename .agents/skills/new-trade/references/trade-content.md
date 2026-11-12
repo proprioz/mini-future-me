@@ -27,7 +27,7 @@ task, and the last one delivers something.
 `skills` in the trade module: 3 to 5 domains taken from the training plan (short labels, verb first:
 "Produire des contenus", "Concevoir des visuels"), each with a pictogram and a palette tint, each
 trained by one or more tasks. Add a final domain trained by every task (media: "Mener des projets"), won
-with the whole order. Each domain unlocks a decor or a pose on the poster (`studio.unlocks`).
+with the whole order.
 
 ## The job chapter of "Dans les coulisses"
 

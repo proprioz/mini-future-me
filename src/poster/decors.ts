@@ -3,9 +3,8 @@ import { PALETTE as C } from '../render/palette.ts';
 // Poster backgrounds, painted in 2D in a frame 1000 units wide and 1414 high (A4 portrait).
 // The floor starts around y = 1000; the character's feet stand at FEET_Y. On the poster, the decor is
 // moved up so that this spot lands under the character's feet (see PosterRenderer.ts).
-// These decors are shared by every trade: a trade picks the ones it offers and the domain that unlocks
-// each (`studio` in the trade's module), and may paint its own (Studio photo, in media) with the
-// helpers exported below.
+// These decors are shared by every trade: a trade picks the ones it offers (`studio` in the trade's
+// module), and may paint its own (Studio photo, in media) with the helpers exported below.
 export const W = 1000;
 export const H = 1414;
 export const FEET_Y = 1115;
@@ -15,8 +14,6 @@ export interface Decor {
   id: string;
   label: string;
   draw(g: CanvasRenderingContext2D, scale: number): void;
-  /** Id of the skill that unlocks it (poster/unlocks.ts). */
-  skill?: string;
 }
 
 export const DECORS: Decor[] = [
