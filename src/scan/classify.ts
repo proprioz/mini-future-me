@@ -251,6 +251,8 @@ function styleLikelihood({ hair, left, right }: Features & { hair: HairFront }, 
     shaved: bald,
     buzz: hairy * straight * short * shaved,
     short: hairy * straight * short * (1 - shaved) * loose,
+    // Faded sides don't show on the front photo: like a short cut, the frequencies decide.
+    taper: hairy * straight * short * (1 - shaved) * loose,
     pixie: hairy * straight * short * (1 - shaved) * loose,
     // Short curls, with faded sides or not: the photos can't tell, the frequencies decide.
     curly: hairy * curly * (1 - reach) * (1 - medium),

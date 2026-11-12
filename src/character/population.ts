@@ -84,10 +84,11 @@ const TABLES = {
     }
     const locs = all;
     // Curls on top over faded sides (often a perm): the cut of a great many teenage boys today,
-    // nearly as common as a classic short cut.
-    if (age === 'teen') return { short: 36, curlyFade: 32, buzz: 12, curly: 6, shaved: 4, bald: 1, locs };
-    if (age === 'adult') return { short: 46, buzz: 15, bald: 10, shaved: 9, curlyFade: 9, curly: 6, locs };
-    return { short: 38, buzz: 11, curly: 4, bald: 31, shaved: 8, curlyFade: 1, locs };
+    // nearly as common as a classic short cut. Straight hair over sides faded low (taper) is the
+    // other fade of the young.
+    if (age === 'teen') return { short: 34, curlyFade: 32, taper: 14, buzz: 10, curly: 6, shaved: 4, bald: 1, locs };
+    if (age === 'adult') return { short: 40, buzz: 15, taper: 12, bald: 10, shaved: 9, curlyFade: 9, curly: 6, locs };
+    return { short: 38, buzz: 11, curly: 4, bald: 31, shaved: 8, taper: 3, curlyFade: 1, locs };
   },
   hair: ({ age, skin }): Frequencies => {
     const old = age === 'senior';

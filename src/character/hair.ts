@@ -15,7 +15,7 @@ const V = (x: number, y: number, z: number) => new THREE.Vector3(x, y, z);
 
 /** How far above the skull each style goes (head units), for hats. */
 export const HAIR_VOLUME: Record<string, number> = {
-  bald: 0, shaved: 0.002, buzz: 0.008, short: 0.045, curly: 0.08, curlyFade: 0.09, pixie: 0.035, bob: 0.04, medium: 0.04, long: 0.04,
+  bald: 0, shaved: 0.002, buzz: 0.008, short: 0.045, curly: 0.08, curlyFade: 0.09, taper: 0.06, pixie: 0.035, bob: 0.04, medium: 0.04, long: 0.04,
   curlyLong: 0.08, locs: 0.03, braids: 0.02, ponytail: 0.02, bun: 0.02,
 };
 
@@ -54,7 +54,7 @@ export interface HairRecipe {
   extra?: ShellOptions['extra'];
   locks?: THREE.BufferGeometry[];
   top?: THREE.BufferGeometry[];
-  fade?: { line: HeadLine; top: HeadLine };
+  fade?: { line: HeadLine; top: HeadLine; ramp?: number };
   stubble?: HeadLine;
   shade?: number;
   lockMap?: THREE.Texture;
@@ -448,6 +448,60 @@ function broccoliCurls(params: HeadParams): THREE.BufferGeometry {
   return broccoliCache.get(key)!.clone();
 }
 
+/** Shape of the taper cut: the edge of the textured mass on top, its thickness, the fringe jutting out. */
+const taperMass = once(() => {
+  // A choppy fringe down to the eyebrows, then a ragged edge over the temples, lower at the back.
+  const line = (lon: number) => {
+    const a = Math.abs(lon);
+    const fringe = 0.22 + 0.14 * teeth(lon + 0.12, 0.25);
+    const sides = lerp(0.24, 0.08, smoothstep(a, 1.4, 2.8)) - 0.06 * teeth(lon + 0.05, 0.28);
+    return lerp(fringe, sides, smoothstep(a, 0.8, 1.05));
+  };
+  const chunks = curlField(140, 0.16, 0.1, 51);
+  // Full at once from the edge: the mass stands out over the short sides, like a shelf.
+  const shell = (lon: number, lat: number) => {
+    const cover = smoothstep(lat, line(lon) - 0.01, line(lon) + 0.03);
+    return cover > 0 ? cover * (0.018 + 0.04 * Math.max(0, Math.sin(lat)) + 0.012 * chunks(lon, lat)) : 0;
+  };
+  // The fringe falls forward over the forehead instead of sticking to it.
+  const extra = (lon: number, lat: number) => {
+    const front = Math.exp(-((lon / 0.8) ** 2)) * smoothstep(lat, 0.1, 0.5) * (1 - smoothstep(lat, 0.8, 1.2));
+    return V(0, -0.006, 0.014).multiplyScalar(front * smoothstep(lat, line(lon) - 0.01, line(lon) + 0.03));
+  };
+  return { line, shell, extra };
+});
+
+/**
+ * Locks of the taper cut: flat, pointed chunks lying on the mass, pushed forward and down from the
+ * crown, the tips lifting off it (a messy, textured crop), the front ones falling over the forehead.
+ */
+function taperLocks(params: HeadParams): THREE.BufferGeometry[] {
+  const { line, shell, extra } = taperMass();
+  const random = seeded(52);
+  const rand = (from: number, to: number) => from + random() * (to - from);
+  /** Point `lift` above the mass at the direction of `p`. */
+  const onMass = (p: THREE.Vector3, lift: number) => {
+    const lon = Math.atan2(p.x, p.z);
+    const lat = Math.asin(THREE.MathUtils.clamp(p.y / p.length(), -1, 1));
+    return surface(lon, lat, shell(lon, lat) + lift, params).add(extra(lon, lat));
+  };
+  const locks: THREE.BufferGeometry[] = [];
+  for (const spot of spiral(44, 0.25, 1.45)) {
+    const lon = spot.lon + rand(-0.05, 0.05);
+    const lat = spot.lat + rand(-0.04, 0.04);
+    if (lat < line(lon) + 0.12) continue;
+    // Down the head, turned towards the face: forward on top, down and a little forward on the sides.
+    const n = surfaceNormal(lon, lat);
+    const down = V(0, -1, 0).addScaledVector(n, n.y).normalize();
+    const along = down.add(V(0, 0, 0.9).addScaledVector(n, -n.z)).add(V(rand(-0.3, 0.3), 0, rand(-0.3, 0.3))).normalize();
+    const length = rand(0.07, 0.1);
+    const root = surface(lon, lat, 0, params);
+    const points = [0, 0.35, 0.7, 1].map((f) => onMass(root.clone().addScaledVector(along, f * length), lerp(-0.008, 0.02, f ** 2)));
+    locks.push(lock(points, rand(0.026, 0.034), { flatten: 0.32, tip: 0.0015 }));
+  }
+  return locks;
+}
+
 /**
  * Braided rope, tiling along a lock: chevrons like the crossing strands of a braid (or the twists of
  * a loc), light grey multiplied with the hair colour.
@@ -624,6 +678,27 @@ const STYLES: Record<string, (params: HeadParams, options: { hatted: boolean }) 
       shade: -0.22,
       top: [broccoliCurls(params)],
       fade: { line: (lon) => hairline(lon, { forehead: 0.55, nape: -0.5 }), top: shape.topLine },
+    };
+  },
+
+  // Taper: a textured, messy crop on top, its fringe falling over the forehead, the sides and back
+  // short, faded down to the skin only low (the sideburns, round the ears and at the nape). The mass
+  // under the locks is a little darker: the shadow between them.
+  taper: (params) => {
+    const mass = taperMass();
+    // Square sideburns in front of the ears, short hair round and behind them (they stand out of it),
+    // down to the nape.
+    const line = (lon: number) => Math.min(hairline(lon, { forehead: 0.4, nape: -0.58, sides: -0.2 }),
+      lerp(0.4, -0.15, smoothstep(Math.abs(lon), 1.02, 1.16)));
+    // Height of the fade above that line: the sideburns and round the ears, more at the nape; above
+    // it, short hair up to the mass.
+    const band = (lon: number) => lerp(0.18, 0.32, smoothstep(Math.abs(lon), 1.6, 2.8));
+    return {
+      shell: mass.shell,
+      extra: mass.extra,
+      shade: -0.1,
+      top: taperLocks(params),
+      fade: { line, top: (lon) => line(lon) + band(lon), ramp: 0.05 },
     };
   },
 
@@ -816,10 +891,11 @@ export function buildHair(
 
   if (recipe.fade) {
     // Shaved sides: a skin-tight layer from the hairline up under the curly top, darker upwards.
-    const { line, top } = recipe.fade;
+    const { line, top, ramp = 0.3 } = recipe.fade;
     // Thin and rising slowly from the hairline (no crease where it starts), on the same grid as the
-    // head so the two surfaces never cross (no flickering stairs at the nape).
-    const fade = shellGeometry(params, capThickness(line, 0.003, 0.003, 0.3), {
+    // head so the two surfaces never cross (no flickering stairs at the nape). Where it is thinnest,
+    // the head hides it: a fade that must show right from its line rises faster (`ramp`).
+    const fade = shellGeometry(params, capThickness(line, 0.003, 0.003, ramp), {
       uv: (lon, lat) => [0.5, smoothstep(lat, line(lon), top(lon))],
       segments: { lonSegments: 72, latSegments: 48 },
       skinNormals: true,
