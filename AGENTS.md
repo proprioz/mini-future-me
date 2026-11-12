@@ -40,7 +40,7 @@ both PLAN.md and PLAN.fr.md.
   never names a trade.
 - **Character options** (`src/character/options.ts`): few options, only traits that are common among
   people in Switzerland and plausible; a rare trait takes the closest option instead of getting its own
-  (a single moustache, a single beard, goatee = moustache + around the mouth + chin). Clothing colours:
+  (a single moustache, a single beard, goatee = an anchor along the chin, the moustache is its own option). Clothing colours:
   only the main ones, the measurement takes the closest. Each option is coded `f`, `m` or neutral, and what
   the game picks by itself never mixes the two (only "Au hasard" does). An option that is no longer
   configurable can still be visible with a fixed value. A new option goes through the whole chain:

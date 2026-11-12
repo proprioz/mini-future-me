@@ -22,7 +22,7 @@
 // - Clothes: black, white, grey and navy are by far the most worn colours, jeans (blue) for the bottom.
 // - Locs and braids: worn by a large share of people with afro-textured hair, rarely by others.
 //   Two plaits: mostly girls (Medihair: braids 1 %).
-// - Goatees: a minority of beards, more among young men.
+// - Goatees: a minority of beards, more among young men, most often worn with a moustache.
 // - Freckles: most people with red hair, about a quarter of the blond, few others.
 // Options rarer than that (afro, turban, vitiligo, dyed hair…) are not in the game at all: a rare trait
 // is drawn as its closest common option.
@@ -131,12 +131,12 @@ const TABLES = {
     if (age === 'adult') return { none: 40, stubble: 24, goatee: 8, short: 28 };
     return { none: 50, stubble: 14, goatee: 6, short: 30 };
   },
-  // Stubble already shades the upper lip; a beard almost always comes with a moustache, a goatee
-  // always (it is a moustache, round the mouth and the chin).
+  // Stubble already shades the upper lip; a beard almost always comes with a moustache, a goatee (the
+  // chin only) most often.
   mustache: ({ gender, beard }) => {
     if (gender === 'f') return { none: 100 };
     return ({
-      none: { none: 90, thick: 10 }, stubble: { none: 85, thick: 15 }, goatee: { thick: 100 }, short: { thick: 92, none: 8 },
+      none: { none: 90, thick: 10 }, stubble: { none: 85, thick: 15 }, goatee: { thick: 80, none: 20 }, short: { thick: 92, none: 8 },
     } as Record<string, Frequencies>)[beard ?? 'none'];
   },
   earrings: ({ gender, age }): Frequencies => (gender === 'f'

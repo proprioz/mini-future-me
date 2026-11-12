@@ -160,7 +160,9 @@ export class FaceTexture {
     const stubble = face.beard === 'stubble';
     const shell = (face.beard !== 'none' && !stubble) || face.mustache !== 'none';
     if (!stubble && !shell) return;
-    const grown = stubble ? { beard: 'short', mustache: 'thick' } : { beard: face.beard, mustache: face.mustache };
+    // A goatee is trimmed with clean edges: nothing to blend (its narrow shape would show the cells).
+    const grown = stubble ? { beard: 'short', mustache: 'thick' }
+      : { beard: face.beard === 'goatee' ? 'none' : face.beard, mustache: face.mustache };
     // Faded out before the edges of the canvas, which are stretched over the rest of the head.
     const border = (v: number) => smoothstep(FACE_SPAN - 0.04 - Math.abs(v), 0, 0.12);
     const density = (lon: number, lat: number) => facialHairDensity(grown.beard, grown.mustache, lon, lat, 0.02) * border(lon) * border(lat);

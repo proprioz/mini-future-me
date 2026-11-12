@@ -281,9 +281,9 @@ function headwearLikelihood(hair: HairFront): Likelihood {
 
 /**
  * Likelihood of each beard and moustache (the moustache depends on the beard, see population.ts).
- * There is a single beard (between short and long), a goatee (always with the moustache) and a single
- * moustache. The photos can't tell a goatee from a full beard: their frequencies decide. A thin
- * moustache (or the shadow of stubble on the lip) counts as none.
+ * There is a single beard (between short and long), a goatee (the chin, most often with the
+ * moustache) and a single moustache. The photos can't tell a goatee from a full beard: their
+ * frequencies decide. A thin moustache (or the shadow of stubble on the lip) counts as none.
  */
 function facialHairLikelihood({ skin, chin, jaw, mustache, below }: FacialHairFront) {
   const skinL = lightness(skin);
@@ -304,7 +304,7 @@ function facialHairLikelihood({ skin, chin, jaw, mustache, below }: FacialHairFr
   return {
     // Found because it is duller than the skin, not darker: grey, not a warm colour.
     grey: grey * (1 - step(chin.dark, RULES.beard, 0.03)),
-    // A goatee comes with a moustache: likely only as much as the moustache is.
+    // A goatee most often comes with a moustache (population.ts): likely only as much as the moustache is.
     beard: { none: 1 - beard, stubble: beard * (1 - long) * (1 - thick), goatee: grown * moustache, short: grown },
     mustache: { none: 1 - moustache, thick: moustache },
   };

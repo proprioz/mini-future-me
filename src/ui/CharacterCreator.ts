@@ -57,11 +57,7 @@ const TABS: Tab[] = [
       { key: 'hairStyle', label: 'Coupe', choices: HAIR_STYLES, thumb: { view: 'head', heading: 0.8, bare: true } },
       { key: 'hair', label: 'Couleur', colors: HAIR_COLORS },
       { key: 'beard', label: 'Barbe', choices: BEARDS, thumb: { view: 'head', heading: 0.35, bare: true } },
-      // A goatee always has its moustache.
-      {
-        key: 'mustache', label: 'Moustache', choices: MUSTACHES, thumb: { view: 'head', heading: 0.2, bare: true },
-        showIf: (look) => look.beard !== 'goatee',
-      },
+      { key: 'mustache', label: 'Moustache', choices: MUSTACHES, thumb: { view: 'head', heading: 0.2, bare: true } },
       {
         key: 'beardColor', label: 'Couleur de la barbe', colors: HAIR_COLORS,
         showIf: (look) => look.beard !== 'none' || look.mustache !== 'none',

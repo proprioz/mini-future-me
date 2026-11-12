@@ -48,10 +48,13 @@ function beardDensity(style: string, lon: number, lat: number, grow = 0): number
   // The lips stay visible.
   const mouth = smoothstep((lon / 0.21) ** 2 + ((lat - FEATURES.mouthLat + 0.01) / 0.075) ** 2, 0.8, 1.4);
   if (style === 'goatee') {
-    // Round the mouth (down from the ends of the moustache) and over the chin, the cheeks shaved.
-    const top = FEATURES.mouthLat + 0.03 + grow;
-    const width = 0.3 - 0.03 * smoothstep(-lat, 0.5, 0.8) - 0.12 * smoothstep(-lat, 0.85, 1.05) + 0.02 * noise(lon, lat) + grow;
-    return smoothstep(top - lat, -0.01, 0.04) * smoothstep(width - a, 0, 0.05) * smoothstep(lat + 1.05 + grow, 0, 0.1) * mouth;
+    // Trimmed like an anchor, with clean edges: a band along the chin whose ends curve up towards the
+    // corners of the mouth. The cheeks, the upper lip and under the lower lip stay shaved (the
+    // moustache is its own option).
+    const t = a / 0.4;
+    const centre = -0.85 + 0.17 * t * t;
+    const half = 0.12 * (1 - 0.65 * Math.min(t, 1)) + 0.008 * noise(lon, lat) + grow;
+    return smoothstep(half - Math.abs(lat - centre), 0, 0.02) * smoothstep(0.42 + grow - a, 0, 0.04) * mouth;
   }
   const edge = curve(CHEEK_LINE, a) + 0.03 * noise(lon, lat) + grow;
   // Thinning out over a band on the cheeks rather than stopping at a line.
@@ -76,12 +79,8 @@ function mustacheDensity(style: string, lon: number, lat: number, grow = 0): num
   return smoothstep(lat - bottom, 0, 0.02) * smoothstep(top - lat, 0, 0.035) * smoothstep(width - a, 0, 0.05);
 }
 
-/** A goatee always comes with its moustache. */
-const withMustache = (beard: string, mustache: string) => (beard === 'goatee' ? 'thick' : mustache);
-
 /** Facial hair density (beard and moustache together), for the shell and the painted shadow. */
 export function facialHairDensity(beard: string, mustache: string, lon: number, lat: number, grow = 0): number {
-  mustache = withMustache(beard, mustache);
   return Math.max(beardDensity(beard, lon, lat, grow), mustacheDensity(mustache, lon, lat, grow));
 }
 
@@ -174,12 +173,11 @@ function beardVolume(lon: number, lat: number, b: number): THREE.Vector3 {
 
 /**
  * Beard and moustache as one mesh, or null (no facial hair, or stubble only: painted).
- * `beard`: 'none' | 'stubble' | 'goatee' (with its moustache) | 'short'; `mustache`: 'none' | 'thick'.
+ * `beard`: 'none' | 'stubble' | 'goatee' (the chin) | 'short'; `mustache`: 'none' | 'thick'.
  */
 export function buildFacialHair(
-  beard: string, moustache: string, { color, params }: { color: string; params: HeadParams },
+  beard: string, mustache: string, { color, params }: { color: string; params: HeadParams },
 ): THREE.Mesh | null {
-  const mustache = withMustache(beard, moustache);
   if ((beard === 'none' || beard === 'stubble') && mustache === 'none') return null;
   const thickness = (lon: number, lat: number) => {
     const b = beardDensity(beard, lon, lat, 0.04);

@@ -43,7 +43,7 @@ export const PEOPLE = [
   { skin: '#f6d0b1', faceShape: 'round', eyeColor: '#8a6a2f', hair: GREY, hairStyle: 'curly', glasses: 'round', glassesColor: '#2b2d42', outfit: 'sweater', top: '#2b2b2e' },
   // 15: bald, short salt-and-pepper beard, black rectangular glasses
   { skin: '#e2ae86', faceShape: 'oval', eyeColor: '#5b3a29', hairStyle: 'bald', beard: 'short', mustache: 'thick', beardColor: BROWN, glasses: 'square', glassesColor: '#2b2d42', outfit: 'tshirt', top: '#2b2b2e' },
-  // 16: shoulder-length locs, goatee (with its moustache), navy hoodie
+  // 16: shoulder-length locs, goatee and moustache, navy hoodie
   { skin: '#86563a', faceShape: 'oval', eyeShape: 'almond', eyeColor: '#2b1d17', hair: BLACK, hairStyle: 'locs', beard: 'goatee', mustache: 'thick', beardColor: BLACK, outfit: 'hoodie', top: '#2f3a56' },
   // 17: long box braids, black rectangular glasses, black sweater
   { skin: '#a8714d', faceShape: 'oval', eyeShape: 'almond', eyeColor: '#2b1d17', hair: BLACK, hairStyle: 'locs', glasses: 'square', glassesColor: '#2b2d42', outfit: 'sweater', top: '#2b2b2e' },
