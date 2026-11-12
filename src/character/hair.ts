@@ -108,9 +108,14 @@ function lock(points: THREE.Vector3[], r0: number, { tip = 0.002, flatten = 0.55
 
 /**
  * Hair falling below the hairline at the sides and back (bob, long hair): the shell is stretched
- * down by up to `length`, straight rather than following the jaw. The face stays open.
+ * down by up to `length` × `tips(lon)` (the shape of the lower edge), straight rather than following
+ * the jaw. The face stays open.
  */
-function fall(length: number, { from = 1.0 }: { from?: number } = {}) {
+function fall(
+  length: number,
+  // Pointed ends along the bottom edge, by default.
+  { from = 1.0, tips = (lon) => 1 - 0.18 * teeth(lon, 0.32) }: { from?: number; tips?: (lon: number) => number } = {},
+) {
   return (lon: number, lat: number): THREE.Vector3 => {
     // Nothing on the crown: there, all longitudes meet, and pushing only the back ones would tear a
     // hole in the top of the hair.
@@ -118,9 +123,7 @@ function fall(length: number, { from = 1.0 }: { from?: number } = {}) {
     const below = smoothstep(-lat, -0.35, 0.62);
     const n = surfaceNormal(lon, lat);
     const out = V(n.x, 0, n.z).normalize().multiplyScalar(side * (0.015 + 0.03 * below));
-    // Pointed ends along the bottom edge.
-    const tips = 1 - 0.18 * teeth(lon, 0.32);
-    return out.add(V(0, -side * below ** 1.2 * length * tips, 0));
+    return out.add(V(0, -side * below ** 1.2 * length * tips(lon), 0));
   };
 }
 
@@ -231,6 +234,9 @@ function once<T>(make: () => T): () => T {
 
 const smallCurls = once(() => curlField(900, 0.075, 0, 21));
 const curlClumps = once(() => curlField(110, 0.22, 0, 22));
+// Clumps of the long curly cut, down to its ends, and smaller ones over them.
+const curlLobes = once(() => curlField(220, 0.2, -1.3, 23));
+const curlTufts = once(() => curlField(600, 0.1, -1.3, 24));
 
 /**
  * Hairline hanging in round lobes over the forehead (curls falling on it), `depth` deep, one lobe
@@ -702,29 +708,29 @@ const STYLES: Record<string, (params: HeadParams, options: { hatted: boolean }) 
     };
   },
 
-  // Shoulder-length curls: scalloped volume falling on the sides and back, ringlets at the ends.
-  curlyLong: (params) => {
+  // Shoulder-length curls, told by the volume alone, without drawing each curl: a full mass, rounded
+  // on top and widening down to the shoulders, its surface in uneven clumps, its lower edge in
+  // rounded lobes, a few lobes over the forehead.
+  curlyLong: () => {
     const sides = (lon: number) => hairline(lon, { sides: -0.35, nape: -0.7 });
     const line = (lon: number) => curlyFringe(lon, { high: 0.5, depth: 0.1, period: 0.32, spread: 0.8 }) + Math.min(0, sides(lon) - 0.5);
-    const base = capThickness(line, 0.03, 0.025, 0.08);
-    const drop = fall(0.14, { from: 1.05 });
-    const cloud = bumps(spiral(200, -1.2), 0.19, 0.05, 0.6);
-    // Ringlets hanging from the lower edge of the hair, carried down by the fall like the shell.
-    const ends: [number, number, number, number][] = [];
-    for (const side of [-1, 1]) {
-      for (const lon of [1.15, 1.45, 1.8, 2.15, 2.5, 2.85]) ends.push([side * lon, sides(lon) + 0.1, 0.16, 3]);
-    }
+    const base = capThickness(line, 0.03, 0.03, 0.08);
+    const lobes = curlLobes();
+    const tufts = curlTufts();
+    const drop = fall(0.15, { from: 1.05, tips: (lon) => 1 - 0.22 * (1 - Math.abs(Math.sin((Math.PI * lon) / 0.36))) });
     return {
       shell: (lon, lat) => {
         const t = base(lon, lat);
-        return t > 0 ? t + cloud(lon, lat) * smoothstep(t, 0, 0.02) : 0;
+        // The fall stretches the lower part down: smaller tufts there keep it as uneven as the top.
+        const low = smoothstep(-lat, -0.2, 0.6);
+        return t > 0 ? t + (lerp(0.03, 0.018, low) * lobes(lon, lat) + lerp(0.006, 0.014, low) * tufts(lon, lat)) * smoothstep(t, 0, 0.02) : 0;
       },
-      extra: drop,
-      top: ringlets(params, [[-0.42, 0.5, 0.08, 1.75], [0.35, 0.52, 0.085, 1.75]], 0.04, { radius: 0.018, thickness: 0.014 }),
-      locks: ringlets(params, ends, 0.05, { radius: 0.022, thickness: 0.018 }).map((g, i) => {
-        const shift = drop(ends[i][0], ends[i][1]);
-        return g.translate(shift.x, shift.y, shift.z);
-      }),
+      // Curly hair widens as it falls: pushed out more and more towards the shoulders.
+      extra: (lon, lat) => {
+        const n = surfaceNormal(lon, lat);
+        const widen = 0.035 * smoothstep(Math.abs(lon), 1.4, 1.9) * smoothstep(-lat, 0, 0.9);
+        return drop(lon, lat).add(V(n.x, 0, n.z).normalize().multiplyScalar(widen));
+      },
     };
   },
 
