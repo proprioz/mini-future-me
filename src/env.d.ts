@@ -4,7 +4,7 @@ interface ImportMetaEnv {
   readonly VITE_TRADES?: string;
   /** false (or 0, off, non) turns the photo scan off for the whole stand. */
   readonly VITE_SCAN?: string;
-  /** true (or 1, on, oui) shows the game's version in a corner of the welcome screen. */
+  /** The game's version in a corner: true (or 1, on, oui) on the welcome screen, partout on every screen. */
   readonly VITE_VERSION?: string;
   readonly VITE_SCHOOL_NAME?: string;
   readonly VITE_SCHOOL_SITE?: string;

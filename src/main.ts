@@ -12,6 +12,7 @@ import { kiosk } from './kiosk/kiosk.ts';
 import { enabledTrades, loadTrade } from './trades/index.ts';
 import { setTrade } from './trades/current.ts';
 import { logoSvg } from './ui/icons.ts';
+import { VERSION, versionStamp } from './ui/version.ts';
 import type { Trade } from './trades/types.ts';
 
 /** Handle for poking at the game from the devtools / Playwright, in development only. */
@@ -35,6 +36,8 @@ declare global {
 // On the stand, inactivity pauses the game on "Es-tu là ?". In development only with ?borne, so that
 // the card doesn't pop up under the devtools or in the end-to-end tests.
 kiosk.install(document.body, { idle: !import.meta.env.DEV || new URLSearchParams(location.search).has('borne') });
+// For staging (VITE_VERSION=partout): the version stays in a corner of every screen.
+if (VERSION.stamp === 'everywhere') document.body.insertAdjacentHTML('beforeend', versionStamp());
 
 // The trades the stand shows: all loaded now, « Dans les coulisses » explains each one's job.
 const trades = await Promise.all(enabledTrades().map(loadTrade));

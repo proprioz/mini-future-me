@@ -2234,20 +2234,24 @@ button {
 }
 
 .welcome[data-step='about'] .welcome-sound,
-.welcome[data-step='about'] .welcome-version {
+.welcome[data-step='about'] .version-stamp {
   display: none;
 }
 
-/* The version running on this PC, small in the bottom-right corner (see ui/version.ts). */
-.welcome-version {
-  position: absolute;
-  right: 1.25rem;
-  bottom: 0.75rem;
+/* The version running on this PC, small in the bottom-left corner, which most screens leave free: of the
+   welcome screen, or of every screen, above everything, for staging (see ui/version.ts). */
+.version-stamp {
+  position: fixed;
+  z-index: 70;
+  left: 1rem;
+  bottom: 0.5rem;
   margin: 0;
+  padding: 0.125rem 0.5rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.6);
   color: var(--ink-soft);
   font-size: 0.75rem;
   font-weight: 700;
-  opacity: 0.75;
   pointer-events: none;
 }
 

@@ -85,7 +85,7 @@ Les réglages de chaque stand vont dans `.env.local` (ignoré par git ; modèle 
 |---|---|
 | `VITE_TRADES` | filières proposées sur l'accueil, dans l'ordre (ids de `src/trades/index.ts`, séparés par des virgules). Vide : toutes. Avec une seule filière, l'accueil ne propose pas de choix. |
 | `VITE_SCAN` | `false` : pas de scan des photos, l'avatar se crée à la main (sans carte de consentement). Activé par défaut ; une filière peut aussi le couper pour elle seule (`scan: false`). |
-| `VITE_VERSION` | `true` : la version du jeu et la date et l'heure de sa dernière mise à jour, en petit dans un coin de l'accueil. Désactivé par défaut ; « Le code », dans « Dans les coulisses », la montre toujours. |
+| `VITE_VERSION` | `true` : la version du jeu et la date et l'heure de sa dernière mise à jour, en petit dans un coin de l'accueil ; `partout` : dans un coin de tous les écrans, pour un PC de staging. Désactivé par défaut ; « Le code », dans « Dans les coulisses », la montre toujours. |
 | `VITE_SCHOOL_NAME`, `VITE_SCHOOL_SITE`, `VITE_SCHOOL_URL` | ton école, dans le pied de chaque affiche et de « Dans les coulisses » imprimé (nom, site affiché, lien du QR code). Sans URL, il n'y a pas de bloc école. |
 
 Le logo de l'école va dans `public/school/logo.svg` (ignoré par git) ; s'il manque, son nom est écrit à la place.
@@ -102,7 +102,7 @@ msedge --kiosk http://localhost:3000 --edge-kiosk-type=fullscreen --no-first-run
 - **Accueil** : un avatar au hasard fait coucou jusqu'à ce qu'on touche l'écran. Avec plusieurs filières,
   une carte propose de choisir un métier. Ensuite, si le scan est activé, une carte explique ce qu'on fait des
   photos (« Avec mes photos » ou « Sans photos, à la main ») ; sinon, on passe directement à « Crée ton perso ».
-  Avec `VITE_VERSION=true`, le coin en bas à droite montre la version installée sur le PC : celle de
+  Avec `VITE_VERSION=true` (ou `partout`, sur tous les écrans), le coin en bas à gauche montre la version installée sur le PC : celle de
   `package.json`, le dernier commit, sa date et son heure (l'heure du build si le jeu n'est pas un clone git) ;
   « Le code », dans « Dans les coulisses », la montre toujours.
 - **Dans les coulisses** : « Comment ce jeu est fabriqué », sous le bouton Jouer, explique le jeu en
