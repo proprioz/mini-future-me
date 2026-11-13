@@ -26,22 +26,184 @@ function star(outer: number, inner = outer * 0.5): THREE.Shape {
   return shape;
 }
 
-function cap(color: string): THREE.Group {
+/**
+ * Lower edge of the cap's crown, as a latitude on the head by longitude: across the upper forehead,
+ * just over the ears, low on the back of the head. The hair comes out from under it (see hatEdge()).
+ */
+const capEdge = (lon: number) => 0.16 + 0.2 * Math.cos(lon);
+
+/** Stitch rows of the visor, along its outer edge (v = 0 at the crown, 1 at the edge), multiplied with its colour. */
+let stitches: THREE.CanvasTexture | null = null;
+function visorStitches(): THREE.CanvasTexture {
+  if (stitches) return stitches;
+  const canvas = document.createElement('canvas');
+  canvas.width = 256;
+  canvas.height = 64;
+  const ctx = canvas.getContext('2d')!;
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, 256, 64);
+  ctx.fillStyle = '#b4b4b4';
+  for (const v of [0.6, 0.72, 0.84]) {
+    for (let x = 0; x < 256; x += 6) ctx.fillRect(x, Math.round((1 - v) * 64) - 1, 4, 2);
+  }
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.anisotropy = 4;
+  return (stitches = texture);
+}
+
+/**
+ * The visor (bill) of the cap, coming out of the crown along its edge over the forehead: thin, round
+ * in front, pitched down and bent down more and more towards its sides (a pre-curved bill), its
+ * edge rounded. Two geometries: the top with its edge, and the underside.
+ */
+function visorGeometry(params: HeadParams, room: number): THREE.BufferGeometry[] {
+  const halfSpan = 1.1; // longitude where the visor meets the crown, on each side
+  const columns = 48;
+  const steps = 10; // along the top and the underside
+  const tip = 5; // round the edge
+  const positions: number[] = [];
+  const uvs: number[] = [];
+  for (let c = 0; c <= columns; c++) {
+    const u = (c / columns) * 2 - 1;
+    const lon = u * halfSpan;
+    const root = surface(lon, capEdge(lon) + 0.015, room - 0.004, params);
+    const n = surfaceNormal(lon, 0);
+    const flat = new THREE.Vector3(n.x, 0, n.z).normalize().lerp(new THREE.Vector3(0, 0, 1), 0.55).normalize();
+    const pitch = 0.3 + 0.45 * u * u;
+    const along = flat.clone().multiplyScalar(Math.cos(pitch)).setY(-Math.sin(pitch));
+    const up = flat.clone().multiplyScalar(Math.sin(pitch)).setY(Math.cos(pitch));
+    const length = 0.125 * Math.sqrt(1 - Math.abs(u) ** 2.4);
+    const half = 0.0032 * (0.6 + 0.4 * (1 - u * u));
+    const at = (s: number, h: number, v: number) => {
+      // Arched along its length too: the middle of the bill a little higher than its ends.
+      const p = root.clone().addScaledVector(along, s).addScaledVector(up, h + 0.012 * (s / 0.125) * (1 - s / 0.125 / 1.4));
+      positions.push(p.x, p.y, p.z);
+      uvs.push((u + 1) / 2, v);
+    };
+    for (let k = 0; k <= steps; k++) at((k / steps) * length, half, k / steps);
+    for (let k = 1; k < tip; k++) {
+      const a = Math.PI / 2 - (Math.PI * k) / tip;
+      at(length + half * Math.cos(a), half * Math.sin(a), 1);
+    }
+    for (let k = steps; k >= 0; k--) at((k / steps) * length, -half, 1);
+  }
+  const profile = 2 * steps + tip + 1;
+  const top: number[] = [];
+  const under: number[] = [];
+  for (let c = 0; c < columns; c++) {
+    for (let k = 0; k < profile - 1; k++) {
+      const a = c * profile + k;
+      const b = a + profile;
+      (k < steps + tip ? top : under).push(a, a + 1, b, b, a + 1, b + 1);
+    }
+  }
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+  geometry.setIndex([...top, ...under]);
+  geometry.computeVertexNormals();
+  // Same vertices and normals, so the two parts meet without a crease.
+  return [top, under].map((indices) => geometry.clone().setIndex(indices));
+}
+
+/**
+ * Grid of `rows` × `columns` quads through `point(i, j)` (i, j from 0 to 1), row 0 on top and
+ * columns from left to right seen from outside (its front faces outwards), with smooth normals.
+ */
+function grid(rows: number, columns: number, point: (i: number, j: number) => THREE.Vector3): THREE.BufferGeometry {
+  const positions: number[] = [];
+  for (let i = 0; i <= rows; i++) {
+    for (let j = 0; j <= columns; j++) positions.push(...point(i / rows, j / columns).toArray());
+  }
+  const indices: number[] = [];
+  for (let i = 0; i < rows; i++) {
+    for (let j = 0; j < columns; j++) {
+      const a = i * (columns + 1) + j;
+      const b = a + columns + 1;
+      indices.push(a, b, a + 1, b, b + 1, a + 1);
+    }
+  }
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
+  return geometry;
+}
+
+/**
+ * Baseball cap, built on the head itself so it fits every face shape: a crown of soft panels, fuller
+ * over the forehead (the stiff front panels), a button on top, a logo on the front; its band across
+ * the upper forehead, just over the ears and low on the back of the head, rolled under at its edge;
+ * an opening at the back over the adjustable strap; a thin, curved visor, darker underneath.
+ * `volume`: how far the hair under it rises (HAIR_VOLUME): big hair lifts it a little.
+ */
+function cap(color: string, params: HeadParams, volume: number): THREE.Group {
   const group = new THREE.Group();
-  const dome = part(new THREE.SphereGeometry(1, 40, 16, 0, Math.PI * 2, 0, Math.PI * 0.45), color);
-  // No rim light: seen at a grazing angle, it washed the visor out to grey.
-  const visor = celMesh(new THREE.CylinderGeometry(0.95, 0.95, 0.08, 32, 1, false, -Math.PI / 2, Math.PI),
-    cel(shadeHex(color, -0.15), { rim: 0 }), { outline: 0.012 });
-  visor.position.set(0, 0.2, 0.8);
-  visor.rotation.x = 0.16;
-  const button = part(new THREE.SphereGeometry(0.1, 12, 8), color);
-  button.position.y = 1;
-  // Logo on the front panel: a star in a light contrasting colour.
-  const logo = celMesh(new THREE.ShapeGeometry(star(0.22)), cel(shadeHex(color, 0.75), { rim: 0 }), { outline: 0 });
-  const front = new THREE.Vector3(0, Math.sin(0.62), Math.cos(0.62));
-  logo.position.copy(front).multiplyScalar(1.005);
-  logo.lookAt(front.clone().multiplyScalar(2));
-  group.add(dome, visor, button, logo);
+  const room = 0.012 + Math.min(volume, 0.09) * 0.3;
+  const material = cel(color, { rim: 0.3 });
+  // The opening at the back: the edge rises in an arch over the strap.
+  const opening = 0.42;
+  const edge = (lon: number) => capEdge(lon) + 0.2 * Math.sqrt(Math.max(0, 1 - ((Math.PI - Math.abs(lon)) / opening) ** 2));
+  // Height of the crown above the head at (lon, v), v from its edge (0) to the button (1): fuller at
+  // the front, the same all round near the top (where the panels meet).
+  const front = (lon: number, v: number) => lerp(Math.exp(-((lon / 1.1) ** 2)), 0.45, smoothstep(v, 0.45, 1));
+  const height = (lon: number, v: number) => room + (0.004 + 0.016 * front(lon, v)) * smoothstep(v, 0, 0.35) * (1 - 0.35 * smoothstep(v, 0.7, 1));
+  const crownPoint = (lon: number, v: number, lift = 0) => surface(lon, lerp(edge(lon), Math.PI / 2, v), height(lon, v) + lift, params);
+
+  // From the button down to the edge (v from 1 to 0), then the band rolled under it: a rounded lip,
+  // then tucked in.
+  const rows = 36;
+  const crown = grid(rows + 2, 128, (i, j) => {
+    const lon = (j * 2 - 1) * Math.PI;
+    const row = Math.round(i * (rows + 2));
+    if (row <= rows) return crownPoint(lon, 1 - row / rows);
+    const under = row - rows;
+    return surface(lon, edge(lon) - [0, 0.012, 0.022][under], room - [0, 0.002, 0.009][under], params);
+  });
+  group.add(celMesh(smoothSeams(crown), material, { outline: 0.004 }));
+
+  // Seams between the panels: thin welts from the edge up to the button (none down the front panel,
+  // where the logo is).
+  const welt = cel(shadeHex(color, -0.18), { rim: 0.2 });
+  for (const lon of [-2.1, -1.05, 1.05, 2.1, Math.PI]) {
+    const curve = new THREE.CatmullRomCurve3(Array.from({ length: 13 }, (_, k) => crownPoint(lon, 0.04 + (0.92 * k) / 12, 0.0005)));
+    group.add(celMesh(sweep(curve, () => 0.0018, { segments: 40, radial: 6 }), welt, { outline: 0 }));
+  }
+  const button = part(new THREE.SphereGeometry(0.016, 14, 10), color, { outline: 0.003 });
+  button.scale.y = 0.55;
+  button.position.copy(surface(0, Math.PI / 2, height(0, 1) + 0.002, params));
+  group.add(button);
+
+  // Logo on the front panel: a star in a contrasting colour (dark on a light cap), laid on the crown.
+  const logo = new THREE.ShapeGeometry(star(0.036));
+  const logoAt = 0.42;
+  const p = logo.attributes.position;
+  for (let i = 0; i < p.count; i++) {
+    const lon = p.getX(i) / (HEAD.rz + room);
+    const v = logoAt + p.getY(i) / ((HEAD.ry + room) * (Math.PI / 2 - edge(0)));
+    const q = crownPoint(lon, v, 0.0012);
+    p.setXYZ(i, q.x, q.y, q.z);
+  }
+  logo.computeVertexNormals();
+  const light = new THREE.Color(color).getHSL({ h: 0, s: 0, l: 0 }).l > 0.7;
+  group.add(celMesh(logo, cel(shadeHex(color, light ? -0.5 : 0.75), { rim: 0 }), { outline: 0 }));
+
+  // The strap across the bottom of the opening, its ends sunk into the crown, with its snap.
+  const strap = grid(3, 24, (i, j) => {
+    const lift = j === 0 || j === 1 ? -0.006 : i === 0 || i === 1 ? 0.0005 : 0.002; // rounded edges
+    return surface(Math.PI + (j * 2 - 1) * (opening + 0.04), capEdge(Math.PI) + 0.05 - 0.052 * i, room + lift, params);
+  });
+  group.add(celMesh(strap, cel(shadeHex(color, -0.12), { rim: 0.2 }), { outline: 0.002 }));
+  const snap = part(new THREE.CylinderGeometry(0.0055, 0.0055, 0.002, 12), shadeHex(color, 0.5), { outline: 0.002 });
+  snap.position.copy(surface(Math.PI, capEdge(Math.PI) + 0.024, room + 0.0025, params));
+  snap.rotation.x = Math.PI / 2;
+  group.add(snap);
+
+  // No rim light on the visor: seen at a grazing angle, it washed it out to grey.
+  const [bill, under] = visorGeometry(params, room);
+  group.add(celMesh(bill, cel(color, { rim: 0, map: visorStitches() }), { outline: 0.003 }));
+  group.add(celMesh(under, cel(shadeHex(color, -0.35), { rim: 0 }), { outline: 0.003 }));
   return group;
 }
 
@@ -126,7 +288,7 @@ function wizard(color: string): THREE.Group {
   return group;
 }
 
-const { smoothstep } = THREE.MathUtils;
+const { smoothstep, lerp } = THREE.MathUtils;
 
 /**
  * How far (lon, lat) is outside the face opening of the scarf: < 0 inside, 0 on its edge. An oval
@@ -263,7 +425,8 @@ export function buildHeadwear(
   type: string, { color, volume = 0.03, params }: { color: string; volume?: number; params: HeadParams },
 ): THREE.Group | null {
   if (type === 'headscarf') return headscarf(color, params);
-  const group = ({ cap, beanie, wizard } as Record<string, (color: string) => THREE.Group>)[type]?.(color);
+  if (type === 'cap') return cap(color, params, volume);
+  const group = ({ beanie, wizard } as Record<string, (color: string) => THREE.Group>)[type]?.(color);
   if (!group) return null;
   // Hats squash the hair: only part of its volume counts.
   const room = 0.01 + Math.min(volume, 0.04) * 0.6;
@@ -277,6 +440,18 @@ export function buildHeadwear(
 /** Hats hide the top of the hair. */
 export function coversHair(type: string): boolean {
   return type === 'cap' || type === 'beanie' || type === 'wizard';
+}
+
+/**
+ * Lower edge of a hat, as a latitude on the head by longitude, for the hair to come out from under
+ * it (see buildHair()); undefined for the hats that keep the default edge.
+ */
+export function hatEdge(type: string): ((lon: number) => number) | undefined {
+  // The cuff of the beanie, tilted up at the front.
+  if (type === 'beanie') return (lon) => 0.085 + 0.165 * Math.cos(lon);
+  // The band of the wizard hat, level all round its crown.
+  if (type === 'wizard') return () => 0.29;
+  return type === 'cap' ? capEdge : undefined;
 }
 
 // ---------------------------------------------------------------- glasses

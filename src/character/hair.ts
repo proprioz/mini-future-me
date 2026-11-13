@@ -634,12 +634,12 @@ function hangingPlait(points: THREE.Vector3[], side: number, width: number): THR
   return [plait(axis, width, facing), tie(end, down, width * 0.32), tuft];
 }
 
-// Each recipe (params, { hatted }) returns { shell?(lon, lat) → thickness, extra?(lon, lat) → displacement,
+// Each recipe (params, { hatted, hatEdge }) returns { shell?(lon, lat) → thickness, extra?(lon, lat) → displacement,
 // locks: [geometries], top: [geometries a hat would cover or cross (dropped under one)], fade?: faded
 // sides (see buildHair), stubble?: hairline of hair shaved very close (painted, see buildHair), shade?:
 // the shell darker than the locks (shadows between curls, scalp between locs), lockMap?: texture of the
 // locks }.
-const STYLES: Record<string, (params: HeadParams, options: { hatted: boolean }) => HairRecipe> = {
+const STYLES: Record<string, (params: HeadParams, options: { hatted: boolean; hatEdge: HeadLine }) => HairRecipe> = {
   bald: () => ({ shell: () => 0 }),
 
   // Shaved very close: no volume, the hair only shows as a shade and tiny hairs on the scalp.
@@ -847,9 +847,11 @@ const STYLES: Record<string, (params: HeadParams, options: { hatted: boolean }) 
   }),
 
   // Ponytail tied high at the back: a full tail, gathered at the tie, rounded out, then falling down
-  // the back and ending in a few soft strands (not a single point).
-  ponytail: (params) => {
-    const root = surface(Math.PI, 0.55, 0.02, params);
+  // the back and ending in a few soft strands (not a single point). Under a hat, tied low: just
+  // over its edge (through the opening at the back of a cap), or under it when it is high.
+  ponytail: (params, { hatted, hatEdge }) => {
+    const rootLat = hatted ? Math.min(hatEdge(Math.PI) + 0.07, 0.12) : 0.55;
+    const root = surface(Math.PI, rootLat, 0.02, params);
     const axis = new THREE.CatmullRomCurve3([root.clone().add(V(0, 0, 0.01)), root.clone().add(V(0, 0.005, -0.05)),
       root.clone().add(V(0, -0.07, -0.095)), root.clone().add(V(0, -0.2, -0.09)), root.clone().add(V(0, -0.31, -0.065))]);
     // Narrow at the tie, full below it, slimmer lower down, closing round.
@@ -865,7 +867,7 @@ const STYLES: Record<string, (params: HeadParams, options: { hatted: boolean }) 
     });
     return {
       shell: capThickness((lon) => hairline(lon, { fringe: { low: 0.4, depth: 0.1, period: 0.3, spread: 0.5 } }), 0.012, 0.006),
-      locks: [tie(root.clone().add(V(0, 0, -0.012)), surfaceNormal(Math.PI, 0.55), 0.032), tail, ...strands],
+      locks: [tie(root.clone().add(V(0, 0, -0.012)), surfaceNormal(Math.PI, rootLat), 0.032), tail, ...strands],
     };
   },
 
@@ -886,22 +888,40 @@ const STYLES: Record<string, (params: HeadParams, options: { hatted: boolean }) 
 };
 
 /**
+ * The shell squashed under a hat whose lower edge is `edge`: flat against the head under it, then
+ * swelling back to its full thickness below its edge, the more gradually the thicker it is (the
+ * hair pushed out from under the hat, never a shelf sticking out right under its edge). Its
+ * displacements (`extra`: volume, length) come back the same way.
+ */
+function underHat({ shell, extra }: HairRecipe, edge: HeadLine): Pick<HairRecipe, 'shell' | 'extra'> {
+  const flat = 0.006;
+  return {
+    shell: shell && ((lon, lat) => {
+      const t = shell(lon, lat);
+      return t > flat ? lerp(flat, t, smoothstep(edge(lon) - lat, 0, 0.12 + 2.2 * t)) : t;
+    }),
+    extra: extra && ((lon, lat, d, t) => extra(lon, lat, d, t).multiplyScalar(smoothstep(edge(lon) - lat, -0.05, 0.3))),
+  };
+}
+
+/**
  * Hair of `style` around a head of shape `params` (see head.ts). `hatted`: a hat covers the crown,
- * so the shell stays flat on top and the `top` parts are dropped. `skin`: for faded sides.
+ * so the shell stays flat under it and the `top` parts are dropped; `hatEdge`: the latitude of the
+ * hat's lower edge by longitude, where the hair comes out. `skin`: for faded sides.
  */
 export function buildHair(
-  style: string, { color, skin, params, hatted = false }: { color: string; skin: string; params: HeadParams; hatted?: boolean },
+  style: string, { color, skin, params, hatted = false, hatEdge = () => 0.25 }:
+    { color: string; skin: string; params: HeadParams; hatted?: boolean; hatEdge?: HeadLine },
 ): THREE.Group {
-  const recipe = (STYLES[style] ?? STYLES.short)(params, { hatted });
+  const recipe = (STYLES[style] ?? STYLES.short)(params, { hatted, hatEdge });
   const group = new THREE.Group();
   if (style === 'bald') return group;
-  const thickness = hatted
-    ? (lon: number, lat: number) => (lat > 0.25 ? Math.min(recipe.shell!(lon, lat), 0.006) : recipe.shell!(lon, lat)) : recipe.shell;
+  const { shell: thickness, extra } = hatted ? underHat(recipe, hatEdge) : recipe;
   const material = cel(color, { rim: 0.22 });
   const shellMaterial = recipe.shade ? cel(shadeHex(color, recipe.shade), { rim: 0.22 }) : material;
-  if (recipe.shell) {
-    const shell = shellGeometry(params, thickness!, {
-      extra: recipe.extra, segments: { lonSegments: 200, latSegments: 120 },
+  if (thickness) {
+    const shell = shellGeometry(params, thickness, {
+      extra, segments: { lonSegments: 200, latSegments: 120 },
     });
     group.add(celMesh(shell, shellMaterial, { outline: 0.004 }));
   }

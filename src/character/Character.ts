@@ -9,7 +9,7 @@ import { limb, smoothLathe } from './shapes.ts';
 import { buildHair, HAIR_VOLUME } from './hair.ts';
 import { buildFacialHair } from './beard.ts';
 import { buildNose } from './nose.ts';
-import { buildHeadwear, buildGlasses, buildEarrings, coversHair, hidesHair } from './accessories.ts';
+import { buildHeadwear, buildGlasses, buildEarrings, coversHair, hatEdge, hidesHair } from './accessories.ts';
 
 const WALK_SPEED = 2.6; // tiles per second
 const TURN_RATE = 12;
@@ -375,7 +375,7 @@ export class Character {
 
     this.head.add(buildNose({ skin, params }));
 
-    if (!hidesHair(headwear)) this.head.add(buildHair(hairStyle, { color: hair, skin, params, hatted: coversHair(headwear) }));
+    if (!hidesHair(headwear)) this.head.add(buildHair(hairStyle, { color: hair, skin, params, hatted: coversHair(headwear), hatEdge: hatEdge(headwear) }));
     const facialHair = buildFacialHair(beard, mustache, { color: beardColor, params });
     if (facialHair) this.head.add(facialHair);
 
