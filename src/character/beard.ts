@@ -50,11 +50,12 @@ function beardDensity(style: string, lon: number, lat: number, grow = 0): number
   if (style === 'goatee') {
     // Trimmed like an anchor, with clean edges: a band along the chin whose ends curve up towards the
     // corners of the mouth. The cheeks, the upper lip and under the lower lip stay shaved (the
-    // moustache is its own option).
+    // moustache is its own option). The bottom edge stays flat across the front of the chin before
+    // rising, so it is rounded rather than pointed.
     const t = a / 0.4;
-    const centre = -0.85 + 0.17 * t * t;
-    const half = 0.12 * (1 - 0.65 * Math.min(t, 1)) + 0.008 * noise(lon, lat) + grow;
-    return smoothstep(half - Math.abs(lat - centre), 0, 0.02) * smoothstep(0.42 + grow - a, 0, 0.04) * mouth;
+    const top = -0.75 + 0.13 * t * t + 0.008 * noise(lon, lat) + grow;
+    const bottom = -0.89 + 0.25 * t ** 4 - grow;
+    return smoothstep(top - lat, 0, 0.02) * smoothstep(lat - bottom, 0, 0.02) * smoothstep(0.42 + grow - a, 0, 0.04) * mouth;
   }
   const edge = curve(CHEEK_LINE, a) + 0.03 * noise(lon, lat) + grow;
   // Thinning out over a band on the cheeks rather than stopping at a line.
