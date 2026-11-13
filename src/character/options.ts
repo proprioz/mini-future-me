@@ -127,9 +127,10 @@ export const GLASSES: Option[] = [
 
 export const EARRINGS: Option[] = [
   { id: 'none', label: 'Aucune' },
-  { id: 'studs', label: 'Puces' },
-  { id: 'hoops', label: 'Anneaux', coded: 'f', alt: 'studs' },
-  { id: 'drops', label: 'Pendants', coded: 'f', alt: 'studs' },
+  // Every earring is coded feminine.
+  { id: 'studs', label: 'Puces', coded: 'f', alt: 'none' },
+  { id: 'hoops', label: 'Anneaux', coded: 'f', alt: 'none' },
+  { id: 'drops', label: 'Pendants', coded: 'f', alt: 'none' },
 ];
 
 /** Look key → its list of options. */

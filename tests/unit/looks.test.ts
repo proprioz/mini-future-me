@@ -29,6 +29,11 @@ test('« Au hasard » mixes, and the check sees it', () => {
   expect(mixed.length).toBeGreaterThan(0);
 });
 
+test('earrings are coded feminine', () => {
+  for (const id of ['studs', 'hoops', 'drops']) expect(codedFor('earrings', id)).toBe('f');
+  expect(fitLook({ earrings: 'studs' }, 'm').earrings).toBe('none');
+});
+
 test('the default look is neutral', () => {
   expect(codedGenders(DEFAULT_LOOK).size).toBe(0);
 });

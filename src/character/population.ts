@@ -142,9 +142,10 @@ const TABLES = {
       short: { thick: 92, none: 8 },
     } as Record<string, Frequencies>)[beard ?? 'none'];
   },
+  // Earrings are coded feminine in the game (options.ts).
   earrings: ({ gender, age }): Frequencies => (gender === 'f'
     ? { studs: 50, none: 35, hoops: age === 'teen' ? 20 : 15, drops: age === 'teen' ? 4 : 8 }
-    : { none: age === 'teen' ? 85 : 90, studs: age === 'teen' ? 15 : 10 }),
+    : { none: 100 }),
   // Clothes colours (CLOTH_COLORS): black, then the other neutrals; older visitors wear more navy,
   // blue and beige, less black. Jeans blue for the bottom.
   top: ({ gender, age }) => {
