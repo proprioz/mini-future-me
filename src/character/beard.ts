@@ -6,8 +6,8 @@ import type { HeadParams } from './head.ts';
 
 // Beard and moustache are one layer of hair over the jaw and the upper lip (a shell, see head.ts),
 // painted with fine strands: dense in the middle, thinning out into single hairs at the edges, so it
-// reads as hair rather than a mask. Stubble is only painted on the face (FaceTexture), which also
-// gets a light shadow under the other beards.
+// reads as hair rather than a mask. Stubble (the 3-day beard and the 3-day moustache) is only painted
+// on the face (FaceTexture), which also gets a light shadow under the other beards.
 
 const { smoothstep, lerp } = THREE.MathUtils;
 
@@ -69,7 +69,7 @@ function beardDensity(style: string, lon: number, lat: number, grow = 0): number
 
 /** Thick moustache over the upper lip, its ends drooping to the corners of the mouth. */
 function mustacheDensity(style: string, lon: number, lat: number, grow = 0): number {
-  if (style === 'none') return 0;
+  if (style === 'none' || style === 'stubble') return 0;
   const a = Math.abs(lon);
   const m = FEATURES.mouthLat;
   // From under the nose down over the upper lip.
@@ -173,12 +173,12 @@ function beardVolume(lon: number, lat: number, b: number): THREE.Vector3 {
 
 /**
  * Beard and moustache as one mesh, or null (no facial hair, or stubble only: painted).
- * `beard`: 'none' | 'stubble' | 'goatee' (the chin) | 'short'; `mustache`: 'none' | 'thick'.
+ * `beard`: 'none' | 'stubble' | 'goatee' (the chin) | 'short'; `mustache`: 'none' | 'stubble' | 'thick'.
  */
 export function buildFacialHair(
   beard: string, mustache: string, { color, params }: { color: string; params: HeadParams },
 ): THREE.Mesh | null {
-  if ((beard === 'none' || beard === 'stubble') && mustache === 'none') return null;
+  if ((beard === 'none' || beard === 'stubble') && mustache !== 'thick') return null;
   const thickness = (lon: number, lat: number) => {
     const b = beardDensity(beard, lon, lat, 0.04);
     const m = mustacheDensity(mustache, lon, lat, 0.03);

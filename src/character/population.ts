@@ -131,12 +131,15 @@ const TABLES = {
     if (age === 'adult') return { none: 40, stubble: 24, goatee: 8, short: 28 };
     return { none: 50, stubble: 14, goatee: 6, short: 30 };
   },
-  // Stubble already shades the upper lip; a beard almost always comes with a moustache, a goatee (the
-  // chin only) most often.
+  // Stubble already shades the upper lip (no separate 3-day moustache with it); a beard almost always
+  // comes with a moustache, a goatee (the chin only) most often.
   mustache: ({ gender, beard }) => {
     if (gender === 'f') return { none: 100 };
     return ({
-      none: { none: 90, thick: 10 }, stubble: { none: 85, thick: 15 }, goatee: { thick: 80, none: 20 }, short: { thick: 92, none: 8 },
+      none: { none: 87, thick: 10, stubble: 3 },
+      stubble: { none: 85, thick: 15 },
+      goatee: { thick: 70, stubble: 10, none: 20 },
+      short: { thick: 92, none: 8 },
     } as Record<string, Frequencies>)[beard ?? 'none'];
   },
   earrings: ({ gender, age }): Frequencies => (gender === 'f'

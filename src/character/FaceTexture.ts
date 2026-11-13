@@ -157,15 +157,21 @@ export class FaceTexture {
    */
   drawBeard(): void {
     const { ctx, face } = this;
-    const stubble = face.beard === 'stubble';
-    const shell = (face.beard !== 'none' && !stubble) || face.mustache !== 'none';
-    if (!stubble && !shell) return;
-    // A goatee is trimmed with clean edges: nothing to blend (its narrow shape would show the cells).
-    const grown = stubble ? { beard: 'short', mustache: 'thick' }
-      : { beard: face.beard === 'goatee' ? 'none' : face.beard, mustache: face.mustache };
+    // Stubble covers the area of a beard and a thick moustache: the 3-day beard always has its
+    // moustache, the 3-day moustache goes alone or with another beard.
+    const stubble = {
+      beard: face.beard === 'stubble' ? 'short' : 'none',
+      mustache: face.beard === 'stubble' || face.mustache === 'stubble' ? 'thick' : 'none',
+    };
+    // Under modelled hair. A goatee is trimmed with clean edges: nothing to blend (its narrow shape
+    // would show the cells).
+    const shell = { beard: face.beard === 'short' ? 'short' : 'none', mustache: face.mustache === 'thick' ? 'thick' : 'none' };
+    const hasStubble = stubble.mustache !== 'none';
+    if (!hasStubble && shell.beard === 'none' && shell.mustache === 'none') return;
     // Faded out before the edges of the canvas, which are stretched over the rest of the head.
     const border = (v: number) => smoothstep(FACE_SPAN - 0.04 - Math.abs(v), 0, 0.12);
-    const density = (lon: number, lat: number) => facialHairDensity(grown.beard, grown.mustache, lon, lat, 0.02) * border(lon) * border(lat);
+    const density = (grown: { beard: string; mustache: string }, lon: number, lat: number) =>
+      facialHairDensity(grown.beard, grown.mustache, lon, lat, 0.02) * border(lon) * border(lat);
 
     // Shade, cell by cell (the canvas is too big to test every pixel at each redraw).
     const cell = 8;
@@ -173,13 +179,15 @@ export class FaceTexture {
     ctx.fillStyle = face.beardColor;
     for (let y = SIZE / 2; y < SIZE; y += cell) {
       for (let x = 0; x < SIZE; x += cell) {
-        const d = density((x + cell / 2 - SIZE / 2) / PX, (SIZE / 2 - y - cell / 2) / PX);
-        if (d <= 0) continue;
-        ctx.globalAlpha = d * (stubble ? 0.3 : 0.22);
+        const lon = (x + cell / 2 - SIZE / 2) / PX;
+        const lat = (SIZE / 2 - y - cell / 2) / PX;
+        const alpha = Math.max(density(stubble, lon, lat) * 0.3, density(shell, lon, lat) * 0.22);
+        if (alpha <= 0) continue;
+        ctx.globalAlpha = alpha;
         ctx.fillRect(x, y, cell, cell);
       }
     }
-    if (stubble) {
+    if (hasStubble) {
       // Short hairs, pointing down, fewer towards the edges.
       const random = seeded(7);
       ctx.strokeStyle = face.beardColor;
@@ -187,7 +195,7 @@ export class FaceTexture {
       for (let i = 0; i < 4500; i++) {
         const lon = (random() - 0.5) * 2 * FACE_SPAN;
         const lat = -random() * FACE_SPAN;
-        const d = density(lon, lat);
+        const d = density(stubble, lon, lat);
         if (random() > d) continue;
         const [x, y] = at(lon, lat);
         ctx.globalAlpha = 0.35 + random() * 0.35;

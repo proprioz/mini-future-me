@@ -21,7 +21,7 @@ de ce fichier) : ne pas le modifier à la main. L'estimation sert seulement de p
 | Monture | **noires** (40 %) | **noires** (40 %) | **noires** (40 %) | **noires** (40 %) | **noires** (40 %) | **noires** (40 %) |
 | Sur la tête | **Rien** (90 %) | **Rien** (90 %) | **Rien** (90 %) | **Rien** (86 %) | **Rien** (90 %) | **Rien** (90 %) |
 | Barbe | **Aucune** (100 %) | **Aucune** (100 %) | **Aucune** (100 %) | **Aucune** (80 %) | **Aucune** (40 %), puis Barbe (28 %) | **Aucune** (50 %), puis Barbe (30 %) |
-| Moustache | **Aucune** (100 %) | **Aucune** (100 %) | **Aucune** (100 %) | **Aucune** (90 %) | **Aucune** (90 %) | **Aucune** (90 %) |
+| Moustache | **Aucune** (100 %) | **Aucune** (100 %) | **Aucune** (100 %) | **Aucune** (87 %) | **Aucune** (87 %) | **Aucune** (87 %) |
 | Boucles d'oreilles | **Puces** (46 %), puis Aucune (32 %) | **Puces** (46 %), puis Aucune (32 %) | **Puces** (46 %), puis Aucune (32 %) | **Aucune** (85 %) | **Aucune** (90 %) | **Aucune** (90 %) |
 | Haut | **noir** (26 %) | **noir** (21 %), puis blanc (14 %) | **bleu marine** (17 %), puis noir (13 %) | **noir** (27 %) | **noir** (22 %), puis blanc (14 %) | **bleu marine** (17 %), puis noir (13 %) |
 | Bas | **bleu marine** (30 %), puis noir (25 %) | **bleu marine** (30 %), puis noir (25 %) | **bleu marine** (30 %), puis noir (25 %) | **bleu marine** (30 %), puis noir (25 %) | **bleu marine** (30 %), puis noir (25 %) | **bleu marine** (30 %), puis noir (25 %) |
@@ -42,7 +42,7 @@ de ce fichier) : ne pas le modifier à la main. L'estimation sert seulement de p
 | Monture | **noires** (40 %) | **noires** (40 %) | **noires** (40 %) | **noires** (40 %) | **noires** (40 %) | **noires** (40 %) |
 | Sur la tête | **Rien** (90 %) | **Rien** (90 %) | **Rien** (90 %) | **Rien** (86 %) | **Rien** (90 %) | **Rien** (90 %) |
 | Barbe | **Aucune** (100 %) | **Aucune** (100 %) | **Aucune** (100 %) | **Aucune** (80 %) | **Aucune** (40 %), puis Barbe (28 %) | **Aucune** (50 %), puis Barbe (30 %) |
-| Moustache | **Aucune** (100 %) | **Aucune** (100 %) | **Aucune** (100 %) | **Aucune** (90 %) | **Aucune** (90 %) | **Aucune** (90 %) |
+| Moustache | **Aucune** (100 %) | **Aucune** (100 %) | **Aucune** (100 %) | **Aucune** (87 %) | **Aucune** (87 %) | **Aucune** (87 %) |
 | Boucles d'oreilles | **Puces** (46 %), puis Aucune (32 %) | **Puces** (46 %), puis Aucune (32 %) | **Puces** (46 %), puis Aucune (32 %) | **Aucune** (85 %) | **Aucune** (90 %) | **Aucune** (90 %) |
 | Haut | **noir** (26 %) | **noir** (21 %), puis blanc (14 %) | **bleu marine** (17 %), puis noir (13 %) | **noir** (27 %) | **noir** (22 %), puis blanc (14 %) | **bleu marine** (17 %), puis noir (13 %) |
 | Bas | **bleu marine** (30 %), puis noir (25 %) | **bleu marine** (30 %), puis noir (25 %) | **bleu marine** (30 %), puis noir (25 %) | **bleu marine** (30 %), puis noir (25 %) | **bleu marine** (30 %), puis noir (25 %) | **bleu marine** (30 %), puis noir (25 %) |
@@ -63,7 +63,7 @@ de ce fichier) : ne pas le modifier à la main. L'estimation sert seulement de p
 | Monture | **noires** (40 %) | **noires** (40 %) | **noires** (40 %) | **noires** (40 %) | **noires** (40 %) | **noires** (40 %) |
 | Sur la tête | **Rien** (90 %) | **Rien** (90 %) | **Rien** (90 %) | **Rien** (86 %) | **Rien** (90 %) | **Rien** (90 %) |
 | Barbe | **Aucune** (100 %) | **Aucune** (100 %) | **Aucune** (100 %) | **Aucune** (80 %) | **Aucune** (40 %), puis Barbe (28 %) | **Aucune** (50 %), puis Barbe (30 %) |
-| Moustache | **Aucune** (100 %) | **Aucune** (100 %) | **Aucune** (100 %) | **Aucune** (90 %) | **Aucune** (90 %) | **Aucune** (90 %) |
+| Moustache | **Aucune** (100 %) | **Aucune** (100 %) | **Aucune** (100 %) | **Aucune** (87 %) | **Aucune** (87 %) | **Aucune** (87 %) |
 | Boucles d'oreilles | **Puces** (46 %), puis Aucune (32 %) | **Puces** (46 %), puis Aucune (32 %) | **Puces** (46 %), puis Aucune (32 %) | **Aucune** (85 %) | **Aucune** (90 %) | **Aucune** (90 %) |
 | Haut | **noir** (26 %) | **noir** (21 %), puis blanc (14 %) | **bleu marine** (17 %), puis noir (13 %) | **noir** (27 %) | **noir** (22 %), puis blanc (14 %) | **bleu marine** (17 %), puis noir (13 %) |
 | Bas | **bleu marine** (30 %), puis noir (25 %) | **bleu marine** (30 %), puis noir (25 %) | **bleu marine** (30 %), puis noir (25 %) | **bleu marine** (30 %), puis noir (25 %) | **bleu marine** (30 %), puis noir (25 %) | **bleu marine** (30 %), puis noir (25 %) |

@@ -49,7 +49,7 @@ export const DEFAULT_LOOK = {
   hair: '#4a3426',
   hairStyle: 'curly', // see HAIR_STYLES in options.ts
   beard: 'none', // 'none' | 'stubble' | 'goatee' (the chin) | 'short'
-  mustache: 'none', // 'none' | 'thick'
+  mustache: 'none', // 'none' | 'stubble' | 'thick'
   beardColor: '#4a3426',
   outfit: 'tshirt', // 'tshirt' | 'sweater' | 'shirt' | 'hoodie' | 'jacket' | 'cardigan' | 'dress'
   top: '#5b7fb8',

@@ -88,6 +88,8 @@ export const BEARDS: Option[] = [
 
 export const MUSTACHES: Option[] = [
   { id: 'none', label: 'Aucune' },
+  // The lip of the 3-day beard, on its own (the 3-day beard always has it).
+  { id: 'stubble', label: 'Moustache de 3 jours', coded: 'm', alt: 'none' },
   { id: 'thick', label: 'Moustache', coded: 'm', alt: 'none' },
 ];
 
