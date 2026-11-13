@@ -34,6 +34,13 @@ test('earrings are coded feminine', () => {
   expect(fitLook({ earrings: 'studs' }, 'm').earrings).toBe('none');
 });
 
+test('the wizard hat is only worn by the presets that give it', () => {
+  for (let i = 0; i < RUNS; i++) {
+    for (const look of [randomLook(), likelyLook(GENDERS[i % 2])]) expect(look.headwear).not.toBe('wizard');
+  }
+  for (const gender of GENDERS) expect(fitLook({ headwear: 'wizard' }, gender).headwear).toBe('wizard');
+});
+
 test('the default look is neutral', () => {
   expect(codedGenders(DEFAULT_LOOK).size).toBe(0);
 });

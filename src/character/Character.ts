@@ -55,7 +55,7 @@ export const DEFAULT_LOOK = {
   top: '#5b7fb8',
   bottom: '#2f3a56',
   shoes: '#f7f3ee',
-  headwear: 'none', // 'none' | 'cap' | 'beanie' | 'headscarf'
+  headwear: 'none', // 'none' | 'cap' | 'beanie' | 'headscarf' | 'wizard'
   headwearColor: '#2f3a56',
   glasses: 'none', // 'none' | 'round' | 'square' | 'bold' | 'catEye' | 'browline'
   glassesColor: '#2b2d42', // see GLASSES_COLORS (the last one is clear plastic)

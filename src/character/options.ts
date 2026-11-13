@@ -116,6 +116,8 @@ export const HEADWEAR: Option[] = [
   { id: 'beanie', label: 'Bonnet' },
   { id: 'headscarf', label: 'Foulard', coded: 'f', alt: 'beanie' },
 ];
+// Not in the list: 'wizard' (a worn wizard hat), worn only by the famous characters' presets, so neither
+// the visitor's regular choices nor the game's own picks (random, scan, population.ts) ever give it.
 
 export const GLASSES: Option[] = [
   { id: 'none', label: 'Aucune' },

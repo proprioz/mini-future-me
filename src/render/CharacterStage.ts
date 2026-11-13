@@ -74,9 +74,18 @@ export class CharacterStage {
     this.sunDirection = sun.position.clone().normalize();
   }
 
-  /** A view name from VIEWS, or a custom { target, height, width, lift }. */
-  setView(view: ViewName | StageView): void {
-    this.view = typeof view === 'string' ? VIEWS[view] : view;
+  /**
+   * A view name from VIEWS, or a custom { target, height, width, lift }. With `subject`, the view grows
+   * upwards (its bottom stays) when the subject rises above it: room for a tall hat.
+   */
+  setView(view: ViewName | StageView, subject?: THREE.Object3D): void {
+    const base = typeof view === 'string' ? VIEWS[view] : view;
+    const bottom = base.target.y - base.height / 2;
+    const top = subject ? new THREE.Box3().setFromObject(subject).max.y : -Infinity;
+    const grow = Math.max(1, (top - bottom) / base.height);
+    const height = base.height * grow;
+    this.view = grow === 1 ? base
+      : { ...base, target: base.target.clone().setY(bottom + height / 2), height, width: base.width * grow };
     this.updateCamera();
   }
 

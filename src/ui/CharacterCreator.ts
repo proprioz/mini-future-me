@@ -206,6 +206,7 @@ export class CharacterCreator {
   edit(look: Partial<Look> = this.look) {
     this.look = { ...DEFAULT_LOOK, ...look };
     this.character.setLook(this.look);
+    this.stage.setView('stage', this.character.group);
     this.character.heading = this.character.targetHeading = START_HEADING;
     this.thumbsDirty = true;
     this.showTab(TABS[0]);
@@ -249,6 +250,7 @@ export class CharacterCreator {
   preview(changes: Partial<Look>) {
     Object.assign(this.look, changes);
     this.character.setLook(changes);
+    this.stage.setView('stage', this.character.group); // room for a tall hat
     this.refreshFields();
   }
 

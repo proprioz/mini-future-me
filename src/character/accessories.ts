@@ -59,6 +59,73 @@ function beanie(color: string): THREE.Group {
   return group;
 }
 
+/**
+ * Wizard hat, a bit worn: a wide floppy brim, wavy and drooping at the edge, under a tall cone that
+ * creases as it rises and folds back at the top, its tip sagging; a darker band and a sewn-on patch.
+ */
+function wizard(color: string): THREE.Group {
+  const group = new THREE.Group();
+  const base = 0.22;
+
+  // Brim: a flat ring (an ellipse swept round the crown), lower and wavier towards its edge.
+  const rows = 96;
+  const ring = 16;
+  const positions: number[] = [];
+  const indices: number[] = [];
+  for (let i = 0; i <= rows; i++) {
+    const a = (i / rows) * Math.PI * 2;
+    for (let j = 0; j <= ring; j++) {
+      const u = (j / ring) * Math.PI * 2;
+      const r = 1.24 + 0.32 * Math.cos(u);
+      const out = smoothstep(r, 0.95, 1.56);
+      const droop = out ** 1.6 * (0.2 + 0.05 * Math.cos(a) + 0.06 * Math.sin(a * 3 + 0.7));
+      positions.push(Math.sin(a) * r, base + 0.035 * Math.sin(u) - droop, Math.cos(a) * r);
+    }
+  }
+  for (let i = 0; i < rows; i++) {
+    for (let j = 0; j < ring; j++) {
+      const k = i * (ring + 1) + j;
+      indices.push(k, k + ring + 1, k + 1, k + ring + 1, k + ring + 2, k + 1);
+    }
+  }
+  const brimGeometry = new THREE.BufferGeometry();
+  brimGeometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  brimGeometry.setIndex(indices);
+  brimGeometry.computeVertexNormals();
+  group.add(part(smoothSeams(brimGeometry), color));
+
+  // Crown: rises, leans back, then folds over at the top, the tip hanging down a little.
+  const spine = new THREE.CatmullRomCurve3([
+    [0, base - 0.05, 0], [0, 0.72, -0.03], [0.02, 1.1, -0.1], [0.06, 1.32, -0.3], [0.1, 1.36, -0.58], [0.15, 1.18, -0.82],
+  ].map(([x, y, z]) => new THREE.Vector3(x, y, z)));
+  // Wider at the bottom, narrowing to the tip, with a few soft creases of a hat crushed and shaped again.
+  const radius = (t: number) => 0.98 * (1 - t) ** 1.1 * (1 + 0.05 * Math.sin(t * 17) * smoothstep(t, 0.1, 0.35));
+  group.add(part(sweep(spine, radius, { segments: 64, radial: 32 }), color));
+
+  // Band round the bottom of the crown.
+  const band = part(new THREE.CylinderGeometry(0.97, 1.0, 0.2, 40, 1, true), shadeHex(color, -0.3), { outline: 0 });
+  band.material.side = THREE.DoubleSide;
+  band.position.y = base + 0.12;
+  group.add(band);
+
+  // Patch sewn on the side of the crown, a bit crooked.
+  const t = 0.3;
+  const point = spine.getPointAt(t);
+  const side = new THREE.Vector3(0.75, 0, 0.66).normalize();
+  // The crown narrows as it rises: its surface faces a little upwards.
+  const slope = (radius(t + 0.01) - radius(t - 0.01)) / 0.02 / spine.getLength();
+  const normal = side.clone().addScaledVector(spine.getTangentAt(t), -slope).normalize();
+  // Thick enough that its flat corners stay out of the rounded crown.
+  const patch = part(new THREE.BoxGeometry(0.3, 0.26, 0.07), shadeHex(color, 0.22), { outline: 0.008 });
+  patch.position.copy(point).addScaledVector(side, radius(t));
+  patch.lookAt(patch.position.clone().add(normal));
+  patch.rotateZ(0.25);
+  group.add(patch);
+
+  group.rotation.set(-0.08, 0, 0.06);
+  return group;
+}
+
 const { smoothstep } = THREE.MathUtils;
 
 /**
@@ -196,7 +263,7 @@ export function buildHeadwear(
   type: string, { color, volume = 0.03, params }: { color: string; volume?: number; params: HeadParams },
 ): THREE.Group | null {
   if (type === 'headscarf') return headscarf(color, params);
-  const group = ({ cap, beanie } as Record<string, (color: string) => THREE.Group>)[type]?.(color);
+  const group = ({ cap, beanie, wizard } as Record<string, (color: string) => THREE.Group>)[type]?.(color);
   if (!group) return null;
   // Hats squash the hair: only part of its volume counts.
   const room = 0.01 + Math.min(volume, 0.04) * 0.6;
@@ -209,7 +276,7 @@ export function buildHeadwear(
 
 /** Hats hide the top of the hair. */
 export function coversHair(type: string): boolean {
-  return type === 'cap' || type === 'beanie';
+  return type === 'cap' || type === 'beanie' || type === 'wizard';
 }
 
 // ---------------------------------------------------------------- glasses
