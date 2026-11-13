@@ -3,10 +3,11 @@ import { Character, DEFAULT_LOOK, type Look } from '../character/Character.ts';
 import { CharacterStage } from '../render/CharacterStage.ts';
 import { Thumbnailer, type ThumbnailOptions } from '../render/Thumbnailer.ts';
 import {
-  SKIN_TONES, EYE_COLORS, HAIR_COLORS, CLOTH_COLORS, GLASSES_COLORS, METAL_COLORS,
+  SKIN_TONES, EYE_COLORS, LIKELY_HAIR_COLORS, LIKELY_CLOTH_COLORS, GLASSES_COLORS, METAL_COLORS,
   FACE_SHAPES, EYE_SHAPES, SKIN_MARKS, HAIR_STYLES, BEARDS, MUSTACHES, OUTFITS, HEADWEAR, GLASSES, EARRINGS, CLEAR_FRAME,
   randomLook, type Option,
 } from '../character/options.ts';
+import { ColorPicker } from './ColorPicker.ts';
 import { icon } from './icons.ts';
 import type { IconName } from './iconPaths.ts';
 
@@ -19,9 +20,9 @@ interface BaseField {
   showIf?: (look: Look) => boolean;
 }
 
-/** A field of swatches, or of choices with a 3D thumbnail each. */
+/** A field of swatches, the last one a colour picker unless `picker` is false, or of choices with a 3D thumbnail each. */
 type Field = BaseField & (
-  | { colors: string[]; choices?: undefined; thumb?: undefined }
+  | { colors: string[]; picker?: false; choices?: undefined; thumb?: undefined }
   | { choices: Option[]; colors?: undefined; thumb?: Thumb }
 );
 
@@ -44,7 +45,7 @@ const TABS: Tab[] = [
   {
     id: 'face', icon: 'smiley', label: 'Visage',
     fields: [
-      { key: 'skin', label: 'Teint', colors: SKIN_TONES },
+      { key: 'skin', label: 'Teint', colors: SKIN_TONES, picker: false },
       { key: 'faceShape', label: 'Forme du visage', choices: FACE_SHAPES, thumb: { view: 'portrait', heading: 0.3, bare: true } },
       { key: 'eyeShape', label: 'Forme des yeux', choices: EYE_SHAPES, thumb: FACE_THUMB },
       { key: 'eyeColor', label: 'Yeux', colors: EYE_COLORS },
@@ -55,11 +56,11 @@ const TABS: Tab[] = [
     id: 'hair', icon: 'scissors', label: 'Coiffure',
     fields: [
       { key: 'hairStyle', label: 'Coupe', choices: HAIR_STYLES, thumb: { view: 'head', heading: 0.8, bare: true } },
-      { key: 'hair', label: 'Couleur', colors: HAIR_COLORS },
+      { key: 'hair', label: 'Couleur', colors: LIKELY_HAIR_COLORS },
       { key: 'beard', label: 'Barbe', choices: BEARDS, thumb: { view: 'head', heading: 0.35, bare: true } },
       { key: 'mustache', label: 'Moustache', choices: MUSTACHES, thumb: { view: 'head', heading: 0.2, bare: true } },
       {
-        key: 'beardColor', label: 'Couleur de la barbe', colors: HAIR_COLORS,
+        key: 'beardColor', label: 'Couleur de la barbe', colors: LIKELY_HAIR_COLORS,
         showIf: (look) => look.beard !== 'none' || look.mustache !== 'none',
       },
     ],
@@ -68,16 +69,16 @@ const TABS: Tab[] = [
     id: 'outfit', icon: 't-shirt', label: 'Tenue',
     fields: [
       { key: 'outfit', label: 'Style', choices: OUTFITS, thumb: { view: 'body', heading: 0.35 } },
-      { key: 'top', label: 'Haut', colors: CLOTH_COLORS },
-      { key: 'bottom', label: 'Bas', colors: CLOTH_COLORS },
-      { key: 'shoes', label: 'Chaussures', colors: CLOTH_COLORS },
+      { key: 'top', label: 'Haut', colors: LIKELY_CLOTH_COLORS },
+      { key: 'bottom', label: 'Bas', colors: LIKELY_CLOTH_COLORS },
+      { key: 'shoes', label: 'Chaussures', colors: LIKELY_CLOTH_COLORS },
     ],
   },
   {
     id: 'extras', icon: 'sunglasses', label: 'Accessoires',
     fields: [
       { key: 'headwear', label: 'Sur la tête', choices: HEADWEAR, thumb: { view: 'head', heading: 0.5 } },
-      { key: 'headwearColor', label: 'Couleur', colors: CLOTH_COLORS, showIf: (look) => look.headwear !== 'none' },
+      { key: 'headwearColor', label: 'Couleur', colors: LIKELY_CLOTH_COLORS, showIf: (look) => look.headwear !== 'none' },
       { key: 'glasses', label: 'Lunettes', choices: GLASSES, thumb: { view: 'head', heading: 0.25 } },
       { key: 'glassesColor', label: 'Couleur des lunettes', colors: GLASSES_COLORS, showIf: (look) => look.glasses !== 'none' },
       { key: 'earrings', label: 'Boucles d’oreilles', choices: EARRINGS, thumb: { view: 'head', heading: 0.9, bare: true } },
@@ -92,8 +93,9 @@ const TABS: Tab[] = [
  */
 export class CharacterCreator {
   look: Look;
-  extraColors: Partial<Record<keyof Look, string>>;
   tab: Tab;
+  picker: ColorPicker;
+  pickerKey: keyof Look | null; // field whose colour picker is open
   resolve: ((look: Look) => void) | null;
   thumbsDirty: boolean;
   thumbQueue: Parameters<Thumbnailer['draw']>[];
@@ -108,7 +110,12 @@ export class CharacterCreator {
 
   constructor(root: HTMLElement) {
     this.look = { ...DEFAULT_LOOK };
-    this.extraColors = {};
+    // The look follows the finger, the thumbnails and the smile once it is lifted.
+    this.picker = new ColorPicker((color, done) => {
+      if (done) this.change({ [this.pickerKey!]: color });
+      else this.preview({ [this.pickerKey!]: color });
+    });
+    this.pickerKey = null;
     this.tab = TABS[0];
     this.resolve = null;
     this.thumbsDirty = true;
@@ -161,7 +168,12 @@ export class CharacterCreator {
 
     this.bodyEl.addEventListener('click', (e) => {
       const option = (e.target as Element).closest<HTMLElement>('[data-value]');
-      if (option) this.change({ [option.dataset.key!]: option.dataset.value });
+      if (option) {
+        if (option.dataset.key === this.pickerKey) this.pickerKey = null;
+        this.change({ [option.dataset.key!]: option.dataset.value });
+      }
+      const pickerButton = (e.target as Element).closest<HTMLElement>('[data-picker]');
+      if (pickerButton) this.togglePicker(pickerButton.dataset.picker as keyof Look);
     });
 
     this.el.querySelector('[data-action="random"]')!.addEventListener('click', () => {
@@ -193,11 +205,6 @@ export class CharacterCreator {
   /** Opens the screen with `look` pre-selected and resolves with the final look. */
   edit(look: Partial<Look> = this.look) {
     this.look = { ...DEFAULT_LOOK, ...look };
-    // Colours coming from the face scan aren't in the palettes: offer them as an extra swatch.
-    this.extraColors = {};
-    for (const field of TABS.flatMap((tab) => tab.fields)) {
-      if (field.colors && !field.colors.includes(this.look[field.key])) this.extraColors[field.key] = this.look[field.key];
-    }
     this.character.setLook(this.look);
     this.character.heading = this.character.targetHeading = START_HEADING;
     this.thumbsDirty = true;
@@ -238,11 +245,16 @@ export class CharacterCreator {
     this.stage.canvas.style.height = `${height}px`;
   }
 
-  change(changes: Partial<Look>) {
+  /** Shows `changes` on the character only: no thumbnails, no smile (while a colour is being picked). */
+  preview(changes: Partial<Look>) {
     Object.assign(this.look, changes);
     this.character.setLook(changes);
-    this.thumbsDirty = true;
     this.refreshFields();
+  }
+
+  change(changes: Partial<Look>) {
+    this.thumbsDirty = true;
+    this.preview(changes);
 
     // A little smile so the visitor feels the change.
     clearTimeout(this.expressionTimer!); // null: a no-op
@@ -264,18 +276,30 @@ export class CharacterCreator {
         ${field.colors ? this.swatchesHtml(field) : this.choicesHtml(field)}
       </div>`).join('');
     this.bodyEl.scrollTop = 0;
+    this.pickerKey = null;
     this.thumbsDirty = true;
     this.refreshFields();
   }
 
-  swatchesHtml({ key, colors }: { key: keyof Look; colors: string[] }) {
-    const extra = this.extraColors[key];
-    return `<div class="swatches">${(extra ? [extra, ...colors] : colors).map((color) => `
-      <button class="swatch${color === extra ? ' scanned' : ''}${color === CLEAR_FRAME ? ' clear' : ''}" data-key="${key}"
-        data-value="${color}" style="--swatch:${color}"
-        aria-label="${color === extra ? 'Couleur de ton scan' : color === CLEAR_FRAME ? 'Transparentes' : color}">${
-        color === extra ? `<span class="swatch-badge">${icon('camera')}</span>` : ''}</button>`).join('')}
+  swatchesHtml({ key, colors, picker }: { key: keyof Look; colors: string[]; picker?: false }) {
+    return `<div class="swatches">${colors.map((color) => `
+      <button class="swatch${color === CLEAR_FRAME ? ' clear' : ''}" data-key="${key}" data-value="${color}"
+        style="--swatch:${color}" aria-label="${color === CLEAR_FRAME ? 'Transparentes' : color}"></button>`).join('')}
+      ${picker === false ? '' : `
+      <button class="swatch swatch-picker" data-picker="${key}" aria-label="Autre couleur">
+        <span class="swatch-badge">${icon('palette')}</span>
+      </button>`}
     </div>`;
+  }
+
+  /** Opens the colour picker of field `key` under its swatches, starting from its colour, or closes it. */
+  togglePicker(key: keyof Look) {
+    this.pickerKey = this.pickerKey === key ? null : key;
+    if (this.pickerKey) {
+      this.picker.set(this.look[key]);
+      this.bodyEl.querySelector(`[data-field="${key}"]`)!.append(this.picker.el);
+    }
+    this.refreshFields();
   }
 
   choicesHtml({ key, choices }: { key: keyof Look; choices: Option[] }) {
@@ -297,7 +321,17 @@ export class CharacterCreator {
         option.classList.toggle('selected', selected);
         option.setAttribute('aria-pressed', String(selected));
       }
+      // A colour that isn't one of the swatches (picked, scanned, « Au hasard ») shows on the picker button.
+      const pickerButton = fieldEl.querySelector<HTMLElement>('[data-picker]');
+      if (pickerButton) {
+        const custom = !field.colors!.includes(this.look[field.key]);
+        pickerButton.classList.toggle('selected', custom);
+        pickerButton.setAttribute('aria-pressed', String(custom));
+        pickerButton.setAttribute('aria-expanded', String(this.pickerKey === field.key));
+        pickerButton.style.setProperty('--swatch', custom ? this.look[field.key] : '');
+      }
     }
+    this.picker.el.hidden = !this.pickerKey;
     if (this.thumbsDirty) this.renderThumbs();
   }
 

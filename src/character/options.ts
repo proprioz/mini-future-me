@@ -30,6 +30,12 @@ export const GLASSES_COLORS = ['#2b2d42', '#6b4226', '#c9a227', '#b8bec6', CLEAR
 
 export const METAL_COLORS = ['#ffcf4a', '#d6dde6', '#ff6fa5'];
 
+// « Crée ton perso » shows only the most likely colours of the long palettes (population.ts), and a
+// colour picker for any other: hair without red and white, clothes the neutrals and blue (jeans).
+const [BLACK_HAIR, BROWN_HAIR, CHESTNUT_HAIR, , BLOND_HAIR, GREY_HAIR] = HAIR_COLORS;
+export const LIKELY_HAIR_COLORS = [BLACK_HAIR, BROWN_HAIR, CHESTNUT_HAIR, BLOND_HAIR, GREY_HAIR];
+export const LIKELY_CLOTH_COLORS = CLOTH_COLORS.slice(0, 7);
+
 // Pink (clothes, earrings) is coded feminine: closest colour of the same palette otherwise.
 const FEMININE_COLORS: Record<string, string> = { '#ff9fb1': '#b83a44', '#ff6fa5': '#d6dde6' };
 
