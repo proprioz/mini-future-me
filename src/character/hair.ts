@@ -654,8 +654,9 @@ const STYLES: Record<string, (params: HeadParams, options: { hatted: boolean }) 
       - 0.08 * teeth(lon, 0.4) * smoothstep(Math.abs(lon), 0.9, 1.2), 0.02, 0.035),
   }),
 
-  // Short curls all over: a scalloped cloud, a few curls falling on the forehead.
-  curly: (params) => {
+  // Short curls all over, told by the volume alone: a scalloped cloud, its hairline in round lobes
+  // over the forehead.
+  curly: () => {
     const line = (lon: number) => curlyFringe(lon, { high: 0.5, depth: 0.1, period: 0.3, spread: 0.85 })
       + Math.min(0, hairline(lon, { sides: -0.12, nape: -0.55 }) - 0.5);
     const base = capThickness(line, 0.025, 0.025, 0.08);
@@ -665,8 +666,6 @@ const STYLES: Record<string, (params: HeadParams, options: { hatted: boolean }) 
         const t = base(lon, lat);
         return t > 0 ? t + cloud(lon, lat) * smoothstep(t, 0, 0.02) : 0;
       },
-      top: ringlets(params, [[-0.45, 0.5, 0.08, 1.75], [0.12, 0.52, 0.09, 2], [0.62, 0.48, 0.075, 1.5]], 0.04,
-        { radius: 0.018, thickness: 0.014 }),
     };
   },
 
