@@ -11,7 +11,7 @@ de ce fichier) : ne pas le modifier à la main. L'estimation sert seulement de p
 
 | | Femme < 20 ans | Femme 20–44 ans | Femme 45 ans et + | Homme < 20 ans | Homme 20–44 ans | Homme 45 ans et + |
 |---|---|---|---|---|---|---|
-| Coupe | **Long** (29 %), puis Mi-long (19 %) | **Mi-long** (26 %), puis Long (24 %) | **Carré** (28 %), puis Mi-long (24 %) | **Court** (33 %), puis Boucles et dégradé (32 %) | **Court** (39 %) | **Court** (40 %), puis Chauve (32 %) |
+| Coupe | **Long** (28 %), puis Mi-long (19 %) | **Mi-long** (24 %), puis Long (22 %) | **Carré** (26 %), puis Mi-long (22 %) | **Court** (31 %), puis Boucles et dégradé (29 %) | **Court** (38 %) | **Court** (39 %), puis Chauve (32 %) |
 | Cheveux | **bruns** (36 %), puis blonds (24 %) | **bruns** (38 %) | **gris** (30 %), puis bruns (24 %) | **bruns** (36 %), puis blonds (24 %) | **bruns** (38 %) | **gris** (30 %), puis bruns (24 %) |
 | Yeux | **bleus** (36 %), puis marron (22 %) | **bleus** (36 %), puis marron (22 %) | **bleus** (36 %), puis marron (22 %) | **bleus** (36 %), puis marron (22 %) | **bleus** (36 %), puis marron (22 %) | **bleus** (36 %), puis marron (22 %) |
 | Forme des yeux | **Ronds** (50 %), puis En amande (50 %) | **Ronds** (50 %), puis En amande (50 %) | **Ronds** (50 %), puis En amande (50 %) | **Ronds** (50 %), puis En amande (50 %) | **Ronds** (50 %), puis En amande (50 %) | **Ronds** (50 %), puis En amande (50 %) |
@@ -32,7 +32,7 @@ de ce fichier) : ne pas le modifier à la main. L'estimation sert seulement de p
 
 | | Femme < 20 ans | Femme 20–44 ans | Femme 45 ans et + | Homme < 20 ans | Homme 20–44 ans | Homme 45 ans et + |
 |---|---|---|---|---|---|---|
-| Coupe | **Long** (28 %), puis Mi-long (19 %) | **Mi-long** (25 %), puis Long (23 %) | **Carré** (28 %), puis Mi-long (24 %) | **Court** (33 %), puis Boucles et dégradé (31 %) | **Court** (39 %) | **Court** (39 %), puis Chauve (32 %) |
+| Coupe | **Long** (27 %), puis Mi-long (18 %) | **Mi-long** (24 %), puis Long (22 %) | **Carré** (26 %), puis Mi-long (22 %) | **Court** (31 %), puis Boucles et dégradé (29 %) | **Court** (37 %) | **Court** (39 %), puis Chauve (32 %) |
 | Cheveux | **bruns** (43 %), puis noirs (38 %) | **bruns** (43 %), puis noirs (38 %) | **bruns** (31 %), puis noirs (27 %) | **bruns** (43 %), puis noirs (38 %) | **bruns** (43 %), puis noirs (38 %) | **bruns** (31 %), puis noirs (27 %) |
 | Yeux | **marron foncé** (40 %), puis marron (35 %) | **marron foncé** (40 %), puis marron (35 %) | **marron foncé** (40 %), puis marron (35 %) | **marron foncé** (40 %), puis marron (35 %) | **marron foncé** (40 %), puis marron (35 %) | **marron foncé** (40 %), puis marron (35 %) |
 | Forme des yeux | **Ronds** (50 %), puis En amande (50 %) | **Ronds** (50 %), puis En amande (50 %) | **Ronds** (50 %), puis En amande (50 %) | **Ronds** (50 %), puis En amande (50 %) | **Ronds** (50 %), puis En amande (50 %) | **Ronds** (50 %), puis En amande (50 %) |
@@ -53,7 +53,7 @@ de ce fichier) : ne pas le modifier à la main. L'estimation sert seulement de p
 
 | | Femme < 20 ans | Femme 20–44 ans | Femme 45 ans et + | Homme < 20 ans | Homme 20–44 ans | Homme 45 ans et + |
 |---|---|---|---|---|---|---|
-| Coupe | **Long** (23 %), puis Locks / tresses (23 %) | **Locks / tresses** (23 %), puis Mi-long (20 %) | **Carré** (25 %), puis Mi-long (21 %) | **Court** (30 %), puis Boucles et dégradé (28 %) | **Court** (35 %) | **Court** (37 %), puis Chauve (31 %) |
+| Coupe | **Long** (22 %), puis Locks / tresses (22 %) | **Locks / tresses** (22 %), puis Mi-long (19 %) | **Carré** (23 %), puis Mi-long (20 %) | **Court** (28 %), puis Boucles et dégradé (26 %) | **Court** (34 %) | **Court** (37 %), puis Chauve (30 %) |
 | Cheveux | **noirs** (85 %) | **noirs** (85 %) | **noirs** (62 %) | **noirs** (85 %) | **noirs** (85 %) | **noirs** (62 %) |
 | Yeux | **marron foncé** (80 %) | **marron foncé** (80 %) | **marron foncé** (80 %) | **marron foncé** (80 %) | **marron foncé** (80 %) | **marron foncé** (80 %) |
 | Forme des yeux | **Ronds** (50 %), puis En amande (50 %) | **Ronds** (50 %), puis En amande (50 %) | **Ronds** (50 %), puis En amande (50 %) | **Ronds** (50 %), puis En amande (50 %) | **Ronds** (50 %), puis En amande (50 %) | **Ronds** (50 %), puis En amande (50 %) |

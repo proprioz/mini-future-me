@@ -16,7 +16,7 @@ const V = (x: number, y: number, z: number) => new THREE.Vector3(x, y, z);
 /** How far above the skull each style goes (head units), for hats. */
 export const HAIR_VOLUME: Record<string, number> = {
   bald: 0, shaved: 0.002, buzz: 0.008, short: 0.045, curly: 0.08, curlyFade: 0.09, taper: 0.06, pixie: 0.035, bob: 0.04, medium: 0.04, long: 0.04,
-  curlyLong: 0.08, locs: 0.03, braids: 0.02, ponytail: 0.02, bun: 0.02,
+  curlyLong: 0.08, locs: 0.03, braids: 0.02, ponytail: 0.02, bun: 0.02, midShort: 0.045,
 };
 
 /** Triangle wave, 0 at multiples of `period`, 1 halfway: pointed strands along an edge. */
@@ -791,6 +791,29 @@ const STYLES: Record<string, (params: HeadParams, options: { hatted: boolean }) 
       // Volume on the parted side, lying flat on the other. Measured across the head (x), not by
       // longitude, which jumps from -π to π at the back and would split the hair there.
       extra: (lon, lat, d) => V(0.012, 0.01, 0.006).multiplyScalar(smoothstep(lat, 0.2, 0.8) * smoothstep(d.x, -0.35, 0.55)),
+    };
+  },
+
+  // Between the short cut and the bob, for both genders: the hair covers the ears and ends in
+  // pointed locks at the earlobes and the top of the neck, a layered fringe over the eyebrows.
+  midShort: () => {
+    const line = (lon: number) => hairline(lon, {
+      sides: -0.3, nape: -0.58, fringe: { low: 0.25, depth: 0.12, period: 0.26, spread: 0.95 },
+    }) - 0.07 * teeth(lon, 0.3) * smoothstep(Math.abs(lon), 1.25, 1.5);
+    // A crisp fringe; the sides and back thinning out towards their ends.
+    const fringe = capThickness(line, 0.026, 0.03);
+    const ends = capThickness(line, 0.026, 0.03, 0.12);
+    return {
+      shell: (lon, lat) => lerp(fringe(lon, lat), ends(lon, lat), smoothstep(Math.abs(lon), 0.9, 1.2)),
+      // Standing out from the sides and the back, more towards the ends, like the bob, but only
+      // where the hair grows (the bob also pushes out the shell tucked under its hairline, down to
+      // the jaw). Not over the crown, where all longitudes meet.
+      extra: (lon, lat, _d, t) => {
+        const n = surfaceNormal(lon, lat);
+        const side = smoothstep(Math.abs(lon), 1.0, 1.35) * (1 - smoothstep(lat, 0.6, 1.2));
+        const out = (0.012 + 0.016 * smoothstep(-lat, -0.35, 0.3)) * side * smoothstep(t, 0, 0.02);
+        return V(n.x, 0, n.z).normalize().multiplyScalar(out);
+      },
     };
   },
 

@@ -73,6 +73,7 @@ export const HAIR_STYLES: Option[] = [
   { id: 'curlyFade', label: 'Boucles et dégradé', coded: 'm', alt: 'curly' },
   { id: 'taper', label: 'Taper', coded: 'm', alt: 'pixie' },
   { id: 'pixie', label: 'Courte effilée', coded: 'f', alt: 'short' },
+  { id: 'midShort', label: 'Mi-court' },
   { id: 'bob', label: 'Carré', coded: 'f', alt: 'short' },
   { id: 'medium', label: 'Mi-long', coded: 'f', alt: 'short' },
   { id: 'long', label: 'Long', coded: 'f', alt: 'short' },

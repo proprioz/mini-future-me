@@ -77,18 +77,18 @@ const TABLES = {
     if (gender === 'f') {
       const locs = all;
       return {
-        teen: { long: 30, medium: 20, ponytail: 16, bun: 14, curlyLong: 8, bob: 6, braids: 4, pixie: 3, curly: 2, locs },
-        adult: { medium: 26, long: 24, bob: 12, ponytail: 10, bun: 8, pixie: 8, curlyLong: 8, curly: 3, braids: 1.5, locs },
-        senior: { bob: 28, medium: 24, pixie: 22, long: 8, curly: 7, curlyLong: 5, ponytail: 3, bun: 2, braids: 1.5, locs },
+        teen: { long: 30, medium: 20, ponytail: 16, bun: 14, curlyLong: 8, bob: 6, midShort: 4, braids: 4, pixie: 3, curly: 2, locs },
+        adult: { medium: 26, long: 24, bob: 12, ponytail: 10, bun: 8, pixie: 8, curlyLong: 8, midShort: 6, curly: 3, braids: 1.5, locs },
+        senior: { bob: 28, medium: 24, pixie: 22, long: 8, midShort: 8, curly: 7, curlyLong: 5, ponytail: 3, bun: 2, braids: 1.5, locs },
       }[age];
     }
     const locs = all;
     // Curls on top over faded sides (often a perm): the cut of a great many teenage boys today,
     // nearly as common as a classic short cut. Straight hair over sides faded low (taper) is the
-    // other fade of the young.
-    if (age === 'teen') return { short: 34, curlyFade: 32, taper: 14, buzz: 10, curly: 6, shaved: 4, bald: 1, locs };
-    if (age === 'adult') return { short: 40, buzz: 15, taper: 12, bald: 10, shaved: 9, curlyFade: 9, curly: 6, locs };
-    return { short: 38, buzz: 11, curly: 4, bald: 31, shaved: 8, taper: 3, curlyFade: 1, locs };
+    // other fade of the young. Some teenage boys let their hair grow over the ears (mi-court).
+    if (age === 'teen') return { short: 34, curlyFade: 32, taper: 14, buzz: 10, midShort: 8, curly: 6, shaved: 4, bald: 1, locs };
+    if (age === 'adult') return { short: 40, buzz: 15, taper: 12, bald: 10, shaved: 9, curlyFade: 9, curly: 6, midShort: 4, locs };
+    return { short: 38, buzz: 11, curly: 4, bald: 31, shaved: 8, taper: 3, curlyFade: 1, midShort: 1, locs };
   },
   hair: ({ age, skin }): Frequencies => {
     const old = age === 'senior';

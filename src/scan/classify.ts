@@ -26,7 +26,8 @@ export const RULES = {
   bald: 0.06, // share of the crown area that is hair, below which the head is bald
   buzz: 0.3, // … below which it is shaved (test portraits: buzz 0.28, short 0.31–0.5)
   curls: 0.55, // ragged hair outline (front) → curly (straight 0.2–0.52, curly 0.63–1.1)
-  bobBelowChin: -0.35, // front: hair beside the face ending below this (/ face height) → bob
+  midShortBelowChin: -0.44, // front: hair beside the face ending below this (/ face height) → mi-court (not yet tuned on the portraits)
+  bobBelowChin: -0.35, // … → bob
   mediumBelowChin: 0, // … → shoulder length
   longBelowChin: 0.25, // … → long
   bunBackY: 0.2, // profile: back-most hair point this high on the head → bun
@@ -241,7 +242,9 @@ function styleLikelihood({ hair, left, right }: Features & { hair: HairFront }, 
   const long = reach * (1 - plaited);
   const medium = step(hair.length, r.mediumBelowChin, 0.05) * (1 - reach);
   const bob = step(hair.length, r.bobBelowChin, 0.05) * (1 - medium) * (1 - reach);
-  const short = (1 - bob) * (1 - medium) * (1 - reach);
+  // Over the ears, ending around the earlobes: between a short cut and a bob.
+  const midShort = step(hair.length, r.midShortBelowChin, 0.04) * (1 - bob) * (1 - medium) * (1 - reach);
+  const short = (1 - midShort) * (1 - bob) * (1 - medium) * (1 - reach);
   // Tied hair looks short from the front (unless it falls below the chin there).
   const loose = 1 - Math.max(hints.bun, hints.ponytail) * (1 - frontLong);
   const shaved = 1 - step(hair.amount, r.buzz, 0.03);
@@ -262,6 +265,7 @@ function styleLikelihood({ hair, left, right }: Features & { hair: HairFront }, 
     // for this visitor (population.ts) tells them apart. Short locs end around the chin.
     locs: hairy * Math.max(long * (0.4 + 0.6 * curly), plaited),
     braids: hairy * plaited,
+    midShort: hairy * straight * midShort * loose,
     bob: hairy * straight * bob * loose,
     medium: hairy * straight * medium * loose,
     long: hairy * straight * long * loose,
