@@ -420,12 +420,25 @@ export class FaceTexture {
         ctx.stroke();
         break;
       default: {
-        lowerLip();
+        // A slight smile, the lips just parted on a row of upper teeth.
         const smirk = expression === 'wink' ? 5 : 0;
+        const mouth = new Path2D();
+        mouth.moveTo(x - w * 1.15, y - 6);
+        mouth.bezierCurveTo(x - w * 0.5, y + 3, x + w * 0.5, y + 3, x + w * 1.15, y - 6 - smirk);
+        mouth.bezierCurveTo(x + w * 0.55, y + w * 0.95, x - w * 0.55, y + w * 0.95, x - w * 1.15, y - 6);
+        ctx.fillStyle = lip;
         ctx.beginPath();
-        ctx.moveTo(x - w, y - 3);
-        ctx.bezierCurveTo(x - w * 0.4, y + 5, x + w * 0.4, y + 5, x + w, y - 3 - smirk);
-        ctx.stroke();
+        ctx.ellipse(x, y + w * 0.8, w * 0.6, 8, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#6e2427';
+        ctx.fill(mouth);
+        ctx.save();
+        ctx.clip(mouth);
+        ctx.fillStyle = '#fbf3ee';
+        ctx.fillRect(x - w * 1.2, y - 10, w * 2.4, 19);
+        ctx.restore();
+        ctx.lineWidth = 3.5;
+        ctx.stroke(mouth);
       }
     }
   }
