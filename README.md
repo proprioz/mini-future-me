@@ -85,6 +85,7 @@ Each booth's settings go in `.env.local` (ignored by git; template in `.env.exam
 |---|---|
 | `VITE_TRADES` | trades offered on the welcome screen, in order (ids from `src/trades/index.ts`, comma-separated). Empty: all of them. With a single trade, the welcome screen offers no choice. |
 | `VITE_SCAN` | `false`: no photo scan, the avatar is created by hand (no consent card). On by default; a trade can also turn it off for itself (`scan: false`). |
+| `VITE_VERSION` | `true`: the game's version and the date and time of its last update, small in a corner of the welcome screen. Off by default; "Le code", in "Dans les coulisses", always shows it. |
 | `VITE_SCHOOL_NAME`, `VITE_SCHOOL_SITE`, `VITE_SCHOOL_URL` | your school, in the footer of every poster and of the printed "Dans les coulisses" (name, website shown, QR code link). Without a URL, there is no school block. |
 
 The school's logo goes in `public/school/logo.svg` (ignored by git); when it is missing, its name is
@@ -100,7 +101,10 @@ msedge --kiosk http://localhost:3000 --edge-kiosk-type=fullscreen --no-first-run
 
 - **Welcome**: a random avatar waves until someone touches the screen. With several trades, a card
   offers to choose one. Then, when the scan is on, a card explains what the photos are used for ("Avec
-  mes photos" or "Sans photos, à la main"); otherwise the game goes straight to "Crée ton perso".
+  mes photos" or "Sans photos, à la main"); otherwise the game goes straight to "Crée ton perso". With
+  `VITE_VERSION=true`, the bottom-right corner shows the version running on the PC: `package.json`'s
+  version, the last commit and its date and time (the build time when the game is not a git clone); "Le
+  code", in "Dans les coulisses", always shows it.
 - **Behind the scenes**: "Comment ce jeu est fabriqué", under the Play button, explains the game in
   chapters (code, 3D, face, scan, privacy, AI, then the job of each trade), with small demos on the
   welcome avatar. Made for the booth team to explain it, even without knowing the code. "Imprimer" lays every chapter out on a

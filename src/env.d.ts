@@ -4,6 +4,8 @@ interface ImportMetaEnv {
   readonly VITE_TRADES?: string;
   /** false (or 0, off, non) turns the photo scan off for the whole stand. */
   readonly VITE_SCAN?: string;
+  /** true (or 1, on, oui) shows the game's version in a corner of the welcome screen. */
+  readonly VITE_VERSION?: string;
   readonly VITE_SCHOOL_NAME?: string;
   readonly VITE_SCHOOL_SITE?: string;
   readonly VITE_SCHOOL_URL?: string;
@@ -12,3 +14,6 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
+
+/** Set by vite.config.ts: package.json's version, the last commit (empty without git) and its ISO date. */
+declare const __BUILD__: { version: string; commit: string; date: string };

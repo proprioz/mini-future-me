@@ -7,6 +7,7 @@ import { sound } from '../kiosk/sound.ts';
 import { kiosk } from '../kiosk/kiosk.ts';
 import { icon } from './icons.ts';
 import { AboutPanel } from './AboutPanel.ts';
+import { VERSION } from './version.ts';
 import { GAME, scanEnabled } from '../trades/index.ts';
 import type { Trade } from '../trades/types.ts';
 
@@ -95,6 +96,7 @@ export class WelcomeScreen {
         <button class="welcome-back" data-choice="back">${icon('arrow-left')} Retour</button>
       </section>
       <button class="welcome-sound" aria-label="Son"></button>
+      ${VERSION.onWelcome ? `<p class="welcome-version">Version ${VERSION.number}${VERSION.commit ? ` (${VERSION.commit})` : ''} · mise à jour le ${VERSION.date} à ${VERSION.time}</p>` : ''}
     `;
     root.appendChild(this.el);
 

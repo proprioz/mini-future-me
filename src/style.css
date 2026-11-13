@@ -2233,8 +2233,22 @@ button {
   grid-template-columns: minmax(0, 0.6fr) minmax(0, 1.4fr);
 }
 
-.welcome[data-step='about'] .welcome-sound {
+.welcome[data-step='about'] .welcome-sound,
+.welcome[data-step='about'] .welcome-version {
   display: none;
+}
+
+/* The version running on this PC, small in the bottom-right corner (see ui/version.ts). */
+.welcome-version {
+  position: absolute;
+  right: 1.25rem;
+  bottom: 0.75rem;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.75rem;
+  font-weight: 700;
+  opacity: 0.75;
+  pointer-events: none;
 }
 
 .welcome-about {

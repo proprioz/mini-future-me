@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { PALETTE } from '../render/palette.ts';
 import { SCHOOL, drawSchoolQr, loadLogo } from '../poster/school.ts';
 import { icon } from './icons.ts';
+import { VERSION } from './version.ts';
 import type { IconName } from './iconPaths.ts';
 import { GAME, scanEnabled } from '../trades/index.ts';
 import type { Trade } from '../trades/types.ts';
@@ -62,6 +63,12 @@ const CHAPTERS: Chapter[] = [
         ['check-circle', '<b>Des tests automatiques</b> : à chaque changement, un programme joue une partie entière, sans Internet, et vérifie les règles du jeu.'],
         ['paper-plane-tilt', '<b>Proposer ses améliorations</b> : envoyer ses changements au projet. Une fois acceptés, ils rejoignent le jeu pour tout le monde.'],
         ['graduation-cap', '<b>Ajouter un métier</b> : chaque école peut y ajouter le sien, avec ses épreuves et son décor, sans refaire le reste du jeu.'],
+      ],
+    }, {
+      heading: 'Cette version du jeu',
+      points: [
+        ['clock-counter-clockwise', `<b>Version ${VERSION.number}</b>, mise à jour le ${VERSION.date} à ${VERSION.time}.`],
+        ...(VERSION.commit ? [['git-commit', `<b>${VERSION.commit}</b> : le nom de cette mise à jour dans l’historique du code, pour retrouver exactement ce jeu.`] satisfies [IconName, string]] : []),
       ],
     }],
     note: 'Environ 14 500 lignes de TypeScript et 3 700 lignes de CSS.',
