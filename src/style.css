@@ -49,6 +49,8 @@ body {
   user-select: none;
   -webkit-user-select: none;
   -webkit-tap-highlight-color: transparent;
+  /* The arrow by default: only what answers a click shows the hand (cursor: pointer on each control). */
+  cursor: default;
 }
 
 #app {
@@ -1568,6 +1570,10 @@ button {
   touch-action: none;
 }
 
+.mg-slider input:disabled {
+  cursor: not-allowed;
+}
+
 .mg-slider input::-webkit-slider-runnable-track {
   height: 0.75rem;
   border-radius: 0.375rem;
@@ -1979,7 +1985,6 @@ button {
   grid-template-columns: minmax(0, 1fr) minmax(25rem, min(44%, 37.5rem));
   align-items: center;
   background: var(--backdrop);
-  cursor: pointer;
   animation: mg-fade 0.6s ease-out;
   transition: opacity 0.45s;
 }
@@ -2014,12 +2019,7 @@ button {
   border-radius: 2rem;
   background: var(--paper);
   box-shadow: 0 0.375rem 0 var(--line), 0 1.5rem 3.75rem rgba(var(--shadow), 0.2);
-  cursor: default;
   animation: mg-in 0.45s cubic-bezier(0.3, 1.4, 0.5, 1);
-}
-
-.welcome[data-step='attract'] .welcome-card {
-  cursor: pointer;
 }
 
 .welcome:not([data-step='attract']) .welcome-attract,
@@ -2066,17 +2066,20 @@ button {
   list-style: none;
 }
 
+/* Plain icon and words, no tile: what the game offers, not something to tap. */
 .welcome-highlights li {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.375rem;
-  padding: 0.875rem 0.5rem;
-  border-radius: 1.25rem;
-  background: var(--foam);
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
   font-weight: 800;
   font-size: 0.9375rem;
   text-align: center;
+}
+
+.welcome-highlights li + li {
+  border-left: 1px solid var(--line);
 }
 
 .welcome-highlights span {
@@ -2098,13 +2101,11 @@ button {
   list-style: none;
 }
 
+/* A plain list like the ones of « Dans les coulisses »: a tile would look like the buttons below it. */
 .welcome-points li {
   display: flex;
   gap: 0.875rem;
   align-items: flex-start;
-  padding: 0.875rem 1rem;
-  border-radius: 1.125rem;
-  background: var(--mist);
   font-weight: 700;
   line-height: 1.4;
 }
@@ -2230,7 +2231,6 @@ button {
 /* « Dans les coulisses »: the card widens, the character stays on the left for the 3D demos. */
 .welcome[data-step='about'] {
   grid-template-columns: minmax(0, 0.6fr) minmax(0, 1.4fr);
-  cursor: default;
 }
 
 .welcome[data-step='about'] .welcome-sound {

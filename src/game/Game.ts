@@ -136,13 +136,18 @@ export class Game {
     this.setHovered(item);
 
     const { grid } = this.room;
-    if (hit?.tile && grid.isWalkable(hit.tile.x, hit.tile.z)) this.tileHighlight.show(grid.center(hit.tile));
+    const tile = hit?.tile;
+    const walkable = tile !== undefined && grid.isWalkable(tile.x, tile.z);
+    if (walkable) this.tileHighlight.show(grid.center(tile));
     else this.tileHighlight.hide();
+    // The hand over what a click acts on: a station, or a floor tile to walk to.
+    this.stage.renderer.domElement.style.cursor = item || walkable ? 'pointer' : 'default';
   }
 
   clearHover(): void {
     this.setHovered(null);
     this.tileHighlight.hide();
+    this.stage.renderer.domElement.style.cursor = 'default';
   }
 
   setHovered(item: Interactable | null): void {
@@ -151,7 +156,6 @@ export class Game {
     item?.setHighlight(true);
     this.hovered = item;
     this.pins.setHovered(item?.id);
-    this.stage.renderer.domElement.style.cursor = item ? 'pointer' : 'default';
   }
 
   walkTo(tile: Tile, onArrive?: () => void): void {

@@ -125,10 +125,6 @@
   opacity: 0.45;
 }
 
-.shoot-light .mg-slider input:disabled {
-  cursor: not-allowed;
-}
-
 .shoot-focus[hidden] {
   display: none;
 }
