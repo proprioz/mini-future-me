@@ -85,7 +85,7 @@ export class ScanScreen {
           </div>
         </div>` : ''}
         <ul class="scan-findings" aria-live="polite"></ul>
-        <p class="scan-privacy">${icon('lock-simple')} Les photos restent sur cet ordinateur et sont oubliées dès que tu continues :
+        <p class="scan-privacy">${icon('lock-simple')} Les photos restent sur cet appareil et sont oubliées dès que tu continues :
           on garde seulement des couleurs et des formes.</p>
         <footer class="scan-actions">
           <button class="btn btn-ghost" data-action="skip"></button>
@@ -176,7 +176,7 @@ export class ScanScreen {
   showError() {
     if (this.el.dataset.state === 'closed') return; // skipped while loading
     this.setState('error', {
-      instruction: 'Oups, l’analyse ne marche pas sur cet ordinateur. Pas grave : tu vas créer ton perso à la main !',
+      instruction: 'Oups, l’analyse ne marche pas sur cet appareil. Pas grave : tu vas créer ton perso à la main !',
       go: 'Continuer',
       onGo: () => this.finish(null),
     });

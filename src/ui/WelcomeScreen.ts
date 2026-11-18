@@ -85,7 +85,7 @@ export class WelcomeScreen {
         <h1>Avant de commencer</h1>
         <p>Tu vas devenir un perso de jeu vidéo&nbsp;! Avec des photos de toi, il te ressemblera comme un vrai clone numérique.</p>
         <ul class="welcome-points">
-          <li><span>${icon('laptop')}</span>Tes photos sont traitées ici, sur cet ordinateur.</li>
+          <li><span>${icon('laptop')}</span>Tes photos sont traitées ici, sur cet appareil.</li>
           <li><span>${icon('user-circle')}</span>Le jeu devine aussi ton âge et ton genre, juste pour un premier look : tu pourras tout changer.</li>
           <li><span>${icon('lock-simple')}</span>Rien n’est conservé : à la fin, tout est effacé automatiquement.</li>
         </ul>

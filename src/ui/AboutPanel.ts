@@ -46,7 +46,7 @@ const CHAPTERS: Chapter[] = [
   {
     id: 'web', icon: 'code', tab: 'Le code',
     title: 'Avec quoi ce jeu est-il fait ?',
-    lead: 'C’est un site web ! Il s’ouvre dans un navigateur, comme une page Internet, mais tout est sur cet ordinateur : il marche même sans Internet.',
+    lead: 'C’est un site web ! Il s’ouvre dans un navigateur, comme une page Internet, mais tout est sur cet appareil : il marche même sans Internet.',
     blocks: [{
       heading: 'Trois langages, trois rôles',
       points: [
@@ -119,7 +119,7 @@ const CHAPTERS: Chapter[] = [
   {
     id: 'scan', icon: 'scan', tab: 'Le scan', needsScan: true,
     title: 'Comment le jeu analyse-t-il mes photos ?',
-    lead: 'Il trouve ton visage, colorie les zones de la photo, fait des mesures, puis choisit l’option la plus proche dans « Crée ton perso ». Tout se passe sur cet ordinateur.',
+    lead: 'Il trouve ton visage, colorie les zones de la photo, fait des mesures, puis choisit l’option la plus proche dans « Crée ton perso ». Tout se passe sur cet appareil.',
     demo: 'scan',
     blocks: [{
       heading: 'En 4 étapes',
@@ -152,7 +152,7 @@ const CHAPTERS: Chapter[] = [
     blocks: [{
       points: [
         ['magnifying-glass', '<b>Détecter</b>, c’est trouver où sont les yeux et la bouche. <b>Reconnaître</b>, ce serait retrouver ton nom en comparant avec d’autres visages : le jeu ne le fait pas.'],
-        ['lock-simple', 'Tes photos restent dans la mémoire de l’ordinateur pendant l’analyse, puis le jeu les oublie, et l’équipe du stand efface les fichiers juste après. Rien n’est envoyé sur Internet.'],
+        ['lock-simple', 'Tes photos restent dans la mémoire de l’appareil pendant l’analyse, puis le jeu les oublie, et l’équipe du stand efface les fichiers juste après. Rien n’est envoyé sur Internet.'],
         ['user-circle', 'Pour proposer un premier look, le scan devine aussi ton âge et ton genre d’après la photo. Il ne les garde pas, et tu peux tout changer ensuite.'],
         ['brain', 'Les modèles d’IA ont appris avant, chez leurs créateurs. Ici, ils appliquent ce qu’ils savent, sans rien apprendre de toi.'],
         ['clock-countdown', 'Seule ton affiche va sur le petit serveur du stand, et elle est effacée après 30 minutes.'],
@@ -217,15 +217,15 @@ function standSheet(scan: boolean): Pick<Chapter, 'title' | 'lead' | 'blocks'> {
   return {
     title: 'Tes données sur ce stand',
     lead: scan
-      ? 'Ce que le jeu fait de tes photos, de ton perso et de ton affiche, du début à la fin de ta partie. Tout se passe sur l’ordinateur du stand : rien n’est envoyé sur Internet.'
-      : 'Ce que le jeu fait de ton perso et de ton affiche, du début à la fin de ta partie. Tout se passe sur l’ordinateur du stand : rien n’est envoyé sur Internet.',
+      ? 'Ce que le jeu fait de tes photos, de ton perso et de ton affiche, du début à la fin de ta partie. Tout se passe sur l’appareil du stand : rien n’est envoyé sur Internet.'
+      : 'Ce que le jeu fait de ton perso et de ton affiche, du début à la fin de ta partie. Tout se passe sur l’appareil du stand : rien n’est envoyé sur Internet.',
     blocks: [
       ...(scan ? [{
         heading: 'Tes photos',
         points: [
           ['camera', 'Seulement si tu choisis « Avec mes photos » : l’équipe du stand les prend, de face, et si tu veux de profil et de dos.'],
-          ['laptop', 'Le jeu les analyse sur cet ordinateur pour proposer un premier look à ton perso, puis il les oublie dès la fin du scan.'],
-          ['trash', 'L’équipe du stand efface les photos de l’ordinateur et de l’appareil photo juste après ton scan.'],
+          ['laptop', 'Le jeu les analyse sur cet appareil pour proposer un premier look à ton perso, puis il les oublie dès la fin du scan.'],
+          ['trash', 'L’équipe du stand efface les photos juste après ton scan, sur l’appareil du jeu comme sur l’appareil photo.'],
         ],
       }, {
         heading: 'Ce que le scan mesure',
@@ -238,7 +238,7 @@ function standSheet(scan: boolean): Pick<Chapter, 'title' | 'lead' | 'blocks'> {
       {
         heading: 'Ton perso et ton prénom',
         points: [
-          ['user', 'C’est toi qui les choisis. Ils restent dans la mémoire de l’ordinateur pendant ta partie et sont effacés à la fin, quand le jeu se remet à zéro.'],
+          ['user', 'C’est toi qui les choisis. Ils restent dans la mémoire de l’appareil pendant ta partie et sont effacés à la fin, quand le jeu se remet à zéro.'],
         ],
       },
       {
