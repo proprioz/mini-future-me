@@ -946,6 +946,63 @@ button {
   text-align: center;
 }
 
+/* The sample people (VITE_SAMPLE_PHOTOS), for visitors without photos of their own. */
+.scan-samples {
+  flex-shrink: 0;
+  margin: 0 1.5rem;
+  text-align: center;
+}
+
+.scan[data-state='photos']:has(.scan-samples) .scan-avatar {
+  flex-basis: clamp(7.5rem, 22vh, 13.75rem);
+}
+
+.scan:not([data-state='photos']) .scan-samples {
+  display: none;
+}
+
+.scan-samples p {
+  margin: 0 0 0.5rem;
+  font-weight: 700;
+}
+
+.scan-samples-list {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.scan-sample {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.scan-sample img {
+  width: 3.5rem;
+  height: 3.5rem;
+  border: 0.1875rem solid var(--paper);
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--teal);
+  object-fit: cover;
+  object-position: 50% 30%;
+  transition: transform 0.15s;
+}
+
+.scan-sample:hover img,
+.scan-sample:focus-visible img {
+  transform: scale(1.08);
+}
+
 .scan-privacy {
   margin: 0 1.5rem;
   color: var(--ink-soft);

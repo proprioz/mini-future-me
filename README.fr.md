@@ -85,6 +85,7 @@ Les réglages de chaque stand vont dans `.env.local` (ignoré par git ; modèle 
 |---|---|
 | `VITE_TRADES` | filières proposées sur l'accueil, dans l'ordre (ids de `src/trades/index.ts`, séparés par des virgules). Vide : toutes. Avec une seule filière, l'accueil ne propose pas de choix. |
 | `VITE_SCAN` | `false` : pas de scan des photos, l'avatar se crée à la main (sans carte de consentement). Activé par défaut ; une filière peut aussi le couper pour elle seule (`scan: false`). |
+| `VITE_SAMPLE_PHOTOS` | `true` : l'écran des photos du scan propose aussi quatre personnes fictives (photos générées par une IA, sous les quatre angles, dans `public/samples/`) ; en toucher une analyse ses photos comme si c'étaient celles du visiteur ou de la visiteuse, pour qui n'a pas de photos de soi. Désactivé par défaut. |
 | `VITE_VERSION` | `true` : la version du jeu et la date et l'heure de sa dernière mise à jour, en petit dans un coin de l'accueil ; `partout` : dans un coin de tous les écrans, pour un PC de staging. Désactivé par défaut ; « Le code », dans « Dans les coulisses », la montre toujours. |
 | `VITE_SCHOOL_NAME`, `VITE_SCHOOL_SITE`, `VITE_SCHOOL_URL` | ton école, dans le pied de chaque affiche et de « Dans les coulisses » imprimé (nom, site affiché, lien du QR code). Sans URL, il n'y a pas de bloc école. |
 

@@ -3,9 +3,33 @@ import { Character, DEFAULT_LOOK, type Look } from '../character/Character.ts';
 import { CharacterStage } from '../render/CharacterStage.ts';
 import { PortraitAnalyzer } from '../scan/PortraitAnalyzer.ts';
 import { logReport } from '../scan/classify.ts';
-import { PhotoSlots, type PhotoSources } from './PhotoSlots.ts';
+import { PhotoSlots, SLOTS, type PhotoSources, type SlotName } from './PhotoSlots.ts';
 import { AnalysisView, type Finding } from './AnalysisView.ts';
 import { icon } from './icons.ts';
+
+/**
+ * Fictional people (AI-generated photos in public/samples/<id>/, one per slot), for visitors without
+ * photos of their own. Offered only when the stand turns them on: VITE_SAMPLE_PHOTOS=true in .env.local.
+ */
+export const SAMPLE_PEOPLE = /^(true|1|on|oui)$/i.test(import.meta.env.VITE_SAMPLE_PHOTOS ?? '')
+  ? [
+      { id: 'noa', name: 'Noa' },
+      { id: 'robin', name: 'Robin' },
+      { id: 'sacha', name: 'Sacha' },
+      { id: 'alex', name: 'Alex' },
+    ]
+  : [];
+
+/** The photos of the sample person `id`, by slot (front.jpg, left.jpg…; only the front one is required). */
+async function samplePhotos(id: string) {
+  const photos = await Promise.all(SLOTS.map(async ({ name, required }) => {
+    const response = await fetch(`${import.meta.env.BASE_URL}samples/${id}/${name}.jpg`);
+    const image = response.ok && response.headers.get('content-type')?.startsWith('image/');
+    if (!image && required) throw new Error(`Photo d'exemple introuvable : ${id}/${name}.jpg`);
+    return image ? [[name, new File([await response.blob()], `${name}.jpg`, { type: 'image/jpeg' })]] : [];
+  }));
+  return Object.fromEntries(photos.flat()) as Partial<Record<SlotName, File>>;
+}
 
 type ScanState = 'photos' | 'analyzing' | 'done' | 'error';
 
@@ -52,6 +76,14 @@ export class ScanScreen {
         <div class="scan-avatar"></div>
         <p class="scan-instruction" aria-live="polite"></p>
         <p class="scan-hint"></p>
+        ${SAMPLE_PEOPLE.length ? `<div class="scan-samples">
+          <p>Pas de photos&nbsp;? Prends une personne inventée par une IA&nbsp;:</p>
+          <div class="scan-samples-list">${SAMPLE_PEOPLE.map(({ id, name }) => `
+            <button type="button" class="scan-sample" data-sample="${id}">
+              <img src="${import.meta.env.BASE_URL}samples/${id}/thumb.jpg" alt="">${name}
+            </button>`).join('')}
+          </div>
+        </div>` : ''}
         <ul class="scan-findings" aria-live="polite"></ul>
         <p class="scan-privacy">${icon('lock-simple')} Les photos restent sur cet ordinateur et sont oubliées dès que tu continues :
           on garde seulement des couleurs et des formes.</p>
@@ -93,6 +125,9 @@ export class ScanScreen {
 
     this.skipButton.addEventListener('click', () => this.onSkip?.());
     this.goButton.addEventListener('click', () => this.onGo?.());
+    for (const button of this.el.querySelectorAll<HTMLElement>('[data-sample]')) {
+      button.addEventListener('click', () => this.useSample(button.dataset.sample!));
+    }
   }
 
   /** Shows the screen on the photo slots; resolves with the scanned look parameters, or null. */
@@ -162,6 +197,20 @@ export class ScanScreen {
     if (this.el.dataset.state !== 'photos') return;
     this.goButton.disabled = !this.photos.ready;
     this.hintEl.textContent = this.photos.sorting ? 'Je range tes photos…' : '';
+  }
+
+  /** Puts the photos of the sample person `id` in the slots and analyses them. */
+  async useSample(id: string) {
+    if (this.el.dataset.state !== 'photos') return;
+    this.hintEl.textContent = '';
+    try {
+      await this.photos.fill(await samplePhotos(id));
+    } catch (error) {
+      console.warn('Photos d’exemple impossibles à charger :', error);
+      this.hintEl.textContent = 'Je n’arrive pas à charger ces photos.';
+      return;
+    }
+    if (this.el.dataset.state === 'photos' && this.photos.ready) this.runAnalysis(this.photos.sources());
   }
 
   /** Slot of each photo picked together, guessed from the face it shows (null when unsure). */

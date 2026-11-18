@@ -118,6 +118,17 @@ export class PhotoSlots {
     this.setSorting(false);
   }
 
+  /** Replaces the photos with `files`, each in its own slot (a sample person's photos). */
+  async fill(files: Partial<Record<SlotName, File>>) {
+    this.clear();
+    const generation = this.generation;
+    const photos = await Promise.all(Object.entries(files).map(async ([name, file]) => [name, await this.decode(file)] as const));
+    for (const [name, photo] of photos) {
+      if (photo && generation === this.generation) this.show(name as SlotName, photo);
+      else photo?.bitmap.close();
+    }
+  }
+
   /** Each photo into its guessed slot; the unsure ones and duplicates fill the slots left. */
   place(photos: DecodedPhoto[], guesses: (SlotName | null)[]) {
     const placed = new Map<SlotName, DecodedPhoto>(); // slot name → photo
