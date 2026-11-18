@@ -1,6 +1,7 @@
 import { CLASSES } from '../scan/masks.ts';
 import { SLOTS } from './PhotoSlots.ts';
 import { PALETTE } from '../render/palette.ts';
+import { blurCanvas } from '../render/canvasFilters.ts';
 import { icon, drawIcon } from './icons.ts';
 import type { MaskView, Point, Box } from '../scan/masks.ts';
 import type { SlotName } from './PhotoSlots.ts';
@@ -119,9 +120,8 @@ function backdropCanvas(source: HTMLCanvasElement, w: number, h: number) {
   const scale = Math.max(w / source.width, h / source.height) * 1.15;
   const sw = source.width * scale;
   const sh = source.height * scale;
-  ctx.filter = `blur(${Math.round(Math.max(w, h) / 40)}px)`;
   ctx.drawImage(source, (w - sw) / 2, (h - sh) / 2, sw, sh);
-  ctx.filter = 'none';
+  blurCanvas(canvas, Math.round(Math.max(w, h) / 40));
   ctx.globalAlpha = 0.45;
   ctx.fillStyle = INK;
   ctx.fillRect(0, 0, w, h);

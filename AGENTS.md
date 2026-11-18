@@ -35,6 +35,8 @@ both PLAN.md and PLAN.fr.md.
 - No emojis in the UI: pictograms through `icon('name')` (HTML) or `drawIcon()` (canvas) from
   `src/ui/icons.ts`. For a new icon, add its Phosphor name to `tools/build-icons.ts`, then `pnpm icons`.
 - Materials through `toon()` and the helpers of `src/render/materials.ts`, for a consistent style.
+- No `ctx.filter` in a 2D canvas: Safari (iPad and Mac) ignores it without an error. Brightness, contrast,
+  saturation and blur go through `adjustColors()` and `blurCanvas()` from `src/render/canvasFilters.ts`.
 - **Trades**: everything specific to a trade lives in `src/trades/<id>/` behind the contract described in
   `docs/adding-a-trade.md` and typed in `src/trades/types.ts`; the common code (`game/`, `ui/`, `poster/`…) reads it through `trade()` and
   never names a trade.

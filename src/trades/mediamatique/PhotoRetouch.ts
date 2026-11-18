@@ -2,6 +2,7 @@ import { MiniGame } from '../../minigames/MiniGame.ts';
 import { icon } from '../../ui/icons.ts';
 import { sound } from '../../kiosk/sound.ts';
 import type { IconName } from '../../ui/iconPaths.ts';
+import { adjustColors } from '../../render/canvasFilters.ts';
 import { SCENE, PRODUCT, BACKDROPS, backdropCanvas, productCanvas, setBackdrop, clampView, drawChecker } from './artwork.ts';
 
 const MAX_ZOOM = 2;
@@ -43,6 +44,8 @@ export class PhotoRetouch extends MiniGame {
   backdrop!: string | null;
   ref!: HTMLCanvasElement;
   work!: HTMLCanvasElement;
+  /** Where the photo is drawn and adjusted before it goes on `ref` or `work`. */
+  photo!: HTMLCanvasElement;
   ui!: {
     bar: HTMLElement;
     score: HTMLElement;
@@ -64,6 +67,7 @@ export class PhotoRetouch extends MiniGame {
     this.defects = { light: darkness, contrast: flatness };
     this.values = { light: 0, contrast: 0, crop: 0 };
     this.backdrop = null; // fresh from the shoot: no backdrop yet
+    this.photo = document.createElement('canvas');
 
     el.innerHTML = `
       <div class="mg-visual retouch-visual">
@@ -150,12 +154,17 @@ export class PhotoRetouch extends MiniGame {
     const w = SCENE.w / zoom;
     const h = SCENE.h / zoom;
     const view = clampView({ x: CROP_CENTER.x - w / 2, y: CROP_CENTER.y - h / 2, w, h });
-    const draw = (source: CanvasImageSource) => g.drawImage(source, view.x, view.y, view.w, view.h, 0, 0, canvas.width, canvas.height);
-    if (!this.backdrop) drawChecker(g, 0, 0, canvas.width, canvas.height, canvas.width / 30);
-    g.filter = `brightness(${light}) contrast(${contrast})`;
+    // The photo is adjusted on a layer of its own, so that the checkerboard behind it stays as it is.
+    const { photo } = this;
+    photo.width = canvas.width;
+    photo.height = canvas.height;
+    const p = photo.getContext('2d')!;
+    const draw = (source: CanvasImageSource) => p.drawImage(source, view.x, view.y, view.w, view.h, 0, 0, photo.width, photo.height);
     if (this.backdrop) draw(backdropCanvas(this.backdrop));
     draw(productCanvas());
-    g.filter = 'none';
+    adjustColors(photo, { brightness: light, contrast });
+    if (!this.backdrop) drawChecker(g, 0, 0, canvas.width, canvas.height, canvas.width / 30);
+    g.drawImage(photo, 0, 0);
   }
 
   update() {

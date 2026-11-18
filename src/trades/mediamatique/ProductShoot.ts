@@ -2,6 +2,7 @@ import { MiniGame } from '../../minigames/MiniGame.ts';
 import { PRODUCT, BOTTLE, clampView, greenCanvas, greenScreenCanvas, productCanvas, drawChecker } from './artwork.ts';
 import type { View } from './artwork.ts';
 import { PALETTE as C } from '../../render/palette.ts';
+import { adjustColors, blurCanvas } from '../../render/canvasFilters.ts';
 import { sound } from '../../kiosk/sound.ts';
 import { icon } from '../../ui/icons.ts';
 
@@ -52,6 +53,7 @@ export class ProductShoot extends MiniGame {
   reveal!: { x: number; y: number; t: number } | null;
   phase!: Phase;
   blurred!: HTMLCanvasElement[];
+  lit!: { brightness: number; canvas: HTMLCanvasElement } | null;
   layers!: { checker: HTMLCanvasElement; green: HTMLCanvasElement; product: HTMLCanvasElement };
   productPixels!: ImageData;
 
@@ -108,6 +110,7 @@ export class ProductShoot extends MiniGame {
     this.focus = { value: FOCUS.start, target: Math.round(FOCUS.min + Math.random() * (FOCUS.max - FOCUS.min)) };
     this.frozen = false;
     this.reveal = null;
+    this.lit = null;
 
     this.setPhase('light');
     this.ui.step.textContent = '1 · Éclairage';
@@ -286,12 +289,27 @@ export class ProductShoot extends MiniGame {
     const layer = document.createElement('canvas');
     layer.width = width;
     layer.height = height;
-    const g = layer.getContext('2d')!;
-    g.filter = `brightness(${this.brightness()})${blur ? ` blur(${blur}px)` : ''}`;
-    g.drawImage(source,
+    layer.getContext('2d')!.drawImage(source,
       this.view.x - margin / k, this.view.y - margin / k, VIEW_W + (margin * 2) / k, VIEW_H + (margin * 2) / k,
       -margin, -margin, width + margin * 2, height + margin * 2);
+    adjustColors(layer, { brightness: this.brightness() });
+    blurCanvas(layer, blur);
     return layer;
+  }
+
+  /** The whole set as lit by the softbox, computed again only when the light changes. */
+  litScene() {
+    const brightness = this.brightness();
+    if (this.lit?.brightness !== brightness) {
+      const source = greenScreenCanvas();
+      const canvas = this.lit?.canvas ?? document.createElement('canvas');
+      canvas.width = source.width;
+      canvas.height = source.height;
+      canvas.getContext('2d')!.drawImage(source, 0, 0);
+      adjustColors(canvas, { brightness });
+      this.lit = { brightness, canvas };
+    }
+    return this.lit.canvas;
   }
 
   shoot() {
@@ -379,9 +397,7 @@ export class ProductShoot extends MiniGame {
       const level = Math.round(Math.min(1, off / FOCUS.blurry) * (BLUR_LEVELS - 1));
       g.drawImage(this.blurred[level], 0, 0);
     } else {
-      g.filter = `brightness(${this.brightness()})`;
-      g.drawImage(greenScreenCanvas(), this.view.x, this.view.y, VIEW_W, VIEW_H, 0, 0, width, height);
-      g.filter = 'none';
+      g.drawImage(this.litScene(), this.view.x, this.view.y, VIEW_W, VIEW_H, 0, 0, width, height);
     }
 
     // Centre box, the rest of the frame a little dimmed while framing.

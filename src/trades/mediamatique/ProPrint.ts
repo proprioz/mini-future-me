@@ -2,6 +2,7 @@ import { MiniGame } from '../../minigames/MiniGame.ts';
 import { icon } from '../../ui/icons.ts';
 import { drawDesign, DEFAULT_DESIGN } from './PosterLayout.ts';
 import type { Design } from './PosterLayout.ts';
+import { adjustColors } from '../../render/canvasFilters.ts';
 
 type SettingKey = 'format' | 'color' | 'dpi' | 'bleed';
 
@@ -150,10 +151,9 @@ export class ProPrint extends MiniGame {
       source = this.lowRes;
     }
     g.imageSmoothingEnabled = values.dpi !== '72';
-    // RGB colours sent to a CMYK press come out dull.
-    g.filter = values.color === 'rgb' ? 'saturate(0.45) brightness(0.92) contrast(0.9)' : 'none';
     g.drawImage(source, 0, 0, width, height);
-    g.filter = 'none';
+    // RGB colours sent to a CMYK press come out dull.
+    if (values.color === 'rgb') adjustColors(canvas, { saturate: 0.45, brightness: 0.92, contrast: 0.9 });
 
     // Without bleed the cut drifts a little and leaves white slivers on two sides.
     if (values.bleed === 'no') {
