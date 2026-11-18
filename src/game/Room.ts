@@ -50,7 +50,7 @@ const HIGHLIGHT = new THREE.Color(0.16, 0.14, 0.09);
 const GLOW = new THREE.Color(0.2, 0.07, 0.08);
 
 /**
- * The little office: floor, two back walls, the cork board with the client's orders and some decor,
+ * The little office: floor, two back walls (their colours and the floor may come from the trade's `room`), the cork board with the client's orders and some decor,
  * common to every trade; the trade adds its work stations (`trade().buildStations(ctx)`).
  * Back wall runs along X at z = 0, left wall along Z at x = 0; the camera looks from +X +Z.
  * Small room, big stations: each one reads at a glance and is an easy target for a finger.
@@ -140,31 +140,34 @@ export function canvasTexture(
 }
 
 /** Basket-weave parquet: one square of three planks per tile, so the walking grid reads at a glance. */
-function parquetTexture(): THREE.CanvasTexture<HTMLCanvasElement> {
-  const size = 512;
+function drawParquet(g: CanvasRenderingContext2D, size: number): void {
   const tile = size / 2;
   const plank = tile / 3;
-  const texture = canvasTexture(size, size, (g) => {
-    for (let tz = 0; tz < 2; tz++) {
-      for (let tx = 0; tx < 2; tx++) {
-        const across = (tx + tz) % 2 === 0;
-        for (let i = 0; i < 3; i++) {
-          const [x, y, w, h] = across
-            ? [tx * tile, tz * tile + i * plank, tile, plank]
-            : [tx * tile + i * plank, tz * tile, plank, tile];
-          g.fillStyle = C.parquet[(tx * 3 + tz * 2 + i) % C.parquet.length];
-          g.fillRect(x, y, w, h);
-          // Soft highlight along one edge of each plank, then the seam.
-          g.fillStyle = 'rgba(255, 255, 255, 0.18)';
-          if (across) g.fillRect(x, y + 3, w, 4);
-          else g.fillRect(x + 3, y, 4, h);
-          g.strokeStyle = C.wood;
-          g.lineWidth = 2;
-          g.strokeRect(x + 1, y + 1, w - 2, h - 2);
-        }
+  for (let tz = 0; tz < 2; tz++) {
+    for (let tx = 0; tx < 2; tx++) {
+      const across = (tx + tz) % 2 === 0;
+      for (let i = 0; i < 3; i++) {
+        const [x, y, w, h] = across
+          ? [tx * tile, tz * tile + i * plank, tile, plank]
+          : [tx * tile + i * plank, tz * tile, plank, tile];
+        g.fillStyle = C.parquet[(tx * 3 + tz * 2 + i) % C.parquet.length];
+        g.fillRect(x, y, w, h);
+        // Soft highlight along one edge of each plank, then the seam.
+        g.fillStyle = 'rgba(255, 255, 255, 0.18)';
+        if (across) g.fillRect(x, y + 3, w, 4);
+        else g.fillRect(x + 3, y, 4, h);
+        g.strokeStyle = C.wood;
+        g.lineWidth = 2;
+        g.strokeRect(x + 1, y + 1, w - 2, h - 2);
       }
     }
-  });
+  }
+}
+
+/** The floor: the trade's own (`room.floor`) or the parquet, repeated over the room, 2 × 2 tiles per canvas. */
+function floorTexture(): THREE.CanvasTexture<HTMLCanvasElement> {
+  const size = 512;
+  const texture = canvasTexture(size, size, (g) => (trade().room?.floor ?? drawParquet)(g, size));
   texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
   texture.repeat.set(ROOM_WIDTH / 2, ROOM_DEPTH / 2); // one canvas = 2x2 tiles
   texture.anisotropy = 8;
@@ -176,6 +179,7 @@ function buildShell({ group }: RoomContext): void {
   const D = ROOM_DEPTH;
   const H = WALL_HEIGHT;
   const T = WALL_THICKNESS;
+  const { wall, wainscot } = trade().room ?? C;
 
   // The room floats like a diorama: thick teal base, with a soft shadow far below it.
   const shadow = new THREE.Mesh(
@@ -206,7 +210,7 @@ function buildShell({ group }: RoomContext): void {
     group.add(part);
   }
 
-  const floor = mesh(new THREE.PlaneGeometry(W, D), toon('#ffffff', { map: parquetTexture() }));
+  const floor = mesh(new THREE.PlaneGeometry(W, D), toon('#ffffff', { map: floorTexture() }));
   floor.rotation.x = -Math.PI / 2;
   floor.position.set(W / 2, 0.001, D / 2);
   floor.castShadow = false;
@@ -214,12 +218,12 @@ function buildShell({ group }: RoomContext): void {
 
   // Back wall (z = 0), left wall (x = 0), with two-tone wainscot and a top cap.
   addTo(group,
-    place(box(W + T, H, T, C.wall, 0.01), W / 2 - T / 2, H / 2, -T / 2),
-    place(box(T, H, D, C.wall, 0.01), -T / 2, H / 2, D / 2),
+    place(box(W + T, H, T, wall, 0.01), W / 2 - T / 2, H / 2, -T / 2),
+    place(box(T, H, D, wall, 0.01), -T / 2, H / 2, D / 2),
     place(box(W + T + 0.04, 0.06, T + 0.04, C.tealDeep, 0.01), W / 2 - T / 2, H + 0.03, -T / 2),
     place(box(T + 0.04, 0.06, D + 0.02, C.tealDeep, 0.01), -T / 2, H + 0.03, D / 2),
-    place(box(W, 0.9, 0.03, C.wainscot, 0.005), W / 2, 0.45, 0.015),
-    place(box(0.03, 0.9, D, C.wainscot, 0.005), 0.015, 0.45, D / 2),
+    place(box(W, 0.9, 0.03, wainscot, 0.005), W / 2, 0.45, 0.015),
+    place(box(0.03, 0.9, D, wainscot, 0.005), 0.015, 0.45, D / 2),
     place(box(W, 0.05, 0.05, C.trim, 0.01), W / 2, 0.92, 0.025),
     place(box(0.05, 0.05, D, C.trim, 0.01), 0.025, 0.92, D / 2),
   );

@@ -2,6 +2,7 @@ import './style.css';
 import { TASKS } from './tasks.ts';
 import { SKILLS } from './skills.ts';
 import { buildStations } from './stations.ts';
+import { WORKSHOP_ROOM } from './workshop.ts';
 import { creation } from './creation.ts';
 import { STUDIO } from './decors.ts';
 import { PHOTOGRAPHER, PROUD } from './poses.ts';
@@ -24,8 +25,10 @@ export default {
   // Won with the whole campaign: shown on the win screen of the last order.
   finalSkill: 'projects',
 
-  // The work stations of the office (desk and laptop, photo corner, copier).
+  // The work stations of the office (desk and laptop, photo corner, copier), and the workshop's walls
+  // and floor.
   buildStations,
+  room: WORKSHOP_ROOM,
 
   // What the character holds on the poster: the poster laid out in the layout task.
   creation,

@@ -57,6 +57,7 @@ and `pnpm typecheck` point out a missing field or a wrong pictogram name.
 | `poster.caption` | the line under the visitor's name on the poster |
 | `about.chapter` | the "Le métier" chapter of "Dans les coulisses", same shape as the common chapters of `src/ui/AboutPanel.ts` |
 | `phone.fact` | a word about the job on the phone page of the poster, after the job's name |
+| `room` | optional: the room's `wall` and `wainscot` colours and its `floor(g, size)`, drawn on a canvas of 2 × 2 tiles; the shared pink office with its parquet otherwise (media: `WORKSHOP_ROOM` in `workshop.ts`) |
 
 Import the trade's CSS from `index.ts` (`import './style.css'`): it loads with the trade.
 

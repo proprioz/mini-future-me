@@ -19,7 +19,9 @@ for shades, `mixHex()` and `shadeHex()` from `src/render/materials.ts`.
 | Secondary accents (sparingly) | `sky`, `lilac`, `leaf` |
 | White objects, paper, appliances | `paper` (#fff), or very light greys like `#f3f6f8`, `#e2e9ee` |
 
-The room's shell (pink walls, wainscot, honey parquet) is common and stays as it is. A trade-specific
+The room's shell (pink walls, wainscot, honey parquet) is common; a trade may give it its own wall and
+wainscot colours and floor through `room` (the media workshop: pale grey walls, slate wainscot, grey tiles),
+keeping one floor square per tile so the walking grid reads. A trade-specific
 colour (like `chroma`, the green screen) is added to `PALETTE` with a comment saying which trade uses it.
 
 ## Office stations (3D)
@@ -43,8 +45,10 @@ models to follow.
   `emissive: '#ffffff', emissiveMap: texture, emissiveIntensity: 0.5–0.6` so they glow softly. Draw them
   with the palette, in the same flat style as the mini-games. If they show something the visitor makes,
   repaint them when it changes (see `artTexture()` in the media stations).
-- **Decor-only pieces** (like the media trade's ring light) are welcome: one per trade is enough to set
-  the scene, without blocking paths.
+- **Decor-only pieces** set the scene: a few telling tools of the trade on the walls, the desk and the
+  floor (the media trade's `workshop.ts`: acoustic panels, a tool pegboard, lenses, flight cases), without
+  blocking paths. Put them where the stations' badges do not cover them, and let the flat ones (on a wall
+  or a desk) cast no shadow, to keep the room light to draw.
 - **Cozy, never realistic**: rounded edges, saturated pastels, ink-coloured dark parts, a little warm light
   (emissive `sun`/`#fff6e6` on lamps).
 - Keep paths walkable: the avatar must reach each station's `useTile`, and the floor around the rug stays

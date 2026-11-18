@@ -26,6 +26,13 @@ export const PALETTE = {
   trim: '#ffffff',
   wood: '#d09a63',
   parquet: ['#f0c28b', '#e8b57d', '#f4ca98', '#e3ac73'],
+
+  // The media trade's workshop (src/trades/mediamatique/workshop.ts): pale grey walls, slate wainscot,
+  // grey resin floor tiles.
+  workshopWall: '#e6ecef',
+  workshopWainscot: '#5f7a87',
+  workshopFloor: ['#c4ccd1', '#bcc5cb', '#c9d1d5', '#b8c1c7'],
+  workshopSeam: '#9eaab2',
 };
 
 // Lighting shared by the game and the character previews: warm sun, sky-blue fill and a

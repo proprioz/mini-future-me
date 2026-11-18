@@ -3,19 +3,19 @@ import { addTo, canvasTexture, makeInteractable } from '../../game/Room.ts';
 import { box, cylinder, sphere, mesh, toon, place } from '../../render/materials.ts';
 import { PALETTE as C } from '../../render/palette.ts';
 import { fontsReady } from '../../ui/fonts.ts';
-import { drawIcon } from '../../ui/icons.ts';
 import { drawStudioView, productView, drawPoster, onBackdropChange } from './artwork.ts';
+import { buildWorkshop } from './workshop.ts';
 import type { RoomContext } from '../../game/Room.ts';
 
-// The work stations of the media office, added to the common room by `buildStations()`: the desk and
-// its laptop against the back wall, the photo corner, the copier on the left wall, and the influencer
-// set-up in front (decor only).
+// The work stations of the media workshop, added to the common room by `buildStations()`: the desk and
+// its laptop against the back wall, the photo corner and the copier on the left wall, with the workshop's
+// decor around them (workshop.ts).
 
 export function buildStations(ctx: RoomContext) {
   buildDesk(ctx);
   buildPhotoCorner(ctx);
   buildPrinter(ctx);
-  buildPhoneCorner(ctx);
+  buildWorkshop(ctx);
 }
 
 /**
@@ -84,8 +84,8 @@ function buildDesk(ctx: RoomContext) {
   desk.add(laptop);
 
   // Mug and desk lamp.
-  desk.add(place(cylinder(0.06, 0.055, 0.14, C.sun), 1.85, 0.85, 0.7));
-  const handle = place(mesh(new THREE.TorusGeometry(0.035, 0.012, 8, 16), toon(C.sun)), 1.91, 0.85, 0.7);
+  desk.add(place(cylinder(0.06, 0.055, 0.14, C.sun), 1.72, 0.85, 0.72));
+  const handle = place(mesh(new THREE.TorusGeometry(0.035, 0.012, 8, 16), toon(C.sun)), 1.78, 0.85, 0.72);
   handle.rotation.y = Math.PI / 2;
   desk.add(handle);
 
@@ -157,21 +157,35 @@ function buildPhotoCorner(ctx: RoomContext) {
   );
   grid.block([5, 0], [6, 0]);
 
-  // Softbox aimed at the product.
-  const softbox = place(new THREE.Group(), 6.55, 0, 1.75);
-  softbox.add(
-    place(cylinder(0.18, 0.2, 0.03, C.ink), 0, 0.015, 0),
-    place(cylinder(0.02, 0.02, 1.55, C.ink), 0, 0.8, 0),
-  );
-  const head = place(new THREE.Group(), 0, 1.6, 0);
-  head.rotation.set(0.25, Math.atan2(cx - 6.55, 0.75 - 1.75), 0, 'YXZ');
+  // Softbox next to the camera, lighting the product almost from the front. Seen from the room it shows
+  // its side: the diffuser stands out so its glowing edge still reads.
+  const [lightX, lightY, lightZ] = [4.35, 1.15, 1.85];
+  const [dx, dz] = [cx - lightX, 0.75 - lightZ];
+  const softbox = place(new THREE.Group(), lightX, 0, lightZ);
+  for (let i = 0; i < 3; i++) {
+    const leg = place(box(0.36, 0.03, 0.04, C.ink, 0.01), 0, 0.02, 0);
+    leg.rotation.y = (i * Math.PI * 2) / 3;
+    leg.translateX(0.16);
+    softbox.add(leg);
+  }
+  softbox.add(place(cylinder(0.02, 0.02, lightY - 0.05, C.ink), 0, lightY / 2, 0));
+  const head = place(new THREE.Group(), 0, lightY, 0);
+  // Aimed at the bottle's middle.
+  head.rotation.set(Math.atan2(lightY - 0.8, Math.hypot(dx, dz)), Math.atan2(dx, dz), 0, 'YXZ');
+  // A square pyramid, wide at the front: the black fabric box, the bright diffuser and its rim, the
+  // lamp housing at the back.
+  const shell = mesh(new THREE.CylinderGeometry(0.46, 0.13, 0.42, 4, 1, true), toon(C.ink, { side: THREE.DoubleSide }));
+  shell.rotation.set(Math.PI / 2, Math.PI / 4, 0, 'XZY');
   head.add(
-    place(box(0.55, 0.55, 0.3, C.ink, 0.04), 0, 0, 0),
-    place(box(0.5, 0.5, 0.02, C.paper, 0.005, { emissive: '#fff6e6', emissiveIntensity: 0.9 }), 0, 0, 0.16),
+    shell,
+    place(box(0.68, 0.68, 0.08, C.paper, 0.02, { emissive: '#fff6e6', emissiveIntensity: 1 }), 0, 0, 0.23),
+    place(box(0.72, 0.72, 0.015, C.inkSoft, 0.01), 0, 0, 0.198),
+    place(box(0.2, 0.2, 0.14, C.inkSoft, 0.03), 0, 0, -0.27),
+    place(box(0.06, 0.24, 0.06, C.ink, 0.01), 0, -0.2, -0.22),
   );
   softbox.add(head);
   group.add(softbox);
-  grid.block([6, 1]);
+  grid.block([4, 1]);
 
   // Camera on tripod, looking at the product (-Z). Big enough to be recognised from across the room.
   const camera = place(new THREE.Group(), cx, 0, 2.5);
@@ -302,51 +316,4 @@ function buildPrinter(ctx: RoomContext) {
     focus: new THREE.Vector3(0.5, 1.35, z0),
     hitbox: { size: [1.2, 1.6, 1.7], at: [0.55, 0.8, z0 + 0.15] },
   });
-}
-
-/** 📱 A big smartphone in a ring light on its stand, the influencer set-up: decor only. */
-function buildPhoneCorner(ctx: RoomContext) {
-  const { group, grid } = ctx;
-  const stand = place(new THREE.Group(), 4.5, 0, 4.45);
-  stand.scale.setScalar(1.25);
-  // The ring and the screen face the camera.
-  stand.rotation.y = Math.PI / 4;
-
-  for (let i = 0; i < 3; i++) {
-    const holder = place(new THREE.Group(), 0, 0.55, 0);
-    holder.rotation.y = (i * Math.PI * 2) / 3;
-    const tilt = new THREE.Group();
-    tilt.rotation.x = 0.35;
-    tilt.add(place(cylinder(0.018, 0.018, 0.6, C.ink, undefined, 8), 0, -0.29, 0));
-    holder.add(tilt);
-    stand.add(holder);
-  }
-  stand.add(place(cylinder(0.02, 0.02, 0.75, C.ink), 0, 0.9, 0));
-
-  const ring = place(mesh(new THREE.TorusGeometry(0.36, 0.045, 12, 40), toon('#fff4dc', { emissive: '#ffe2a8', emissiveIntensity: 0.9 })), 0, 1.4, 0);
-  const screen = artTexture(150, 270, C.blush, (g, w, h) => {
-    // A post being published: profile bar, the photo, likes.
-    g.fillStyle = C.paper;
-    g.fillRect(0, 0, w, h);
-    g.fillStyle = C.coral;
-    g.beginPath();
-    g.arc(22, 26, 12, 0, Math.PI * 2);
-    g.fill();
-    g.fillStyle = C.mist;
-    g.fillRect(42, 20, 80, 12);
-    drawStudioView(g, productView(1, 0.8), 0, 50, w, w);
-    drawIcon(g, 'heart', 8, 212, 30, { ink: C.coral });
-    g.fillStyle = C.mist;
-    g.fillRect(48, 218, 80, 10);
-    g.fillRect(48, 236, 56, 10);
-  });
-  stand.add(
-    ring,
-    place(box(0.24, 0.44, 0.04, C.ink, 0.04), 0, 1.4, 0.01),
-    place(box(0.2, 0.39, 0.006, '#ffffff', 0.002, { map: screen, emissive: '#ffffff', emissiveMap: screen, emissiveIntensity: 0.5 }), 0, 1.4, 0.033),
-    place(box(0.06, 0.04, 0.04, C.ink, 0.01), 0, 1.15, 0),
-  );
-  group.add(stand);
-  grid.block([4, 4]);
-
 }

@@ -80,6 +80,15 @@ export interface TradeModule {
   poster: { caption: string };
   about: { chapter: Chapter };
   phone: { fact: string };
+  /** The look of the room's shell, when the trade wants its own; the shared pink office otherwise. */
+  room?: RoomLook;
+}
+
+/** Colours of the room's walls, and the floor drawn on a canvas of `size` × `size` px for 2 × 2 tiles. */
+export interface RoomLook {
+  wall: string;
+  wainscot: string;
+  floor(g: CanvasRenderingContext2D, size: number): void;
 }
 
 /** A trade's entry in trades/index.ts: what the welcome screen needs before loading it. */

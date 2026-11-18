@@ -58,6 +58,7 @@ Essaie-la avec http://localhost:5173/?filiere=cuisine, et sur le stand avec `VIT
 | `poster.caption` | la ligne sous le prénom sur l'affiche |
 | `about.chapter` | le chapitre « Le métier » de « Dans les coulisses », de même forme que les chapitres communs de `src/ui/AboutPanel.ts` |
 | `phone.fact` | un mot sur le métier sur la page téléphone de l'affiche, après le nom du métier |
+| `room` | facultatif : les couleurs des murs (`wall`) et du soubassement (`wainscot`) de la pièce, et son sol `floor(g, size)`, dessiné sur un canevas de 2 × 2 cases ; sinon, le bureau rose commun et son parquet (médias : `WORKSHOP_ROOM` dans `workshop.ts`) |
 
 Importe le CSS de la filière depuis `index.ts` (`import './style.css'`) : il se charge avec la filière.
 
