@@ -804,25 +804,35 @@ function staff(): THREE.Group {
   return group;
 }
 
-/** Small dark pistol: the grip in the fist (its butt showing under it), the barrel pointing forwards; `side`: the hand. */
+/**
+ * Small dark toy pistol, with the orange tip, trigger and sight of a toy gun: the grip in the fist (its butt
+ * showing behind it), the barrel along the forearm; `side`: the hand.
+ */
 function pistol(side = 1): THREE.Group {
   const group = new THREE.Group();
+  const toy = '#ff7b00';
   const grip = prop(new THREE.BoxGeometry(0.024, 0.085, 0.034), '#2b2b2e');
   grip.rotation.x = -0.25;
   grip.position.set(0, -0.012, -0.006);
-  const slide = prop(new THREE.BoxGeometry(0.026, 0.03, 0.13), '#4a4e57');
-  slide.position.set(0, 0.04, 0.04);
-  const sight = prop(new THREE.BoxGeometry(0.008, 0.01, 0.01), '#4a4e57');
-  sight.position.set(0, 0.058, 0.098);
+  const slide = prop(new THREE.BoxGeometry(0.026, 0.03, 0.115), '#4a4e57');
+  slide.position.set(0, 0.04, 0.0325);
+  const tip = prop(new THREE.BoxGeometry(0.028, 0.032, 0.016), toy);
+  tip.position.set(0, 0.04, 0.098);
+  const sight = prop(new THREE.BoxGeometry(0.008, 0.01, 0.01), toy);
+  sight.position.set(0, 0.058, 0.08);
   const muzzle = celMesh(new THREE.CircleGeometry(0.007, 10), cel('#121214', { rim: 0 }), { outline: 0 });
-  muzzle.position.set(0, 0.042, 0.106);
+  muzzle.position.set(0, 0.042, 0.1065);
   const guard = prop(new THREE.TorusGeometry(0.016, 0.004, 6, 12, Math.PI), '#2b2b2e');
   guard.rotation.set(Math.PI, Math.PI / 2, 0);
   guard.position.set(0, 0.025, 0.035);
-  group.add(grip, slide, sight, muzzle, guard);
+  const trigger = prop(new THREE.BoxGeometry(0.006, 0.016, 0.006), toy);
+  trigger.rotation.x = 0.3;
+  trigger.position.set(0, 0.016, 0.03);
+  group.add(grip, slide, tip, sight, muzzle, guard, trigger);
   group.scale.setScalar(1.25);
-  // Turned out a little, so it shows its side.
-  group.rotation.y = 0.6 * side;
+  // Barrel in line with the forearm (the slide on the thumb's side), turned about it so it shows its side.
+  group.rotation.set(Math.PI / 2, 0, -0.4 * side);
+  group.position.z = -0.025; // the slide in the fist's front, so the barrel comes out of it
   return group;
 }
 

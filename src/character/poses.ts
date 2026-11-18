@@ -13,8 +13,8 @@ import type { Character } from './Character.ts';
 // `creation`, see `setCreation()`), every pose holds it: `withCreation` then replaces the arms and props
 // it lists. `needsCreation`: the pose holds nothing without the object, so a trade offers it only with
 // something else to hold until then (media: the camera, in its own poses.ts).
-/** Angles of an arm, in radians (see above). */
-export interface ArmPose { out?: number; fwd?: number; bendOut?: number; bend?: number }
+/** Angles of an arm, in radians (see above); `onHip`: the hand rests on the hip, so it puts down what it holds. */
+export interface ArmPose { out?: number; fwd?: number; bendOut?: number; bend?: number; onHip?: boolean }
 export interface LegPose { out?: number; fwd?: number; knee?: number }
 
 /** How a prop sits in the hands (see `hold()`). */
@@ -78,8 +78,8 @@ export const POSES: Pose[] = [
   },
   {
     id: 'hero', label: 'Héroïque',
-    leftArm: { out: 0.6, bendOut: -2.0, bend: 0.25 },
-    rightArm: { out: 0.6, bendOut: -2.0, bend: 0.25 },
+    leftArm: { out: 0.6, bendOut: -2.0, bend: 0.25, onHip: true },
+    rightArm: { out: 0.6, bendOut: -2.0, bend: 0.25, onHip: true },
     leftLeg: { out: 0.13 },
     rightLeg: { out: 0.13 },
     head: { nod: -0.07 },
@@ -98,7 +98,7 @@ export interface HeldCreation {
 
 type PropMesh = THREE.Mesh<THREE.BufferGeometry, THREE.Material & { map?: THREE.Texture | null }>;
 
-const REST_ARM: Required<ArmPose> = { out: 0.09, fwd: 0, bendOut: 0, bend: 0.15 };
+const REST_ARM: Required<ArmPose> = { out: 0.09, fwd: 0, bendOut: 0, bend: 0.15, onHip: false };
 const REST_LEG: Required<LegPose> = { out: 0, fwd: 0, knee: 0 };
 // From the elbow joint to the middle of the hand (see Character.build).
 const HAND = new THREE.Vector3(0, -0.14, 0);
@@ -124,10 +124,11 @@ export function applyPose(character: Character, pose: Pose | null | undefined): 
     .filter(([id]) => id !== 'creation' || creation)
     .map(([id, grip]): [string, Grip] => [id, id === 'creation' ? { ...grip, ...creation!.holds?.[pose!.id] } : grip]);
   setProps(character, holds.map(([id]) => id));
-  // A hand that holds a prop of the pose puts down what the character holds (the pistols…).
+  // A hand that holds a prop of the pose, or rests on the hip, puts down what the character holds (the pistols…).
   for (const item of character.heldItems) {
     const hand = item.userData.side > 0 ? 'left' : 'right';
-    item.visible = !holds.some(([, { hand: h = 'both' }]) => h === 'both' || h === hand);
+    const onHip = (hand === 'left' ? held?.leftArm : held?.rightArm)?.onHip;
+    item.visible = !onHip && !holds.some(([, { hand: h = 'both' }]) => h === 'both' || h === hand);
   }
   if (!held) return;
 
