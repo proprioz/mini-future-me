@@ -1,5 +1,6 @@
 # Checks every push and pull request: types, CSS (sizes in rem), the game's rules and the trades'
 # contract (Vitest), then the game played in a browser (Playwright). The same as `pnpm check` on the PC.
+# The quick checks and each browser run as parallel jobs; a new push cancels the run it replaces.
 name: Vérifications
 
 on:
@@ -7,10 +8,14 @@ on:
     branches: [main]
   pull_request:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   check:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -22,11 +27,32 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm lint:css
       - run: pnpm test
-      - run: pnpm exec playwright install --with-deps chromium webkit firefox
-      - run: xvfb-run pnpm test:e2e
+
+  # Every test in Chromium, the @target ones (the target screen) in WebKit and Firefox: see playwright.config.ts.
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, webkit, firefox]
+    # Playwright's image ships its browsers, their system libraries and xvfb: nothing to install.
+    # Its version must match @playwright/test in pnpm-lock.yaml.
+    container: mcr.microsoft.com/playwright:v1.64.1-noble
+    env:
+      HOME: /root # Firefox refuses to start as root with another user's home
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: xvfb-run pnpm test:e2e --project=${{ matrix.browser }}
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
-          name: playwright-traces
+          name: playwright-traces-${{ matrix.browser }}
           path: test-results/
           retention-days: 7
