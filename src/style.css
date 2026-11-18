@@ -1701,6 +1701,11 @@ button {
 }
 
 @media (max-aspect-ratio: 1/1) {
+  /* On a portrait screen, 1rem follows the width: 53.75rem would leave a third of the height empty. */
+  .mg-card {
+    height: 100%;
+  }
+
   .mg-play {
     grid-template-columns: 1fr;
     grid-template-rows: minmax(15rem, 1fr) auto;
