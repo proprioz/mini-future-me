@@ -58,6 +58,7 @@ export interface HairRecipe {
   stubble?: HeadLine;
   shade?: number;
   lockMap?: THREE.Texture;
+  shellMap?: { map: THREE.Texture; uv: (lon: number, lat: number) => number[] };
 }
 
 function teeth(x: number, period: number): number {
@@ -509,10 +510,10 @@ function taperLocks(params: HeadParams): THREE.BufferGeometry[] {
 }
 
 /**
- * Braided rope, tiling along a lock: chevrons like the crossing strands of a braid (or the twists of
- * a loc), light grey multiplied with the hair colour.
+ * Twist of a loc, tiling along it, one twist per tile: a chevron like the crossing strands of a
+ * rope, light grey multiplied with the hair colour.
  */
-const braidTexture = once(() => {
+const locTexture = once(() => {
   const canvas = document.createElement('canvas');
   canvas.width = 32;
   canvas.height = 32;
@@ -534,60 +535,107 @@ const braidTexture = once(() => {
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-  texture.repeat.set(2, 11);
+  texture.repeat.set(2, 1);
   texture.anisotropy = 4;
   return texture;
 });
 
+/** Length of one twist of a loc along the rope (head units): a chevron of locTexture() and a swelling. */
+const LOC_TWIST = 0.024;
+
 const locsCache = new Map<string, THREE.BufferGeometry>();
 
-/** Hairline of locs and braids: a clean one, the hair pulled back from it. */
+/** Hairline of locs: a clean one, the hair pulled back from it. */
 const locsLine = (lon: number) => hairline(lon, { forehead: 0.5 });
+/**
+ * Mass under the locs, of their colour: thick enough to fill the gaps between them, so the top of the
+ * head shows only grooves between the ropes, never a bare, smooth scalp.
+ */
+const locsShell = capThickness(locsLine, 0.024, 0.014);
 
 /**
- * Locs or braids: thick ropes rooted all over the scalp, pulled back and to the sides off the face,
- * hugging the head, then falling below the shoulders. Each rope swells and narrows along its length
- * (the twists of a loc, the crossings of a braid), which shows whatever the hair colour. Under a hat
- * they come out from under its edge. Cached per head shape (cloned: characters dispose of their
- * geometries).
+ * One rope of the locs along `curve`, `r0` thick: it swells at every twist (a chevron of
+ * locTexture() on each), twists of the same length on every rope, shifted by `phase` (0–1) so they
+ * do not line up from one to the next; a round root and a round tip, slimmer towards the end.
  */
-function locStrands(params: HeadParams, hatted: boolean): THREE.BufferGeometry {
-  const key = `${JSON.stringify(params)}|${hatted}`;
+function locRope(curve: THREE.CatmullRomCurve3, r0: number, phase: number): THREE.BufferGeometry {
+  const span = curve.getLength();
+  const twist = (t: number) => phase + (t * span) / LOC_TWIST;
+  const radius = (t: number) => r0 * (0.88 + 0.2 * Math.abs(Math.sin(twist(t) * Math.PI))) * (1 - 0.18 * t)
+    * Math.sqrt(1 - (1 - smoothstep(t, 0, 0.03)) ** 2) * Math.sqrt(1 - smoothstep(t, 0.9, 1) ** 2);
+  const rope = sweep(curve, radius, { segments: Math.ceil((span / LOC_TWIST) * 6), radial: 10 });
+  const uv = rope.attributes.uv;
+  for (let j = 0; j < uv.count; j++) uv.setY(j, twist(uv.getY(j)));
+  return rope;
+}
+
+/**
+ * Locs, between locs and box braids: thin ropes rooted all over the scalp, pulled back and to the
+ * sides off the face, lying a little off the head (volume on the crown), then falling below the
+ * shoulders, splaying out a little towards their rounded ends. Under a hat they come out from just
+ * under its edge (`hatEdge`), behind the temples. Cached per head shape and hat (cloned: characters
+ * dispose of their geometries).
+ */
+function locStrands(params: HeadParams, hatEdge: HeadLine | null): THREE.BufferGeometry {
+  const key = `${JSON.stringify(params)}|${hatEdge ? [0, 1, 2, 3].map((lon) => hatEdge(lon).toFixed(3)) : ''}`;
   if (!locsCache.has(key)) {
     const random = seeded(41);
     const rand = (from: number, to: number) => from + random() * (to - from);
     const strands: THREE.BufferGeometry[] = [];
-    // Under a hat, the roots are a ring just below its edge.
-    const roots = hatted
-      ? Array.from({ length: 30 }, (_, i) => ({ lon: -Math.PI + ((i + 0.5) / 30) * 2 * Math.PI, lat: 0.22 }))
-      : spiral(48, 0.1);
+    // Under a hat, the roots are a ring just below its edge, from behind the temples round the back.
+    const roots = hatEdge
+      ? Array.from({ length: 36 }, (_, i) => {
+        const side = i % 2 ? 1 : -1;
+        const lon = side * lerp(1.12, Math.PI - 0.04, Math.floor(i / 2) / 17);
+        return { lon, lat: hatEdge(lon) - 0.03 };
+      })
+      // Two rows along the hairline, so the front of the head is lined with ropes swept back from it.
+      : [...[[9, 0.8, 0.08], [8, 0.7, 0.22], [7, 0.55, 0.36]].flatMap(([count, spread, above]) => Array.from({ length: count }, (_, i) => {
+        const lon = lerp(-spread, spread, i / (count - 1));
+        return { lon, lat: locsLine(lon) + above, edge: true };
+      })), ...spiral(70, 0.1).filter((root) => root.lat > locsLine(root.lon) + 0.06)];
     roots.forEach((root, i) => {
-      if (root.lat < locsLine(root.lon) + 0.05 || (hatted && Math.abs(root.lon) < 1.0)) return;
+      const r0 = rand(0.0145, 0.0175);
       // Front roots sweep back to the side of the head, behind the temples; the others fall
       // straight down where they are.
       const side = Math.abs(root.lon) > 0.05 ? Math.sign(root.lon) : i % 2 ? 1 : -1;
-      const lon1 = Math.abs(root.lon) < 1.25 ? side * rand(1.25, 1.55) : root.lon;
-      const lat1 = rand(-0.42, -0.3);
+      const lon1 = Math.abs(root.lon) < 1.25 && !hatEdge ? side * rand(1.3, 1.9) : root.lon + rand(-0.08, 0.08);
+      const lat1 = Math.min(rand(-0.42, -0.3), root.lat - 0.08);
+      // Bare-headed, each rope but those lining the forehead starts higher up, towards the crown,
+      // so the ropes meet there and cover the whole top of the head.
+      const lat0 = hatEdge || 'edge' in root ? root.lat : Math.min(1.5, root.lat + 0.35);
+      // Those lining the forehead start a little past its middle: the two in the middle cross there.
+      const lon0 = 'edge' in root ? root.lon - side * 0.2 : root.lon;
       const points: THREE.Vector3[] = [];
-      for (let k = 0; k <= 5; k++) {
-        const f = k / 5;
-        // Off the scalp a little more on the way down, clear of the ears.
-        points.push(surface(lerp(root.lon, lon1, f ** 0.7), lerp(root.lat, lat1, f), lerp(0.018, 0.05, f), params));
+      for (let k = 0; k <= 6; k++) {
+        const f = k / 6;
+        // Half sunk in the mass at the root (flattened under a hat), further off the head on the way
+        // down, clear of the ears.
+        const lon = lerp(lon0, lon1, f ** 0.7);
+        const lat = lerp(lat0, lat1, f);
+        points.push(surface(lon, lat, Math.max(lerp(r0 * 0.5, 0.055, f ** 0.8), hatEdge ? 0 : locsShell(lon, lat) + r0 * 0.3), params));
       }
       const end = points.at(-1)!;
       const out = V(end.x, 0, end.z).normalize();
-      const length = rand(0.16, 0.28);
-      // A little sway, so the ropes don't hang like a curtain.
-      const sway = () => V(rand(-0.012, 0.012), 0, rand(-0.012, 0.012));
+      const length = rand(0.15, 0.26);
+      const sway = () => V(rand(-0.01, 0.01), 0, rand(-0.01, 0.01));
       points.push(end.clone().addScaledVector(out, 0.012).add(V(0, -length * 0.5, 0)).add(sway()));
-      points.push(end.clone().addScaledVector(out, 0.022).add(V(0, -length, 0)).add(sway()));
-      const r0 = rand(0.015, 0.019);
-      const curve = new THREE.CatmullRomCurve3(points);
-      const beads = Math.round(curve.getLength() / 0.026);
-      // Swelling twists (or braid crossings), and a rounded tip: the tube narrows only at the end.
-      const radius = (t: number) => r0 * (0.82 + 0.3 * Math.abs(Math.sin(t * beads * Math.PI))) * (1 - 0.6 * smoothstep(t, 0.95, 1));
-      strands.push(sweep(curve, radius, { segments: beads * 6, radial: 8 }));
+      points.push(end.clone().addScaledVector(out, 0.03).add(V(0, -length, 0)).add(sway()));
+      strands.push(locRope(new THREE.CatmullRomCurve3(points), r0, random()));
     });
+    // Bare-headed, a rope from the middle of the forehead straight back over the crown, down the back
+    // of the head: it covers the meeting point of the ropes swept to each side.
+    if (!hatEdge) {
+      const r0 = 0.016;
+      const points = Array.from({ length: 9 }, (_, k) => {
+        const a = lerp(locsLine(0) + 0.12, Math.PI + 0.45, k / 8);
+        const [lon, lat] = a < Math.PI / 2 ? [0, a] : [Math.PI, Math.PI - a];
+        return surface(lon, lat, locsShell(lon, lat) + r0 * 0.5, params);
+      });
+      const end = points.at(-1)!;
+      points.push(end.clone().add(V(0, -0.1, -0.02)), end.clone().add(V(0, -0.2, -0.035)));
+      strands.push(locRope(new THREE.CatmullRomCurve3(points), r0, random()));
+    }
     locsCache.set(key, mergeGeometries(strands));
   }
   return locsCache.get(key)!.clone();
@@ -638,7 +686,7 @@ function hangingPlait(points: THREE.Vector3[], side: number, width: number): THR
 // locks: [geometries], top: [geometries a hat would cover or cross (dropped under one)], fade?: faded
 // sides (see buildHair), stubble?: hairline of hair shaved very close (painted, see buildHair), shade?:
 // the shell darker than the locks (shadows between curls, scalp between locs), lockMap?: texture of the
-// locks }.
+// locks, shellMap?: texture of the shell and its (lon, lat) → uv mapping }.
 const STYLES: Record<string, (params: HeadParams, options: { hatted: boolean; hatEdge: HeadLine }) => HairRecipe> = {
   bald: () => ({ shell: () => 0 }),
 
@@ -733,12 +781,15 @@ const STYLES: Record<string, (params: HeadParams, options: { hatted: boolean; ha
     };
   },
 
-  // Locs or braids (one style for both): ropes from a tight scalp, falling below the shoulders.
-  locs: (params, { hatted }) => ({
-    shell: capThickness(locsLine, 0.012, 0.004),
-    shade: -0.25,
-    locks: [locStrands(params, hatted)],
-    lockMap: braidTexture(),
+  // Locs: ropes from a tight scalp, falling below the shoulders.
+  locs: (params, { hatted, hatEdge }) => ({
+    shell: locsShell,
+    shade: -0.08,
+    // Rows of braids from the forehead to the nape under the ropes: wherever the head shows between
+    // them, it shows braided hair.
+    shellMap: { map: locTexture(), uv: (lon, lat) => [(lon * 30) / (4 * Math.PI), lat * 7] },
+    locks: [locStrands(params, hatted ? hatEdge : null)],
+    lockMap: locTexture(),
   }),
 
   // Two plaits, from a middle parting, starting behind the ears and falling in front of the shoulders.
@@ -918,10 +969,12 @@ export function buildHair(
   if (style === 'bald') return group;
   const { shell: thickness, extra } = hatted ? underHat(recipe, hatEdge) : recipe;
   const material = cel(color, { rim: 0.22 });
-  const shellMaterial = recipe.shade ? cel(shadeHex(color, recipe.shade), { rim: 0.22 }) : material;
+  const shellColor = recipe.shade ? shadeHex(color, recipe.shade) : color;
+  const shellMaterial = recipe.shellMap ? cel(shellColor, { rim: 0.22, map: recipe.shellMap.map })
+    : recipe.shade ? cel(shellColor, { rim: 0.22 }) : material;
   if (thickness) {
     const shell = shellGeometry(params, thickness, {
-      extra, segments: { lonSegments: 200, latSegments: 120 },
+      extra, uv: recipe.shellMap?.uv, segments: { lonSegments: 200, latSegments: 120 },
     });
     group.add(celMesh(shell, shellMaterial, { outline: 0.004 }));
   }
