@@ -187,7 +187,8 @@ test('inactivity pauses the game, which goes on where it was or starts over afte
   await page.evaluate(() => (window.studio.kiosk.lastActivity -= 10 * 60_000));
   await card.getByRole('button', { name: 'Recommencer à zéro' }).click();
   await confirm.getByRole('button', { name: 'Oui, recommencer' }).click();
-  await expect(page.locator('[data-choice="manual"]:visible').or(page.locator('[data-action="done"]:visible')).first()).toBeVisible();
+  // The page reloads, slowly without a GPU.
+  await expect(page.locator('[data-choice="manual"]:visible').or(page.locator('[data-action="done"]:visible')).first()).toBeVisible({ timeout: 30_000 });
   await expect(page.locator('.welcome-play')).toBeHidden();
   await expect.poll(() => reloaded).toBe(true);
   checks.expectClean();
