@@ -8,6 +8,7 @@
 // A person without an entry here is still shown by the comparison (pnpm portraits), without a score.
 import { CLOTH_NAMES, HAIR_NAMES } from '/src/scan/classify.ts';
 import { codedFor } from '/src/character/options.ts';
+import { hexToRgb, nearestColor } from '/src/scan/color.ts';
 import type { Look } from '/src/character/Character.ts';
 
 export const VIEWS = ['01_face', '02_profil_gauche', '03_profil_droit', '04_dos'];
@@ -89,10 +90,16 @@ export function photoUrl(person: number, view: string) {
 const COLOR_NAMES: Partial<Record<string, Record<string, string>>> = { hair: HAIR_NAMES, top: CLOTH_NAMES };
 const CHECKED: (keyof Look)[] = ['hairStyle', 'headwear', 'hair', 'glasses', 'beard', 'mustache', 'top'];
 
+/** Name of a look colour: the scan applies the measured shade, named after the closest palette colour. */
+function colorName(key: string, value: string) {
+  const names = COLOR_NAMES[key]!;
+  return names[value] ?? names[nearestColor(hexToRgb(value), Object.keys(names))];
+}
+
 /** Colour names of the truth are short: 'noir' for 'noirs', 'marine' for 'bleu marine'. */
 function matches(key: string, value: string, expected: string) {
   if (!COLOR_NAMES[key]) return value === expected;
-  const name = COLOR_NAMES[key][value] ?? value;
+  const name = colorName(key, value);
   return name === expected || name === `${expected}s` || name.endsWith(` ${expected}`);
 }
 
@@ -116,7 +123,7 @@ export function check(person: number, look: Partial<Look>): Miss[] | null {
     if (expected.includes('any') || expected.includes('-')) continue;
     const got = look[key] ?? 'none';
     if (!expected.some((e) => matches(key, got, e))) {
-      misses.push({ key, got: COLOR_NAMES[key]?.[got] ?? got, expected: expected.join(' | ') });
+      misses.push({ key, got: COLOR_NAMES[key] ? colorName(key, got) : got, expected: expected.join(' | ') });
     }
   }
   return misses;

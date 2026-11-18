@@ -103,7 +103,7 @@ export const DEFAULT_LOOK = {
   skinMarks: 'none', // 'none' | 'freckles'
   hair: '#4a3426',
   hairStyle: 'curly', // see HAIR_STYLES in options.ts
-  beard: 'none', // 'none' | 'stubble' | 'goatee' (the chin) | 'short'
+  beard: 'none', // 'none' | 'stubble' | 'goatee' (the chin) | 'trimmed' | 'short'
   mustache: 'none', // 'none' | 'stubble' | 'thick'
   beardColor: '#4a3426',
   // Also 'robe', 'schoolRobe', 'overalls', 'tankTop', 'jersey' and 'heroSuit', worn only by the ready-made characters (presets.ts).

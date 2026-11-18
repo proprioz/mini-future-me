@@ -186,7 +186,7 @@ export class FaceTexture {
     };
     // Under modelled hair. A goatee is trimmed with clean edges: nothing to blend (its narrow shape
     // would show the cells).
-    const shell = { beard: face.beard === 'short' ? 'short' : 'none', mustache: face.mustache === 'thick' ? 'thick' : 'none' };
+    const shell = { beard: face.beard === 'short' || face.beard === 'trimmed' ? 'short' : 'none', mustache: face.mustache === 'thick' ? 'thick' : 'none' };
     const hasStubble = stubble.mustache !== 'none';
     if (!hasStubble && shell.beard === 'none' && shell.mustache === 'none') return;
     // Faded out before the edges of the canvas, which are stretched over the rest of the head.

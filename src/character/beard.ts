@@ -141,7 +141,7 @@ function hairTexture(beard: string, mustache: string, color: string): THREE.Canv
     if (d <= 0.02 || random() > d * 1.3) continue;
     const side = Math.sign(lon) || 1;
     const out = m > b ? side * 1.4 : side * 0.3 * smoothstep(Math.abs(lon), 0.1, 1.0);
-    const length = (m > b ? 7 : 9) + random() * 8;
+    const length = m > b ? 7 + random() * 8 : beard === 'trimmed' ? 5 + random() * 4 : 9 + random() * 8;
     const dx = (out / Math.hypot(out, 1)) * length;
     const dy = length / Math.hypot(out, 1);
     const [x, y] = toPixel(lon, lat);
@@ -174,7 +174,7 @@ function beardVolume(lon: number, lat: number, b: number): THREE.Vector3 {
 
 /**
  * Beard and moustache as one mesh, or null (no facial hair, or stubble only: painted).
- * `beard`: 'none' | 'stubble' | 'goatee' (the chin) | 'short'; `mustache`: 'none' | 'stubble' | 'thick'.
+ * `beard`: 'none' | 'stubble' | 'goatee' (the chin) | 'trimmed' | 'short'; `mustache`: 'none' | 'stubble' | 'thick'.
  */
 export function buildFacialHair(
   beard: string, mustache: string, { color, params }: { color: string; params: HeadParams },
@@ -186,7 +186,7 @@ export function buildFacialHair(
     if (Math.max(b, m) < 0.02) return 0;
     // Thin on the cheeks, thicker along the jaw and under the chin; moustaches bulge in the middle
     // of the lip.
-    const beardDepth = b * lerp(0.004, beard === 'short' ? 0.024 : 0.018, smoothstep(-lat, 0.45, 1.1));
+    const beardDepth = b * lerp(0.004, { short: 0.024, trimmed: 0.008 }[beard] ?? 0.018, smoothstep(-lat, 0.45, 1.1));
     return 0.0015 + Math.max(beardDepth, m * 0.012);
   };
   const geometry = shellGeometry(params, thickness, {

@@ -33,6 +33,31 @@ export function rgbToOklab([r, g, b]: Rgb): Oklab {
   ];
 }
 
+/** OKLab to sRGB (0-255, clamped). */
+export function oklabToRgb([L, a, b]: Oklab): Rgb {
+  const l = (L + 0.3963377774 * a + 0.2158037573 * b) ** 3;
+  const m = (L - 0.1055613458 * a - 0.0638541728 * b) ** 3;
+  const s = (L - 0.0894841775 * a - 1.291485548 * b) ** 3;
+  const gamma = (c: number) => 255 * (c <= 0.0031308 ? 12.92 * c : 1.055 * c ** (1 / 2.4) - 0.055);
+  return [
+    4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s,
+    -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s,
+    -0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s,
+  ].map((c) => Math.round(Math.min(255, Math.max(0, gamma(c))))) as Rgb;
+}
+
+/**
+ * The measured colour `rgb`, kept within `reach` (OKLab distance) of the palette colour `chosen`: the
+ * real shade, without leaving the colour the scan picked (photos make hair lighter, clothes darker).
+ */
+export function towards(rgb: Rgb, chosen: string, reach: number): string {
+  const from = rgbToOklab(hexToRgb(chosen));
+  const to = rgbToOklab(rgb);
+  const distance = Math.hypot(to[0] - from[0], to[1] - from[1], to[2] - from[2]);
+  const t = distance > reach ? reach / distance : 1;
+  return rgbToHex(oklabToRgb(from.map((v, i) => v + (to[i] - v) * t) as Oklab));
+}
+
 /** Palette entry closest to `rgb`; `lightnessWeight` < 1 cares more about hue than brightness. */
 export function nearestColor(rgb: Rgb, palette: readonly string[], lightnessWeight = 1): string {
   const [L, a, b] = rgbToOklab(rgb);

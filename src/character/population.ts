@@ -13,7 +13,8 @@
 // - Hair colour: brown dominant in Central Europe, black 5–8 % (more here: many visitors' families
 //   come from southern Europe, the Balkans or Turkey), red 1–4 %; grey hair for most people between
 //   45 and 65 (Panhard et al. 2012).
-// - Eyes: Germany ≈ 40 % blue, 33 % intermediate (green, hazel), 27 % brown.
+// - Eyes: Germany ≈ 40 % blue, 33 % intermediate (green, hazel), 27 % brown; grey eyes, usually counted
+//   with the blue ones, are a part of them here.
 // - Baldness: ≈ 16 % of men 18–29, half of men in their 40s, 80 % after 70.
 // - Facial hair: more than half of men under 40 (YouGov, Ifop), much less among teenagers.
 // - Glasses: 68 % of the Swiss wear glasses or contact lenses (OFS 2022), more with age.
@@ -67,6 +68,7 @@ const BROWN_EYES = '#5b3a29';
 const HAZEL = '#8a6a2f';
 const GREEN = '#4f8f5a';
 const BLUE = '#3f7cbf';
+const GREY_EYES = '#7d8a96';
 
 const TABLES = {
   hairStyle: ({ gender, age, skin }): Frequencies => {
@@ -102,9 +104,9 @@ const TABLES = {
   },
   eyeColor: ({ skin, hair }): Frequencies => {
     if (skin === 'dark') return { [DARK_EYES]: 80, [BROWN_EYES]: 18, [HAZEL]: 2 };
-    if (skin === 'medium' || hair === BLACK) return { [DARK_EYES]: 40, [BROWN_EYES]: 35, [HAZEL]: 13, [GREEN]: 6, [BLUE]: 6 };
-    if (hair === BLOND || hair === RED) return { [BLUE]: 48, [GREEN]: 18, [HAZEL]: 14, [BROWN_EYES]: 14, [DARK_EYES]: 6 };
-    return { [BLUE]: 36, [BROWN_EYES]: 22, [HAZEL]: 16, [GREEN]: 14, [DARK_EYES]: 12 };
+    if (skin === 'medium' || hair === BLACK) return { [DARK_EYES]: 40, [BROWN_EYES]: 35, [HAZEL]: 13, [GREEN]: 6, [BLUE]: 5, [GREY_EYES]: 1 };
+    if (hair === BLOND || hair === RED) return { [BLUE]: 40, [GREY_EYES]: 8, [GREEN]: 18, [HAZEL]: 14, [BROWN_EYES]: 14, [DARK_EYES]: 6 };
+    return { [BLUE]: 30, [GREY_EYES]: 6, [BROWN_EYES]: 22, [HAZEL]: 16, [GREEN]: 14, [DARK_EYES]: 12 };
   },
   eyeShape: () => ({ round: 50, almond: 50 }),
   skinMarks: ({ skin, hair }) => {
@@ -127,9 +129,10 @@ const TABLES = {
     : { none: 86, cap: age === 'teen' ? 9 : 5, beanie: 5 }),
   beard: ({ gender, age }): Frequencies => {
     if (gender === 'f') return { none: 100 };
-    if (age === 'teen') return { none: 80, stubble: 14, goatee: 3, short: 3 };
-    if (age === 'adult') return { none: 40, stubble: 24, goatee: 8, short: 28 };
-    return { none: 50, stubble: 14, goatee: 6, short: 30 };
+    // Full beards split between closely trimmed ones and longer ones, the longer more with age.
+    if (age === 'teen') return { none: 80, stubble: 14, goatee: 3, trimmed: 2, short: 1 };
+    if (age === 'adult') return { none: 40, stubble: 24, goatee: 8, trimmed: 15, short: 13 };
+    return { none: 50, stubble: 14, goatee: 6, trimmed: 12, short: 18 };
   },
   // Stubble already shades the upper lip (no separate 3-day moustache with it); a beard almost always
   // comes with a moustache, a goatee (the chin only) most often.
@@ -139,6 +142,7 @@ const TABLES = {
       none: { none: 87, thick: 10, stubble: 3 },
       stubble: { none: 85, thick: 15 },
       goatee: { thick: 70, stubble: 10, none: 20 },
+      trimmed: { thick: 90, none: 10 },
       short: { thick: 92, none: 8 },
     } as Record<string, Frequencies>)[beard ?? 'none'];
   },

@@ -8,7 +8,7 @@ import {
 } from '../character/population.ts';
 import type { Look } from '../character/Character.ts';
 import type { IconName } from '../ui/iconPaths.ts';
-import { lightness, rgbToOklab, colorDistance, hexToRgb, type Rgb } from './color.ts';
+import { lightness, rgbToOklab, colorDistance, hexToRgb, towards, type Rgb } from './color.ts';
 import { CALIBRATION, skinTone } from './FaceSampler.ts';
 import { topColor } from './clothes.ts';
 import type { Box, Point } from './masks.ts';
@@ -65,6 +65,12 @@ export const RULES = {
   hairBlond: 0.55, // L above this (and colourful): blond
   hairWhite: 0.78, // L above this: white or blond
   hairRed: 0.065, // C above this: red (or blond when light)
+  // How far the colour applied may stray from the palette colour picked (OKLab): the measured shade
+  // (« Crée ton perso » has a colour picker), but not so far that black hair turns grey on a bright photo.
+  trueColorReach: 0.08,
+  // Iris chroma (OKLab) below this: an iris without colour, grey. Brown irises stay warm on a photo
+  // (sample people: 0.020–0.032), a grey one does not (0.005).
+  greyIris: 0.012,
 };
 
 /** Likelihood (0–1) of each option id or colour, given a measurement. */
@@ -177,6 +183,18 @@ function hairLikelihood(rgb: Rgb): Likelihood {
     [chestnut]: warm * step(L, 0.32, 0.03) * (1 - step(L, r.hairBlond, 0.02)),
     [red]: dark * (1 - greyish) * reddish * (1 - step(L, 0.62, 0.02)),
   };
+}
+
+/**
+ * Likelihood of each eye colour: an iris without colour is grey (the palette's grey is lighter than an
+ * iris on a photo, so the distance alone would pick brown), the others go by the distance.
+ */
+function eyeLikelihood(rgb: Rgb): Likelihood {
+  const [, a, b] = rgbToOklab(rgb);
+  const grey = 1 - step(Math.hypot(a, b), RULES.greyIris, 0.002);
+  const GREY_EYES = EYE_COLORS[5];
+  const likelihood = colorLikelihood(rgb, EYE_COLORS.filter((hex) => hex !== GREY_EYES), 0.08);
+  return { ...Object.fromEntries(Object.entries(likelihood).map(([hex, l]) => [hex, l * (1 - grey)])), [GREY_EYES]: grey };
 }
 
 /** Likelihood of each palette colour from the distance to the measured one (OKLab, `spread` ≈ unsureness). */
@@ -310,7 +328,11 @@ function facialHairLikelihood({ skin, chin, jaw, mustache, below }: FacialHairFr
     // Found because it is duller than the skin, not darker: grey, not a warm colour.
     grey: grey * (1 - step(chin.dark, RULES.beard, 0.03)),
     // A goatee most often comes with a moustache (population.ts): likely only as much as the moustache is.
-    beard: { none: 1 - beard, stubble: beard * (1 - long) * (1 - thick), goatee: grown * moustache, short: grown },
+    // Dark but not hanging below the chin: trimmed along the jaw; hanging below it: the longer beard.
+    beard: {
+      none: 1 - beard, stubble: beard * (1 - long) * (1 - thick), goatee: grown * moustache,
+      trimmed: beard * thick * (1 - long), short: beard * long,
+    },
     mustache: { none: 1 - moustache, stubble: lip * (1 - lipThick), thick: moustache },
   };
 }
@@ -356,7 +378,7 @@ export const HAIR_NAMES: Record<string, string> = {
   '#1f1612': 'noirs', '#4a3426': 'bruns', '#7a4a2a': 'châtains', '#b5672e': 'roux', '#e8c27a': 'blonds',
   '#8f8a85': 'gris', '#d9d4cf': 'blancs',
 };
-export const EYE_NAMES: Record<string, string> = { '#5b3a29': 'marron', '#2b1d17': 'marron foncé', '#8a6a2f': 'noisette', '#4f8f5a': 'verts', '#3f7cbf': 'bleus' };
+export const EYE_NAMES: Record<string, string> = { '#5b3a29': 'marron', '#2b1d17': 'marron foncé', '#8a6a2f': 'noisette', '#4f8f5a': 'verts', '#3f7cbf': 'bleus', '#7d8a96': 'gris' };
 export const CLOTH_NAMES: Record<string, string> = {
   '#2b2b2e': 'noir', '#8e9196': 'gris', '#f7f3ee': 'blanc', '#cdb497': 'beige', '#7a5236': 'brun', '#2f3a56': 'bleu marine',
   '#5b7fb8': 'bleu', '#3f7a57': 'vert', '#b83a44': 'rouge', '#f4c04e': 'jaune', '#8e72b8': 'violet', '#ff9fb1': 'rose',
@@ -431,7 +453,7 @@ function normalize(view: { width: number; height: number }, mark: Mark): Mark {
  * starts from the most likely look for them (`base`, see population.ts) and refines it: each finding
  * is one option of the "Crée ton perso" screen, shown during the analysis animation:
  * { view, icon, title, value, patch, color?, marks: [...] }. What isn't measured at all (face shape,
- * earrings, trousers, shoes) stays as in `base`. Every option
+ * trousers, shoes) stays as in `base`; earrings are none. Every option
  * is neutral or coded for the visitor's estimated gender (see options.ts). `report`: what was guessed
  * and how sure, for the console (logReport).
  */
@@ -449,7 +471,8 @@ export function classify(features: Features, views: PhotoViews): Classification 
     skin: skinGroup(Math.max(0, (SKIN_TONES as (string | null)[]).indexOf(skin))),
   };
   // 2. The most likely look for this visitor, refined below by every measurement.
-  const base = baseLook(context);
+  // Earrings cannot be seen on the photos: none, rather than the most frequent for this visitor.
+  const base = { ...baseLook(context), earrings: 'none' };
 
   // Every decision is noted with how sure it is, for the console (logReport).
   const lines: ReportLine[] = [];
@@ -470,6 +493,9 @@ export function classify(features: Features, views: PhotoViews): Classification 
 
   const look: Partial<Look> = {};
   const findings: Finding[] = [];
+  // The measured colour behind each palette colour picked: the look gets the real shade (not the skin,
+  // which keeps a tone of the palette).
+  const measured: Partial<Record<keyof Look, Rgb>> = {};
   const add = (view: ViewName, finding: Omit<Finding, 'view' | 'marks'> & { marks?: Mark[] }) => {
     const patch = fitLook(finding.patch, gender);
     const marks = (finding.marks ?? []).map((m) => normalize(views[view]!, m));
@@ -487,6 +513,7 @@ export function classify(features: Features, views: PhotoViews): Classification 
   const hairColor = choose('hair', context, hairSeen ? hairLikelihood(hair.color!)
     : facialHairSeen > 0.5 && facialHair!.color ? beardColorLikelihood(facialHair!.color, facial!) : {});
   context.hair = hairColor;
+  if (hairSeen) measured.hair = measured.beardColor = hair.color!;
 
   if (face && g) {
     add('front', {
@@ -494,7 +521,8 @@ export function classify(features: Features, views: PhotoViews): Classification 
       patch: { skin: skin! },
       marks: [{ type: 'dots', points: [50, 280, 101, 330].map(g.p), big: true }],
     });
-    const eyeColor = choose('eyeColor', context, colorLikelihood(face.iris, EYE_COLORS, 0.08));
+    const eyeColor = choose('eyeColor', context, eyeLikelihood(face.iris));
+    measured.eyeColor = face.iris;
     const almond = 1 - step(face.eyeOpen, CALIBRATION.almondBelow, 0.02);
     const eyeShape = choose('eyeShape', context, { almond, round: 1 - almond });
     const eyeBoxes = [468, 473].map((i): Mark => {
@@ -519,6 +547,7 @@ export function classify(features: Features, views: PhotoViews): Classification 
       add('front', { icon: 'eyeglasses', title: 'Lunettes', value: label(GLASSES, 'none'), patch: { glasses: 'none' } });
     } else {
       const color = choose('glassesColor', context, glasses.color ? colorLikelihood(glasses.color, GLASSES_COLORS, 0.1) : {});
+      if (glasses.color && color !== CLEAR_FRAME) measured.glassesColor = glasses.color; // clear plastic: drawn see-through
       add('front', {
         icon: 'eyeglasses', title: 'Lunettes', value: `${label(GLASSES, shape)}, ${GLASSES_NAMES[color]}`, color,
         patch: { glasses: shape, glassesColor: color },
@@ -529,6 +558,7 @@ export function classify(features: Features, views: PhotoViews): Classification 
 
   if (headwear !== 'none' && g) {
     const color = choose('top', context, hair!.coverColor ? clothLikelihood(hair!.coverColor) : {}, { floor: 1e-5, field: 'headwearColor' });
+    if (hair!.coverColor) measured.headwearColor = hair!.coverColor;
     add('front', {
       icon: 'baseball-cap', title: 'Sur la tête', value: label(HEADWEAR, headwear), color,
       patch: { headwear, headwearColor: color },
@@ -539,6 +569,7 @@ export function classify(features: Features, views: PhotoViews): Classification 
   // Top: below the chin and on the back photo, leaving out a headscarf draped over the shoulders.
   const clothes = topColor([features.clothesFront, features.clothesBack], headwear === 'headscarf' ? hair!.coverColor : null);
   const top = choose('top', context, clothes ? clothLikelihood(clothes) : {}, { floor: 1e-5 });
+  if (clothes) measured.top = clothes;
   if (clothes) {
     const view = (features.clothesFront?.amount as number) > 0.05 ? 'front' : 'back'; // undefined > 0.05: false
     add(view, {
@@ -548,11 +579,17 @@ export function classify(features: Features, views: PhotoViews): Classification 
   }
 
   if (facial) {
-    const beard = choose('beard', context, facial.beard);
+    // Beard and moustache together: how well the moustache measured fits each beard counts too (a
+    // thick moustache rarely goes with stubble, almost always with a full beard; population.ts).
+    const sum = (scores: Frequencies) => Object.values(scores).reduce((total, s) => total + s, 0);
+    const withMustache = (beard: string) => sum(weigh('mustache', { ...context, beard }, facial.mustache))
+      / sum(weigh('mustache', { ...context, beard }));
+    const beard = choose('beard', context, Object.fromEntries(Object.entries(facial.beard).map(([id, l]) => [id, l * withMustache(id)])));
     const mustache = choose('mustache', { ...context, beard }, facial.mustache);
     const hasHair = beard !== 'none' || mustache !== 'none';
     const beardColor = hasHair && facialHair.color
       ? choose('hair', context, beardColorLikelihood(facialHair.color, facial), { field: 'beardColor' }) : hairColor;
+    if (hasHair && facialHair.color) measured.beardColor = facialHair.color;
     add('front', {
       icon: 'beard', title: 'Barbe', value: label(BEARDS, beard), color: beard !== 'none' ? beardColor : undefined,
       patch: { beard, beardColor },
@@ -587,6 +624,18 @@ export function classify(features: Features, views: PhotoViews): Classification 
   // Unknown gender: the one the look itself took (fitLook), applied to what the animation shows too.
   const shown = gender ?? lookGender(result);
   for (const finding of findings) finding.patch = fitLook(finding.patch, shown);
+  // Then the real shades, around the colours picked (and fitted to the gender).
+  const shade = (key: keyof Look, hex: string) => (measured[key] ? towards(measured[key], hex, RULES.trueColorReach) : hex);
+  for (const key of Object.keys(measured) as (keyof Look)[]) if (result[key]) (result as Record<string, string>)[key] = shade(key, result[key] as string);
+  for (const finding of findings) {
+    for (const [key, value] of Object.entries(finding.patch)) {
+      if (measured[key as keyof Look]) {
+        const shaded = shade(key as keyof Look, value as string);
+        if (finding.color === value) finding.color = shaded;
+        (finding.patch as Record<string, string>)[key] = shaded;
+      }
+    }
+  }
   for (const key of ['faceShape', 'skinMarks', 'earrings', 'outfit', 'bottomStyle', 'bottom', 'shoes'] as const) {
     lines.push(reportLine(key, result[key], weigh(key, context)));
   }

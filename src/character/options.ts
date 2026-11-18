@@ -12,7 +12,8 @@ import type { Look } from './Character.ts';
 // displayed, and the visitor can still pick anything, or mix everything with « Au hasard ».
 
 export const SKIN_TONES = ['#ffe3cf', '#f6d0b1', '#f1c7a5', '#e2ae86', '#c98f66', '#a8714d', '#86563a', '#5e3b27'];
-export const EYE_COLORS = ['#5b3a29', '#2b1d17', '#8a6a2f', '#4f8f5a', '#3f7cbf'];
+// Brown, dark brown, hazel, green, blue, grey (the scan picks grey for an iris without colour, classify.ts).
+export const EYE_COLORS = ['#5b3a29', '#2b1d17', '#8a6a2f', '#4f8f5a', '#3f7cbf', '#7d8a96'];
 // Natural colours, in this order (black, brown, chestnut, red, blond, grey, white): the photo
 // analysis picks them by position (scan/classify.ts).
 export const HAIR_COLORS = ['#1f1612', '#4a3426', '#7a4a2a', '#b5672e', '#e8c27a', '#8f8a85', '#d9d4cf'];
@@ -89,6 +90,8 @@ export const BEARDS: Option[] = [
   { id: 'stubble', label: 'Barbe de 3 jours', coded: 'm', alt: 'none' },
   // A moustache, round the mouth and on the chin: always with the moustache.
   { id: 'goatee', label: 'Bouc', coded: 'm', alt: 'none' },
+  // Trimmed close along the jaw and the cheeks, a few weeks' growth: thin, no volume under the chin.
+  { id: 'trimmed', label: 'Barbe courte', coded: 'm', alt: 'none' },
   // Between a short and a long beard.
   { id: 'short', label: 'Barbe', coded: 'm', alt: 'none' },
 ];

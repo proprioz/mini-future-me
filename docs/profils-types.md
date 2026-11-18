@@ -13,14 +13,14 @@ de ce fichier) : ne pas le modifier à la main. L'estimation sert seulement de p
 |---|---|---|---|---|---|---|
 | Coupe | **Long** (28 %), puis Mi-long (19 %) | **Mi-long** (24 %), puis Long (22 %) | **Carré** (26 %), puis Mi-long (22 %) | **Court** (31 %), puis Boucles et dégradé (29 %) | **Court** (38 %) | **Court** (39 %), puis Chauve (32 %) |
 | Cheveux | **bruns** (36 %), puis blonds (24 %) | **bruns** (38 %) | **gris** (30 %), puis bruns (24 %) | **bruns** (36 %), puis blonds (24 %) | **bruns** (38 %) | **gris** (30 %), puis bruns (24 %) |
-| Yeux | **bleus** (36 %), puis marron (22 %) | **bleus** (36 %), puis marron (22 %) | **bleus** (36 %), puis marron (22 %) | **bleus** (36 %), puis marron (22 %) | **bleus** (36 %), puis marron (22 %) | **bleus** (36 %), puis marron (22 %) |
+| Yeux | **bleus** (30 %), puis marron (22 %) | **bleus** (30 %), puis marron (22 %) | **bleus** (30 %), puis marron (22 %) | **bleus** (30 %), puis marron (22 %) | **bleus** (30 %), puis marron (22 %) | **bleus** (30 %), puis marron (22 %) |
 | Forme des yeux | **Ronds** (50 %), puis En amande (50 %) | **Ronds** (50 %), puis En amande (50 %) | **Ronds** (50 %), puis En amande (50 %) | **Ronds** (50 %), puis En amande (50 %) | **Ronds** (50 %), puis En amande (50 %) | **Ronds** (50 %), puis En amande (50 %) |
 | Taches | **Aucune** (90 %) | **Aucune** (90 %) | **Aucune** (90 %) | **Aucune** (90 %) | **Aucune** (90 %) | **Aucune** (90 %) |
 | Forme du visage | **Ovale** (40 %), puis Rond (25 %) | **Ovale** (40 %), puis Rond (25 %) | **Ovale** (40 %), puis Rond (25 %) | **Ovale** (40 %), puis Rond (25 %) | **Ovale** (40 %), puis Rond (25 %) | **Ovale** (40 %), puis Rond (25 %) |
 | Lunettes | **Aucune** (70 %) | **Aucune** (63 %) | **Aucune** (37 %), puis Rectangles (28 %) | **Aucune** (70 %) | **Aucune** (61 %) | **Aucune** (36 %), puis Rectangles (30 %) |
 | Monture | **noires** (40 %) | **noires** (40 %) | **noires** (40 %) | **noires** (40 %) | **noires** (40 %) | **noires** (40 %) |
 | Sur la tête | **Rien** (90 %) | **Rien** (90 %) | **Rien** (90 %) | **Rien** (86 %) | **Rien** (90 %) | **Rien** (90 %) |
-| Barbe | **Aucune** (100 %) | **Aucune** (100 %) | **Aucune** (100 %) | **Aucune** (80 %) | **Aucune** (40 %), puis Barbe (28 %) | **Aucune** (50 %), puis Barbe (30 %) |
+| Barbe | **Aucune** (100 %) | **Aucune** (100 %) | **Aucune** (100 %) | **Aucune** (80 %) | **Aucune** (40 %), puis Barbe de 3 jours (24 %) | **Aucune** (50 %) |
 | Moustache | **Aucune** (100 %) | **Aucune** (100 %) | **Aucune** (100 %) | **Aucune** (87 %) | **Aucune** (87 %) | **Aucune** (87 %) |
 | Boucles d'oreilles | **Puces** (46 %), puis Aucune (32 %) | **Puces** (46 %), puis Aucune (32 %) | **Puces** (46 %), puis Aucune (32 %) | **Aucune** (100 %) | **Aucune** (100 %) | **Aucune** (100 %) |
 | Haut | **noir** (26 %) | **noir** (21 %), puis blanc (14 %) | **bleu marine** (17 %), puis noir (13 %) | **noir** (27 %) | **noir** (22 %), puis blanc (14 %) | **bleu marine** (17 %), puis noir (13 %) |
@@ -42,7 +42,7 @@ de ce fichier) : ne pas le modifier à la main. L'estimation sert seulement de p
 | Lunettes | **Aucune** (70 %) | **Aucune** (63 %) | **Aucune** (37 %), puis Rectangles (28 %) | **Aucune** (70 %) | **Aucune** (61 %) | **Aucune** (36 %), puis Rectangles (30 %) |
 | Monture | **noires** (40 %) | **noires** (40 %) | **noires** (40 %) | **noires** (40 %) | **noires** (40 %) | **noires** (40 %) |
 | Sur la tête | **Rien** (90 %) | **Rien** (90 %) | **Rien** (90 %) | **Rien** (86 %) | **Rien** (90 %) | **Rien** (90 %) |
-| Barbe | **Aucune** (100 %) | **Aucune** (100 %) | **Aucune** (100 %) | **Aucune** (80 %) | **Aucune** (40 %), puis Barbe (28 %) | **Aucune** (50 %), puis Barbe (30 %) |
+| Barbe | **Aucune** (100 %) | **Aucune** (100 %) | **Aucune** (100 %) | **Aucune** (80 %) | **Aucune** (40 %), puis Barbe de 3 jours (24 %) | **Aucune** (50 %) |
 | Moustache | **Aucune** (100 %) | **Aucune** (100 %) | **Aucune** (100 %) | **Aucune** (87 %) | **Aucune** (87 %) | **Aucune** (87 %) |
 | Boucles d'oreilles | **Puces** (46 %), puis Aucune (32 %) | **Puces** (46 %), puis Aucune (32 %) | **Puces** (46 %), puis Aucune (32 %) | **Aucune** (100 %) | **Aucune** (100 %) | **Aucune** (100 %) |
 | Haut | **noir** (26 %) | **noir** (21 %), puis blanc (14 %) | **bleu marine** (17 %), puis noir (13 %) | **noir** (27 %) | **noir** (22 %), puis blanc (14 %) | **bleu marine** (17 %), puis noir (13 %) |
@@ -64,7 +64,7 @@ de ce fichier) : ne pas le modifier à la main. L'estimation sert seulement de p
 | Lunettes | **Aucune** (70 %) | **Aucune** (63 %) | **Aucune** (37 %), puis Rectangles (28 %) | **Aucune** (70 %) | **Aucune** (61 %) | **Aucune** (36 %), puis Rectangles (30 %) |
 | Monture | **noires** (40 %) | **noires** (40 %) | **noires** (40 %) | **noires** (40 %) | **noires** (40 %) | **noires** (40 %) |
 | Sur la tête | **Rien** (90 %) | **Rien** (90 %) | **Rien** (90 %) | **Rien** (86 %) | **Rien** (90 %) | **Rien** (90 %) |
-| Barbe | **Aucune** (100 %) | **Aucune** (100 %) | **Aucune** (100 %) | **Aucune** (80 %) | **Aucune** (40 %), puis Barbe (28 %) | **Aucune** (50 %), puis Barbe (30 %) |
+| Barbe | **Aucune** (100 %) | **Aucune** (100 %) | **Aucune** (100 %) | **Aucune** (80 %) | **Aucune** (40 %), puis Barbe de 3 jours (24 %) | **Aucune** (50 %) |
 | Moustache | **Aucune** (100 %) | **Aucune** (100 %) | **Aucune** (100 %) | **Aucune** (87 %) | **Aucune** (87 %) | **Aucune** (87 %) |
 | Boucles d'oreilles | **Puces** (46 %), puis Aucune (32 %) | **Puces** (46 %), puis Aucune (32 %) | **Puces** (46 %), puis Aucune (32 %) | **Aucune** (100 %) | **Aucune** (100 %) | **Aucune** (100 %) |
 | Haut | **noir** (26 %) | **noir** (21 %), puis blanc (14 %) | **bleu marine** (17 %), puis noir (13 %) | **noir** (27 %) | **noir** (22 %), puis blanc (14 %) | **bleu marine** (17 %), puis noir (13 %) |
