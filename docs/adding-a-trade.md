@@ -114,7 +114,7 @@ the left wall from z = 3 (the cork board and its sideboard are at z = 1–2), an
 
 - `decors` and `poses`: lists, in order, of ids of the shared ones (`src/poster/decors.ts`: lagoon, party,
   city, premiere; `src/character/poses.ts`: proud, wave, cheer, hero) or of the trade's own objects, in the
-  same format (the media trade adds a "Studio photo" decor and a "Photographe" pose).
+  same format (the media trade adds a "Studio photo" decor and its own "Fier·ère", `PROUD`).
 - `titles`: the titles over the avatar, `{ id, lines: [line 1, line 2] }`; the first is the default.
 - `defaultDecor`: id of the decor shown first (the first one otherwise).
 

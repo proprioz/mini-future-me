@@ -8,7 +8,7 @@ import type { Character } from './Character.ts';
 // elbow the same ways (negative = inwards). Legs: `out` spreads them, `fwd` lifts them, `knee` folds back.
 // `left` is the character's left (+X), seen on the right of the poster.
 // These poses are shared by every trade: a trade picks the ones it offers (`studio` in the trade's
-// module), and may add its own (Photographe, in media).
+// module), and may add its own or adjust a shared one (Fier·ère, in media).
 // `props`: what the hands hold (see `hold()`). Once the visitor has made the trade's object (its
 // `creation`, see `setCreation()`), every pose holds it: `withCreation` then replaces the arms and props
 // it lists. `needsCreation`: the pose holds nothing without the object, so a trade offers it only with

@@ -5,7 +5,7 @@ import { buildStations } from './stations.ts';
 import { WORKSHOP_ROOM } from './workshop.ts';
 import { creation } from './creation.ts';
 import { STUDIO } from './decors.ts';
-import { PHOTOGRAPHER, PROUD } from './poses.ts';
+import { PROUD } from './poses.ts';
 import { JOB_CHAPTER } from './about.ts';
 import type { TradeModule } from '../types.ts';
 
@@ -37,7 +37,7 @@ export default {
   // titles over the character.
   studio: {
     decors: [STUDIO, 'lagoon', 'party', 'city', 'premiere'],
-    poses: [PROUD, 'wave', 'cheer', PHOTOGRAPHER, 'hero'],
+    poses: [PROUD, 'wave', 'cheer', 'hero'],
     titles: [
       { id: 'pro', lines: ['Futur·e', 'médiamaticien·ne'] },
       { id: 'star', lines: ['Star', 'du studio'] },

@@ -119,8 +119,8 @@ also be played by touching an element, then its place.
 The domains (`skills.ts`, the same as the job chapter behind the scenes): Produire des contenus (shoot and
 retouch), Concevoir des visuels (layout), Marketing et communication (publishing and printing), and Mener
 des projets, won once the client's whole campaign is done. On the poster, the avatar
-holds the poster it laid out; the trade adds the "Studio photo" decor (the default) and the "Photographe"
-pose.
+holds the poster it laid out; the trade adds the "Studio photo" decor (the default), and its "Fier·ère"
+pose holds the camera until the poster is made.
 
 ## Poster studio
 
@@ -130,8 +130,8 @@ pose.
   media, the poster laid out in the layout task, redrawn on a canvas by `drawDesign()` of
   `PosterLayout.ts`). Each pose holds it its own way (`withCreation` in `poses.ts`, which the trade can
   adjust pose by pose with `creation.holds`): with both hands for "Fier·ère" (the default pose once the
-  object exists; before that, in media, it shows the camera in both hands), in one hand at the side for "Coucou", "Photographe" (the camera in the
-  other hand) and "Héroïque", held up at arm's length for "Youpi !". Without an object made, the other poses
+  object exists; before that, in media, it shows the camera in both hands), in one hand at the side for "Coucou"
+  and "Héroïque", held up at arm's length for "Youpi !". Without an object made, the other poses
   stay empty-handed. Every pose is offered from the start.
 - Shared decors and poses (`decors.ts`, `poses.ts`); each trade picks its own and adds some if needed
   (the trade's `studio`), all free from the start. The titles above the avatar and the caption

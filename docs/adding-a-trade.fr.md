@@ -117,7 +117,7 @@ coup d'œil.
 
 - `decors` et `poses` : listes, dans l'ordre, d'ids des décors et poses communs (`src/poster/decors.ts` :
   lagoon, party, city, premiere ; `src/character/poses.ts` : proud, wave, cheer, hero) ou d'objets propres
-  à la filière, au même format (la médiamatique ajoute un décor « Studio photo » et une pose « Photographe »).
+  à la filière, au même format (la médiamatique ajoute un décor « Studio photo » et son propre « Fier·ère », `PROUD`).
 - `titles` : les titres au-dessus de l'avatar, `{ id, lines: [ligne 1, ligne 2] }` ; le premier est celui par défaut.
 - `defaultDecor` : id du décor montré d'abord (sinon le premier).
 
