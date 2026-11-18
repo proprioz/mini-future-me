@@ -228,16 +228,22 @@ export class ScanScreen {
   async runAnalysis(sources: PhotoSources) {
     this.setState('analyzing', { instruction: 'J’analyse tes photos…' });
     this.findingsEl.replaceChildren();
+    this.el.classList.add('busy');
     let result: Awaited<ReturnType<PortraitAnalyzer['analyze']>>;
     try {
       const analyzer = (await this.analyzerPromise)!;
       if (this.el.dataset.state !== 'analyzing') return;
+      // The analysis can hold the page for seconds: the message and its animation go on screen first
+      // (Safari needs a little time after the frame to take the animation over).
+      await new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve, 100)));
       result = await analyzer.analyze(sources);
     } catch (error) {
       console.warn('Analyse impossible :', error);
       this.analyzerPromise = null;
       this.showError();
       return;
+    } finally {
+      this.el.classList.remove('busy');
     }
     logReport(result.report);
     if (!result.features.face) {
