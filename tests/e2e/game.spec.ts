@@ -303,8 +303,9 @@ for (const [width, height] of [[1180, 820], [1200, 750]]) {
     await expect(page.locator('.studio')).toBeVisible();
     await fits('poster studio');
     await page.locator('[data-action="finish"]').click();
-    await expect(page.locator('.export-qr canvas')).toBeVisible({ timeout: 60_000 });
-    await expect(page.locator('.export-preview img')).toBeVisible();
+    // The preview shows once the 300 dpi poster is rendered, then the QR code once the stand server has it.
+    await expect(page.locator('.export-preview img')).toBeVisible({ timeout: 60_000 });
+    await expect(page.locator('.export-share')).toHaveAttribute('data-state', 'ready', { timeout: 15_000 });
     await fits('poster ready');
     checks.expectClean();
   });
