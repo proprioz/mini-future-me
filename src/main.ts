@@ -48,7 +48,8 @@ const creator = new CharacterCreator(document.body);
 // Handle for poking at the game from the devtools / Playwright.
 if (import.meta.env.DEV) window.studio = { welcome, scan, creator, kiosk, trades };
 
-const { start, trade } = await welcome.run();
+const restarted = kiosk.restarted();
+const { start, trade } = await welcome.run(trades.find((t) => t.id === restarted));
 setTrade(trade);
 document.title = trade.title;
 document.querySelector<HTMLLinkElement>('link[rel="icon"]')!.href = `data:image/svg+xml,${encodeURIComponent(logoSvg(trade.icon))}`;

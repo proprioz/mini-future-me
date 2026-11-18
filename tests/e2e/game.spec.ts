@@ -149,7 +149,8 @@ test('a whole visit for every trade, offline', async ({ page }) => {
   checks.expectClean();
 });
 
-test('inactivity pauses the game, which goes on where it was', async ({ page }) => {
+test('inactivity pauses the game, which goes on where it was or starts over after a confirmation', async ({ page }) => {
+  test.setTimeout(120_000); // the office, then the character creation again after the reset, slow without a GPU
   const checks = watch(page);
   const [id] = await tradeIds(page);
   await startByHand(page, id, { borne: true });
@@ -173,6 +174,22 @@ test('inactivity pauses the game, which goes on where it was', async ({ page }) 
   await card.getByRole('button', { name: 'Je suis là' }).click();
   await expect(card).toBeHidden();
   expect(await page.evaluate(() => [...window.studio.game!.done])).toEqual([task]);
+
+  // Starting over always asks first: « Non » goes on where it was…
+  const confirm = page.getByRole('alertdialog', { name: 'Recommencer à zéro ?' });
+  await page.locator('.kiosk-restart').click();
+  await confirm.getByRole('button', { name: 'Non, je continue' }).click();
+  await expect(confirm).toBeHidden();
+  expect(reloaded).toBe(false);
+  expect(await page.evaluate(() => [...window.studio.game!.done])).toEqual([task]);
+
+  // …and the pause card offers it too; « Oui » goes back to creating the character, not the welcome screen.
+  await page.evaluate(() => (window.studio.kiosk.lastActivity -= 10 * 60_000));
+  await card.getByRole('button', { name: 'Recommencer à zéro' }).click();
+  await confirm.getByRole('button', { name: 'Oui, recommencer' }).click();
+  await expect(page.locator('[data-choice="manual"]:visible').or(page.locator('[data-action="done"]:visible')).first()).toBeVisible();
+  await expect(page.locator('.welcome-play')).toBeHidden();
+  await expect.poll(() => reloaded).toBe(true);
   checks.expectClean();
 });
 

@@ -28,7 +28,7 @@ const PHOSPHOR = [
   // Behind the scenes (welcome screen)
   'gear-six', 'code', 'cube', 'scan', 'shield-check', 'robot', 'wrench', 'graduation-cap', 'brain', 'users-three',
   'pencil-simple', 'bug', 'file-html', 'puzzle-piece', 'video-camera', 'microphone', 'receipt', 'hard-drives', 'trash',
-  'clock-counter-clockwise', 'git-commit',
+  'clock-counter-clockwise', 'git-commit', 'arrows-counter-clockwise',
 ];
 
 // Drawn here in the same 256 grid, for what Phosphor lacks. `stroke` paths are drawn with the

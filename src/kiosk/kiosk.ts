@@ -1,14 +1,37 @@
 import { sound } from './sound.ts';
 import { icon } from '../ui/icons.ts';
+import { trade } from '../trades/current.ts';
 
 // Kiosk mode for the stand: a pause when nobody plays any more, a full reset between two visitors,
-// a hidden reset for the staff, and a soft click on every button.
+// « Recommencer à zéro » (a corner button, also on the pause card, always confirmed, back to creating
+// the character), a hidden reset for the staff, and a soft click on every button.
 
 const IDLE_SECONDS = 60; // without any touch, before the game pauses on "Es-tu là ?"
 const STAFF_TAPS = 5; // quick taps in the top-left corner reset the game right away
 const STAFF_WINDOW = 2500; // ms
 const CORNER = 64; // px
 const TAPPABLE = 'button, .choice, .swatch';
+
+// After « Recommencer à zéro », the reloaded page skips the welcome screen and goes straight back
+// to creating the character, in the same trade (its id is all that is kept, for this tab only).
+const RESTART_KEY = 'mfm-restart-trade';
+
+const card = (label: string, body: string) =>
+  `<section class="kiosk-warning-card" role="alertdialog" aria-label="${label}">${body}</section>`;
+const CARDS = {
+  idle: card('Es-tu là ?', `
+    <div class="kiosk-warning-icon" aria-hidden="true">${icon('eyes')}</div>
+    <h1>Es-tu là ?</h1>
+    <p>Le jeu est en pause.</p>
+    <button class="btn btn-primary">Je suis là</button>
+    <button class="btn btn-ghost" data-answer="ask-restart">${icon('arrows-counter-clockwise')} Recommencer à zéro</button>`),
+  restart: card('Recommencer à zéro ?', `
+    <div class="kiosk-warning-icon" aria-hidden="true">${icon('arrows-counter-clockwise')}</div>
+    <h1>Recommencer à zéro ?</h1>
+    <p>Tu reviens à la création de ton perso : ton perso, tes domaines gagnés et ton affiche seront effacés.</p>
+    <button class="btn btn-primary" data-answer="restart">Oui, recommencer</button>
+    <button class="btn btn-ghost">Non, je continue</button>`),
+};
 
 class Kiosk {
   watching: boolean;
@@ -18,6 +41,7 @@ class Kiosk {
   idleEnabled!: boolean;
   veil!: HTMLDivElement;
   warning!: HTMLDivElement;
+  restartButton!: HTMLButtonElement;
 
   constructor() {
     this.watching = false;
@@ -34,18 +58,21 @@ class Kiosk {
     this.warning = document.createElement('div');
     this.warning.className = 'kiosk-warning';
     this.warning.hidden = true;
-    this.warning.innerHTML = `
-      <section class="kiosk-warning-card" role="alertdialog" aria-label="Es-tu là ?">
-        <div class="kiosk-warning-icon" aria-hidden="true">${icon('eyes')}</div>
-        <h1>Es-tu là ?</h1>
-        <p>Le jeu est en pause.</p>
-        <button class="btn btn-primary">Je suis là</button>
-      </section>`;
-    root.append(this.warning, this.veil);
+    this.restartButton = document.createElement('button');
+    this.restartButton.className = 'kiosk-restart';
+    this.restartButton.hidden = true;
+    this.restartButton.setAttribute('aria-label', 'Recommencer à zéro');
+    this.restartButton.innerHTML = icon('arrows-counter-clockwise');
+    this.restartButton.addEventListener('click', () => this.ask('restart'));
+    root.append(this.restartButton, this.warning, this.veil);
     // The card covers the whole screen until the visitor answers, so nothing can be touched behind
-    // it. Dismissed on click (not on pointerdown), so that the tap ends on the card and doesn't go
-    // through to whatever button lies under it.
-    this.warning.addEventListener('click', () => {
+    // it. Answered on click (not on pointerdown), so that the tap ends on the card and doesn't go
+    // through to whatever button lies under it. Any tap goes back to the game, except the restart
+    // buttons: starting over always takes a second, deliberate tap.
+    this.warning.addEventListener('click', (e) => {
+      const answer = (e.target as Element).closest<HTMLElement>('[data-answer]')?.dataset.answer;
+      if (answer === 'ask-restart') return this.ask('restart');
+      if (answer === 'restart') return this.restart();
       this.warning.hidden = true;
       this.poke();
     });
@@ -60,10 +87,18 @@ class Kiosk {
     setInterval(() => this.check(), 250);
   }
 
-  /** From now on, inactivity counts (the welcome screen itself never pauses). */
+  /** From now on, inactivity counts and the visitor can start over (not on the welcome screen). */
   startWatching(): void {
     this.watching = this.idleEnabled;
+    this.restartButton.hidden = false;
     this.poke();
+  }
+
+  /** Shows the card: « Es-tu là ? » (`idle`) or the confirmation before starting over (`restart`). */
+  ask(card: keyof typeof CARDS): void {
+    this.warning.innerHTML = CARDS[card];
+    this.warning.hidden = false;
+    sound.play('pop');
   }
 
   /** Something happened (a touch, a key…): the visitor is still there. */
@@ -91,8 +126,7 @@ class Kiosk {
   check(): void {
     if (!this.watching || !this.warning.hidden) return;
     if ((performance.now() - this.lastActivity) / 1000 < this.limit) return;
-    this.warning.hidden = false;
-    sound.play('pop');
+    this.ask('idle');
   }
 
   staffCorner(event: PointerEvent): void {
@@ -112,6 +146,19 @@ class Kiosk {
     this.warning.hidden = true;
     this.veil.classList.add('closing');
     setTimeout(() => location.reload(), 450);
+  }
+
+  /** « Recommencer à zéro »: the same reset, but back to creating the character instead of the welcome screen. */
+  restart(): void {
+    sessionStorage.setItem(RESTART_KEY, trade().id);
+    this.reset();
+  }
+
+  /** The trade id when the page was reloaded by « Recommencer à zéro » (once), otherwise null. */
+  restarted(): string | null {
+    const id = sessionStorage.getItem(RESTART_KEY);
+    sessionStorage.removeItem(RESTART_KEY);
+    return id;
   }
 }
 

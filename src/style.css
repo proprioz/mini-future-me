@@ -2706,6 +2706,68 @@ button {
   margin-top: 0.5rem;
 }
 
+.kiosk-warning-card .btn-ghost {
+  margin-top: 0;
+}
+
+/* « Recommencer à zéro », small in the top-left corner, which every screen leaves free; in the office,
+   next to « Mon perso » (the avatar and poster editors cover the HUD). Hidden while a mini-game or
+   the export card covers the screen (closing it brings the button back) and on the welcome screen,
+   where there is nothing to start over. */
+.kiosk-restart {
+  position: fixed;
+  z-index: 45;
+  top: 1rem;
+  left: 1rem;
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 0.25rem 0 var(--line);
+  color: var(--ink);
+  font-size: 1.25rem;
+  cursor: pointer;
+}
+
+.kiosk-restart .icon {
+  display: block;
+  width: 1em;
+  height: 1em;
+}
+
+.kiosk-restart:active {
+  transform: translateY(0.1875rem);
+  box-shadow: 0 1px 0 var(--line);
+}
+
+/* In the office: on the HUD bar's line, left of « Mon perso », which moves over to make room; in
+   portrait and on 4:3 screens the bar has no room left, so the button goes just under « Mon perso ». */
+body:has(.hud):not(:has(.creator:not([hidden]))) .kiosk-restart {
+  top: 1.4375rem;
+}
+
+body:has(.kiosk-restart:not([hidden])) .hud-bar {
+  left: 4.75rem;
+}
+
+@media (max-aspect-ratio: 4/3) {
+  body:has(.hud):not(:has(.creator:not([hidden]))) .kiosk-restart {
+    top: 4.75rem;
+  }
+
+  body:has(.kiosk-restart:not([hidden])) .hud-bar {
+    left: 1rem;
+  }
+}
+
+.kiosk-restart[hidden],
+body:has(.minigame) .kiosk-restart {
+  display: none;
+}
+
 /* Fades the screen out before the reset (the page then reloads on the welcome screen). */
 .kiosk-veil {
   position: fixed;
