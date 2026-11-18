@@ -1,6 +1,10 @@
 import { describe, expect, test } from 'vitest';
 import { DEFAULT_LOOK } from '../../src/character/Character.ts';
-import { codedFor, fitLook, likelyLook, lookGender, randomLook } from '../../src/character/options.ts';
+import {
+  codedFor, fitLook, likelyLook, lookGender, randomLook,
+  FACE_SHAPES, EYE_SHAPES, SKIN_MARKS, HAIR_STYLES, BEARDS, MUSTACHES, OUTFITS, HEADWEAR, GLASSES, EARRINGS,
+} from '../../src/character/options.ts';
+import { PRESETS } from '../../src/character/presets.ts';
 import { typicalLook } from '../../src/character/population.ts';
 import type { AgeGroup, Gender, SkinGroup } from '../../src/character/population.ts';
 import { classify } from '../../src/scan/classify.ts';
@@ -85,5 +89,32 @@ describe('the scan', () => {
     for (const result of [look, base, { ...DEFAULT_LOOK, ...look }, ...findings.map((f) => f.patch)]) {
       expect(codedGenders(result).size).toBeLessThanOrEqual(1);
     }
+  });
+});
+
+describe('the famous characters', () => {
+  // `held` (what the hand holds) has no list: only the ready-made characters hold something.
+  const LISTS: Record<string, { id: string }[]> = {
+    faceShape: FACE_SHAPES, eyeShape: EYE_SHAPES, skinMarks: SKIN_MARKS, hairStyle: HAIR_STYLES, beard: BEARDS, mustache: MUSTACHES,
+    outfit: OUTFITS, headwear: HEADWEAR, glasses: GLASSES, earrings: EARRINGS, held: [{ id: 'none' }],
+  };
+  const offered = (key: string, id: string) => LISTS[key].some((option) => option.id === id);
+  /** What a preset wears that no list of « Crée ton perso » offers, as 'key=id'. */
+  const exclusive = (look: object) => Object.entries(look).filter(([key, id]) => key in LISTS && !offered(key, id)).map(([key, id]) => `${key}=${id}`);
+
+  test.each(PRESETS.map((p) => [p.label, p] as const))('%s: the game\'s face and haircut, something of its own', (_, { look }) => {
+    for (const key of ['faceShape', 'eyeShape', 'hairStyle', 'beard', 'mustache']) expect(offered(key, look[key as keyof typeof look])).toBe(true);
+    expect(exclusive(look).length).toBeGreaterThan(0);
+  });
+
+  test('what only they wear, nothing else gives', () => {
+    const theirs = new Set(PRESETS.flatMap((p) => exclusive(p.look)));
+    const looks = [
+      ...Array.from({ length: RUNS }, randomLook),
+      ...GENDERS.flatMap((gender) => Array.from({ length: RUNS }, () => likelyLook(gender))),
+      ...GENDERS.flatMap((gender) => AGES.flatMap((age) => SKINS.map((skin) => typicalLook({ gender, age, skin })))),
+      { ...DEFAULT_LOOK },
+    ];
+    for (const look of looks) for (const [key, id] of Object.entries(look)) expect(theirs.has(`${key}=${id}`)).toBe(false);
   });
 });

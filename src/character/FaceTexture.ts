@@ -15,6 +15,8 @@ export type Expression = (typeof EXPRESSIONS)[number];
 
 // Eyebrows, the same for everyone: thickness (radians), arch (pixels) and how far they reach outwards.
 const BROW = { thick: 0.036, arch: 8, reach: 1.05 };
+// Height of the middle of the young wizard's scar above the eyes (radians), between the eyebrows and the fringe.
+const SCAR_LAT = 0.25;
 
 // Character.faceParams() fills in the look; the proportions keep these values.
 export const DEFAULT_FACE = {
@@ -29,7 +31,7 @@ export const DEFAULT_FACE = {
   beard: 'none', // stubble is painted; the other beards and moustaches are 3D (beard.ts)
   mustache: 'none',
   beardColor: '#4a3426',
-  skinMarks: 'none', // 'none' | 'freckles'
+  skinMarks: 'none', // 'none' | 'freckles' | 'scar' (presets.ts)
 };
 
 /** What the face texture paints (see Character.faceParams()). */
@@ -130,9 +132,13 @@ export class FaceTexture {
     }
   }
 
-  /** Freckles over the nose and cheeks. */
+  /** Freckles over the nose and cheeks, or the young wizard's scar (presets.ts). */
   drawSkinMarks(): void {
     const { ctx, face } = this;
+    if (face.skinMarks === 'scar') {
+      this.drawScar();
+      return;
+    }
     if (face.skinMarks !== 'freckles') return;
     // Densest across the nose and the tops of the cheeks, fading out towards the sides.
     const random = seeded(3);
@@ -149,6 +155,21 @@ export class FaceTexture {
       ctx.fill();
     }
     ctx.globalAlpha = 1;
+  }
+
+  /** A thin lightning bolt on the forehead, above the right eyebrow. */
+  drawScar(): void {
+    const { ctx, face } = this;
+    const lat = FEATURES.eyeLat + SCAR_LAT;
+    const bolt = [[0.035, 0.085], [-0.03, 0.01], [0.03, 0.0], [-0.035, -0.08]].map(([lon, dl]) => at(-0.12 + lon, lat + dl));
+    ctx.lineJoin = ctx.lineCap = 'round';
+    for (const [color, width] of [[shadeHex(face.skin, -0.1), 12], [mixHex(shadeHex(face.skin, -0.35), '#b8434a', 0.4), 6]] as const) {
+      ctx.strokeStyle = color;
+      ctx.lineWidth = width;
+      ctx.beginPath();
+      bolt.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
+      ctx.stroke();
+    }
   }
 
   /**

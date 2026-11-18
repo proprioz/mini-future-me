@@ -7,6 +7,7 @@ import {
   FACE_SHAPES, EYE_SHAPES, SKIN_MARKS, HAIR_STYLES, BEARDS, MUSTACHES, OUTFITS, BOTTOMS, HEADWEAR, GLASSES, EARRINGS, CLEAR_FRAME,
   randomLook, type Option,
 } from '../character/options.ts';
+import { PRESETS } from '../character/presets.ts';
 import { ColorPicker } from './ColorPicker.ts';
 import { icon } from './icons.ts';
 import type { IconName } from './iconPaths.ts';
@@ -31,6 +32,8 @@ interface Tab {
   icon: IconName;
   label: string;
   fields: Field[];
+  /** The tab of the ready-made characters (presets.ts) instead of fields. */
+  presets?: true;
 }
 
 const THUMB_SIZE = 168; // px, rendered at this size and displayed smaller
@@ -90,7 +93,10 @@ const TABS: Tab[] = [
       { key: 'earringColor', label: 'Couleur des boucles', colors: METAL_COLORS, showIf: (look) => look.earrings !== 'none' },
     ],
   },
+  { id: 'famous', icon: 'mask-happy', label: 'Célèbres', fields: [], presets: true },
 ];
+// The whole character, with room for a tall hat.
+const PRESET_THUMB: Thumb = { view: { target: new THREE.Vector3(0, 0.86, 0), height: 1.76, width: 0.85, lift: 0.2 }, heading: 0.35 };
 
 /**
  * Full-screen "Crée ton perso" screen: live 3D preview on one side, tabs of options on the other.
@@ -179,6 +185,11 @@ export class CharacterCreator {
       }
       const pickerButton = (e.target as Element).closest<HTMLElement>('[data-picker]');
       if (pickerButton) this.togglePicker(pickerButton.dataset.picker as keyof Look);
+      const preset = PRESETS.find((p) => p.id === (e.target as Element).closest<HTMLElement>('[data-preset]')?.dataset.preset);
+      if (preset) {
+        this.change(preset.look);
+        this.character.hop();
+      }
     });
 
     this.el.querySelector('[data-action="random"]')!.addEventListener('click', () => {
@@ -277,7 +288,7 @@ export class CharacterCreator {
       button.setAttribute('aria-selected', String(active));
     }
 
-    this.bodyEl.innerHTML = tab.fields.map((field) => `
+    this.bodyEl.innerHTML = tab.presets ? this.presetsHtml() : tab.fields.map((field) => `
       <div class="creator-field" data-field="${field.key}">
         <h2>${field.label}</h2>
         ${field.colors ? this.swatchesHtml(field) : this.choicesHtml(field)}
@@ -309,6 +320,18 @@ export class CharacterCreator {
     this.refreshFields();
   }
 
+  presetsHtml() {
+    return `<div class="creator-field">
+      <h2>Joue un perso célèbre</h2>
+      <div class="choices">${PRESETS.map(({ id, label }) => `
+        <button class="choice" data-preset="${id}">
+          <canvas width="${THUMB_SIZE}" height="${THUMB_SIZE}"></canvas>
+          <span>${label}</span>
+        </button>`).join('')}
+      </div>
+    </div>`;
+  }
+
   choicesHtml({ key, choices }: { key: keyof Look; choices: Option[] }) {
     return `<div class="choices">${choices.map(({ id, label }) => `
       <button class="choice" data-key="${key}" data-value="${id}">
@@ -338,6 +361,13 @@ export class CharacterCreator {
         pickerButton.style.setProperty('--swatch', custom ? this.look[field.key] : '');
       }
     }
+    // A ready-made character stays selected until one of its traits is changed.
+    for (const option of this.bodyEl.querySelectorAll<HTMLElement>('[data-preset]')) {
+      const { look } = PRESETS.find((p) => p.id === option.dataset.preset)!;
+      const selected = Object.entries(look).every(([key, value]) => this.look[key as keyof Look] === value);
+      option.classList.toggle('selected', selected);
+      option.setAttribute('aria-pressed', String(selected));
+    }
     this.picker.el.hidden = !this.pickerKey;
     if (this.thumbsDirty) this.renderThumbs();
   }
@@ -346,6 +376,10 @@ export class CharacterCreator {
   renderThumbs() {
     this.thumbsDirty = false;
     this.thumbQueue = [];
+    for (const option of this.bodyEl.querySelectorAll<HTMLElement>('[data-preset]')) {
+      const { look } = PRESETS.find((p) => p.id === option.dataset.preset)!;
+      this.thumbQueue.push([option.querySelector('canvas')!, look, PRESET_THUMB]);
+    }
     for (const field of this.tab.fields) {
       if (!field.thumb) continue;
       const bare = field.thumb.bare ? { headwear: 'none', glasses: 'none' } : {};

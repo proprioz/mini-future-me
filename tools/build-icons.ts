@@ -22,7 +22,7 @@ const PHOSPHOR = [
   // Scan, character and poster
   'smiley', 'smiley-blank', 'arrow-fat-left', 'arrow-fat-right', 'user', 'images', 'image',
   'magnifying-glass', 'magnifying-glass-plus', 'magnifying-glass-minus', 'drop', 'eye', 'eyeglasses', 'sunglasses', 'baseball-cap', 't-shirt', 'hair-dryer',
-  'scissors', 'dice-five', 'island', 'person-arms-spread', 'text-aa',
+  'scissors', 'dice-five', 'mask-happy', 'island', 'person-arms-spread', 'text-aa',
   // Export
   'file-png', 'file-pdf', 'download-simple', 'qr-code',
   // Behind the scenes (welcome screen)

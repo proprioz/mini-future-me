@@ -124,6 +124,11 @@ export function applyPose(character: Character, pose: Pose | null | undefined): 
     .filter(([id]) => id !== 'creation' || creation)
     .map(([id, grip]): [string, Grip] => [id, id === 'creation' ? { ...grip, ...creation!.holds?.[pose!.id] } : grip]);
   setProps(character, holds.map(([id]) => id));
+  // A hand that holds a prop of the pose puts down what the character holds (the pistols…).
+  for (const item of character.heldItems) {
+    const hand = item.userData.side > 0 ? 'left' : 'right';
+    item.visible = !holds.some(([, { hand: h = 'both' }]) => h === 'both' || h === hand);
+  }
   if (!held) return;
 
   character.arms.forEach(({ shoulder, elbow }) => {
@@ -144,6 +149,7 @@ export function applyPose(character: Character, pose: Pose | null | undefined): 
   character.rig.position.y = held.lift ?? 0;
 
   for (const [id, grip] of holds) hold(character, props.get(character)!.get(id)!, grip);
+  character.straightenHeld();
 }
 
 /** Keeps exactly the props `ids` in the character's group (they live outside the rebuilt rig). */

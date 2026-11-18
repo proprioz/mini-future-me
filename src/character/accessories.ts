@@ -132,13 +132,34 @@ function grid(rows: number, columns: number, point: (i: number, j: number) => TH
 }
 
 /**
+ * Wrench on a white disc, the badge of the plumber's cap (presets.ts), as flat shapes in head units
+ * round the origin, from the bottom layer up.
+ */
+function wrenchBadge(color: string): [THREE.BufferGeometry, string][] {
+  // Finely divided, so that laid on the crown they follow its curve instead of sinking into it.
+  const disc = (r: number) => new THREE.RingGeometry(0, r, 32, 6);
+  const bar = (w: number, h: number) => new THREE.PlaneGeometry(w, h, 2, 8);
+  const at = (geometry: THREE.BufferGeometry, y: number) => geometry.translate(0, y, 0).rotateZ(-Math.PI / 4);
+  return [
+    [disc(0.05), '#f7f3ee'],
+    [at(bar(0.011, 0.048), -0.008), color],
+    [at(disc(0.009), -0.032), color],
+    [at(disc(0.0165), 0.02), color],
+    // The open jaw, and the hole at the other end of the handle.
+    [at(bar(0.011, 0.024), 0.031), '#f7f3ee'],
+    [at(disc(0.0038), -0.032), '#f7f3ee'],
+  ];
+}
+
+/**
  * Baseball cap, built on the head itself so it fits every face shape: a crown of soft panels, fuller
  * over the forehead (the stiff front panels), a button on top, a logo on the front; its band across
  * the upper forehead, just over the ears and low on the back of the head, rolled under at its edge;
  * an opening at the back over the adjustable strap; a thin, curved visor, darker underneath.
- * `volume`: how far the hair under it rises (HAIR_VOLUME): big hair lifts it a little.
+ * `volume`: how far the hair under it rises (HAIR_VOLUME): big hair lifts it a little. `badge`: the
+ * plumber's own cap (presets.ts), a wrench on a white disc instead of the star.
  */
-function cap(color: string, params: HeadParams, volume: number): THREE.Group {
+function cap(color: string, params: HeadParams, volume: number, badge = false): THREE.Group {
   const group = new THREE.Group();
   const room = 0.012 + Math.min(volume, 0.09) * 0.3;
   const material = cel(color, { rim: 0.3 });
@@ -176,18 +197,21 @@ function cap(color: string, params: HeadParams, volume: number): THREE.Group {
   group.add(button);
 
   // Logo on the front panel: a star in a contrasting colour (dark on a light cap), laid on the crown.
-  const logo = new THREE.ShapeGeometry(star(0.036));
   const logoAt = 0.42;
-  const p = logo.attributes.position;
-  for (let i = 0; i < p.count; i++) {
-    const lon = p.getX(i) / (HEAD.rz + room);
-    const v = logoAt + p.getY(i) / ((HEAD.ry + room) * (Math.PI / 2 - edge(0)));
-    const q = crownPoint(lon, v, 0.0012);
-    p.setXYZ(i, q.x, q.y, q.z);
-  }
-  logo.computeVertexNormals();
+  const layOn = (logo: THREE.BufferGeometry, lift: number) => {
+    const p = logo.attributes.position;
+    for (let i = 0; i < p.count; i++) {
+      const lon = p.getX(i) / (HEAD.rz + room);
+      const v = logoAt + p.getY(i) / ((HEAD.ry + room) * (Math.PI / 2 - edge(0)));
+      const q = crownPoint(lon, v, lift);
+      p.setXYZ(i, q.x, q.y, q.z);
+    }
+    logo.computeVertexNormals();
+    return logo;
+  };
   const light = new THREE.Color(color).getHSL({ h: 0, s: 0, l: 0 }).l > 0.7;
-  group.add(celMesh(logo, cel(shadeHex(color, light ? -0.5 : 0.75), { rim: 0 }), { outline: 0 }));
+  const logo: [THREE.BufferGeometry, string][] = badge ? wrenchBadge(color) : [[new THREE.ShapeGeometry(star(0.036)), shadeHex(color, light ? -0.5 : 0.75)]];
+  logo.forEach(([shape, c], layer) => group.add(celMesh(layOn(shape, 0.0012 + layer * 0.0008), cel(c, { rim: 0 }), { outline: 0 })));
 
   // The strap across the bottom of the opening, its ends sunk into the crown, with its snap.
   const strap = grid(3, 24, (i, j) => {
@@ -414,7 +438,85 @@ function headscarf(color: string, params: HeadParams): THREE.Group {
 
 /** Headwear that hides all the hair (no hair is built under it). */
 export function hidesHair(type: string): boolean {
-  return type === 'headscarf';
+  return type === 'headscarf' || type === 'heroMask';
+}
+
+/** Headwear that covers the whole face: no nose, ears or glasses are built under it. */
+export function hidesFace(type: string): boolean {
+  return type === 'heroMask';
+}
+
+const webTextures = new Map<string, THREE.CanvasTexture>();
+
+/**
+ * The superhero's mask (presets.ts), in longitude / latitude over the whole head: a web of black
+ * threads radiating from between the eyes, and two big white lenses rimmed in black.
+ */
+function maskTexture(color: string): THREE.CanvasTexture {
+  if (webTextures.has(color)) return webTextures.get(color)!;
+  const W = 1024;
+  const H = 512;
+  const canvas = document.createElement('canvas');
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext('2d')!;
+  const at = (lon: number, lat: number): [number, number] => [((lon + Math.PI) / (2 * Math.PI)) * W, ((Math.PI / 2 - lat) / Math.PI) * H];
+  ctx.fillStyle = color;
+  ctx.fillRect(0, 0, W, H);
+  const centre = { lon: 0, lat: FEATURES.eyeLat + 0.05 };
+  const point = (angle: number, r: number) => at(centre.lon + Math.cos(angle) * r, centre.lat + Math.sin(angle) * r * 0.8);
+  ctx.strokeStyle = '#1a1416';
+  ctx.lineWidth = 2.5;
+  ctx.lineCap = 'round';
+  const spokes = 16;
+  for (let k = 0; k < spokes; k++) {
+    const a = (k / spokes) * Math.PI * 2;
+    ctx.beginPath();
+    ctx.moveTo(...point(a, 0.05));
+    ctx.lineTo(...point(a, 3));
+    ctx.stroke();
+  }
+  // Rings sagging towards the centre between two spokes.
+  for (let r = 0.22; r < 3; r += 0.24) {
+    for (let k = 0; k < spokes; k++) {
+      const a0 = (k / spokes) * Math.PI * 2;
+      const a1 = ((k + 1) / spokes) * Math.PI * 2;
+      ctx.beginPath();
+      ctx.moveTo(...point(a0, r));
+      ctx.quadraticCurveTo(...point((a0 + a1) / 2, r * 0.86), ...point(a1, r));
+      ctx.stroke();
+    }
+  }
+  // The lenses: tilted, their outer corners raised (a determined look, not a sad one).
+  for (const side of [-1, 1]) {
+    const [x, y] = at(side * 0.45, FEATURES.eyeLat + 0.04);
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(-side * 0.3);
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 0.3 * W / (2 * Math.PI), 0.2 * H / Math.PI, 0, 0, Math.PI * 2);
+    ctx.fillStyle = '#f7f3ee';
+    ctx.fill();
+    ctx.lineWidth = 9;
+    ctx.stroke();
+    ctx.restore();
+  }
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.anisotropy = 4;
+  webTextures.set(color, texture);
+  return texture;
+}
+
+/** The superhero's full mask (presets.ts): a skin-tight layer over the whole head, in its colour. */
+function heroMask(color: string, params: HeadParams): THREE.Group {
+  const group = new THREE.Group();
+  const geometry = shellGeometry(params, () => 0.006, {
+    uv: (lon, lat) => [(lon + Math.PI) / (2 * Math.PI), (lat + Math.PI / 2) / Math.PI],
+    segments: { lonSegments: 160, latSegments: 100 },
+  });
+  group.add(celMesh(geometry, cel('#ffffff', { map: maskTexture(color), rim: 0.25, softness: 0.1 }), { outline: 0.004 }));
+  return group;
 }
 
 /**
@@ -425,7 +527,8 @@ export function buildHeadwear(
   type: string, { color, volume = 0.03, params }: { color: string; volume?: number; params: HeadParams },
 ): THREE.Group | null {
   if (type === 'headscarf') return headscarf(color, params);
-  if (type === 'cap') return cap(color, params, volume);
+  if (type === 'heroMask') return heroMask(color, params);
+  if (type === 'cap' || type === 'plumberCap') return cap(color, params, volume, type === 'plumberCap');
   const group = ({ beanie, wizard } as Record<string, (color: string) => THREE.Group>)[type]?.(color);
   if (!group) return null;
   // Hats squash the hair: only part of its volume counts.
@@ -439,7 +542,7 @@ export function buildHeadwear(
 
 /** Hats hide the top of the hair. */
 export function coversHair(type: string): boolean {
-  return type === 'cap' || type === 'beanie' || type === 'wizard';
+  return type === 'cap' || type === 'beanie' || type === 'wizard' || type === 'plumberCap';
 }
 
 /**
@@ -451,7 +554,7 @@ export function hatEdge(type: string): ((lon: number) => number) | undefined {
   if (type === 'beanie') return (lon) => 0.085 + 0.165 * Math.cos(lon);
   // The band of the wizard hat, level all round its crown.
   if (type === 'wizard') return () => 0.29;
-  return type === 'cap' ? capEdge : undefined;
+  return type === 'cap' || type === 'plumberCap' ? capEdge : undefined;
 }
 
 // ---------------------------------------------------------------- glasses
@@ -475,6 +578,7 @@ const FRAMES: Record<string, FrameSpec> = {
   bold: { a: 1.2, b: 0.95, n: 4, rim: 0.28, flare: 0.2 }, // thick acetate, wider at the top
   catEye: { a: 1.15, b: 0.82, n: 2.6, rim: 0.2, wing: 0.55 }, // outer top corners swept up
   browline: { a: 1.18, b: 0.86, n: 4, rim: 0.07, brow: 0.3 }, // thick top bar over a thin metal rim
+  sunRound: { a: 1.08, b: 1.08, n: 2, rim: 0.12 }, // the adventurer's round sunglasses (presets.ts)
 };
 const METAL_RIM = '#b8bec6';
 // Clear plastic: see-through, only its edges and highlights show. No ink outline (an opaque hull
@@ -560,7 +664,8 @@ function lens(type: string, size: number, color: string, side: number): THREE.Gr
     group.add(celMesh(geometry, frameMaterial(color, 0.2), { outline }));
     if (clear) group.add(clearEdge(bar, depth * 1.3, false));
   }
-  const glass = new THREE.MeshBasicMaterial({ color: '#e3f3ff', transparent: true, opacity: 0.22, depthWrite: false });
+  const sun = type === 'sunRound';
+  const glass = new THREE.MeshBasicMaterial({ color: sun ? '#1d262c' : '#e3f3ff', transparent: true, opacity: sun ? 0.88 : 0.22, depthWrite: false });
   const pane = new THREE.Mesh(new THREE.ShapeGeometry(new THREE.Shape(inner)), glass);
   pane.position.z = depth * 0.5;
   group.add(pane);
@@ -656,4 +761,76 @@ export function buildEarrings(type: string, { color, params }: { color: string; 
     group.add(earring);
   }
   return group;
+}
+
+// ---------------------------------------------------------------- held items
+
+// What the ready-made characters hold in their left hand (presets.ts), in the elbow's frame (see
+// Character.build): centred on the fist, the forearm along −Y, forwards +Z.
+
+const prop = (geometry: THREE.BufferGeometry, color: string) => celMesh(geometry, cel(color, { rim: 0.3 }), { outline: 0.003 });
+
+function wand(): THREE.Group {
+  const group = new THREE.Group();
+  const handle = prop(new THREE.CylinderGeometry(0.011, 0.009, 0.09, 10), '#4a3426');
+  handle.position.y = 0.005;
+  const shaft = prop(new THREE.CylinderGeometry(0.004, 0.008, 0.16, 8), '#7a5236');
+  shaft.position.y = 0.13;
+  const knob = prop(new THREE.SphereGeometry(0.012, 10, 8), '#4a3426');
+  knob.position.y = -0.045;
+  group.add(handle, shaft, knob);
+  // Pointing forwards and out, a little up.
+  group.rotation.set(1.2, 0, -0.6);
+  return group;
+}
+
+/** Wooden staff from the floor to above the head, gnarled at the top. */
+function staff(): THREE.Group {
+  const group = new THREE.Group();
+  const wood = '#8a6a4a';
+  const points = [[0, -0.3], [0.006, 0.2], [-0.004, 0.75], [0.004, 1.15], [0.03, 1.27], [0.02, 1.32]]
+    .map(([x, y]) => new THREE.Vector3(x, y, 0));
+  group.add(prop(sweep(new THREE.CatmullRomCurve3(points), (t) => 0.014 + 0.006 * t + 0.008 * Math.sin(t * 23) * t, { segments: 40, radial: 10 }), wood));
+  for (const [x, y, r] of [[0.02, 1.2, 0.022], [0.035, 1.28, 0.02], [0.012, 1.33, 0.018], [-0.006, 1.25, 0.016]]) {
+    const knot = prop(new THREE.SphereGeometry(r, 12, 8), shadeHex(wood, -0.12));
+    knot.position.set(x, y, 0);
+    group.add(knot);
+  }
+  // In front of the hand and leaning out from the body, so it shows beside the hair; it stays standing
+  // like this whatever the arm does (Character.straightenHeld()).
+  group.rotation.set(0.05, 0, -0.22);
+  group.position.z = 0.04;
+  group.userData.upright = group.quaternion.clone();
+  return group;
+}
+
+/** Small dark pistol: the grip in the fist (its butt showing under it), the barrel pointing forwards; `side`: the hand. */
+function pistol(side = 1): THREE.Group {
+  const group = new THREE.Group();
+  const grip = prop(new THREE.BoxGeometry(0.024, 0.085, 0.034), '#2b2b2e');
+  grip.rotation.x = -0.25;
+  grip.position.set(0, -0.012, -0.006);
+  const slide = prop(new THREE.BoxGeometry(0.026, 0.03, 0.13), '#4a4e57');
+  slide.position.set(0, 0.04, 0.04);
+  const sight = prop(new THREE.BoxGeometry(0.008, 0.01, 0.01), '#4a4e57');
+  sight.position.set(0, 0.058, 0.098);
+  const muzzle = celMesh(new THREE.CircleGeometry(0.007, 10), cel('#121214', { rim: 0 }), { outline: 0 });
+  muzzle.position.set(0, 0.042, 0.106);
+  const guard = prop(new THREE.TorusGeometry(0.016, 0.004, 6, 12, Math.PI), '#2b2b2e');
+  guard.rotation.set(Math.PI, Math.PI / 2, 0);
+  guard.position.set(0, 0.025, 0.035);
+  group.add(grip, slide, sight, muzzle, guard);
+  group.scale.setScalar(1.25);
+  // Turned out a little, so it shows its side.
+  group.rotation.y = 0.6 * side;
+  return group;
+}
+
+/**
+ * What the hand on `side` holds (+1 the left, −1 the right), or null: 'wand', 'staff' or 'pistol' in
+ * the left hand, 'pistols' one in each.
+ */
+export function buildHeldItem(type: string, side: number): THREE.Group | null {
+  if (type === 'pistols') return pistol(side);
+  return side > 0 ? ({ wand, staff, pistol } as Record<string, () => THREE.Group>)[type]?.() ?? null : null;
 }

@@ -9,7 +9,7 @@ import { limb, smoothLathe } from './shapes.ts';
 import { buildHair, HAIR_VOLUME } from './hair.ts';
 import { buildFacialHair } from './beard.ts';
 import { buildNose } from './nose.ts';
-import { buildHeadwear, buildGlasses, buildEarrings, coversHair, hatEdge, hidesHair } from './accessories.ts';
+import { buildHeadwear, buildGlasses, buildEarrings, buildHeldItem, coversHair, hatEdge, hidesFace, hidesHair } from './accessories.ts';
 
 const WALK_SPEED = 2.6; // tiles per second
 const TURN_RATE = 12;
@@ -26,7 +26,62 @@ const SHIN = 0.12;
 const UPPER_ARM = 0.12;
 const FOREARM = 0.1;
 const OUTLINE = 0.005;
-const LONG_SLEEVES = ['hoodie', 'sweater', 'shirt', 'jacket', 'cardigan', 'suit'];
+const LONG_SLEEVES = ['hoodie', 'sweater', 'shirt', 'jacket', 'cardigan', 'suit', 'robe', 'schoolRobe', 'overalls', 'heroSuit'];
+
+const numbers = new Map<string, THREE.CanvasTexture>();
+
+/** A big white jersey number with a dark edge, on a transparent canvas (cached). */
+function numberTexture(text: string): THREE.CanvasTexture {
+  if (numbers.has(text)) return numbers.get(text)!;
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = 256;
+  const ctx = canvas.getContext('2d')!;
+  ctx.font = '700 190px "Fredoka Variable", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.lineJoin = 'round';
+  ctx.lineWidth = 14;
+  ctx.strokeStyle = 'rgba(30, 20, 20, 0.55)';
+  ctx.strokeText(text, 128, 140);
+  ctx.fillStyle = '#ffffff';
+  ctx.fillText(text, 128, 140);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  numbers.set(text, texture);
+  return texture;
+}
+
+let spider: THREE.CanvasTexture | null = null;
+
+/** A black spider, the emblem on the superhero's chest, on a transparent canvas. */
+function spiderTexture(): THREE.CanvasTexture {
+  if (spider) return spider;
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = 256;
+  const ctx = canvas.getContext('2d')!;
+  ctx.fillStyle = ctx.strokeStyle = '#1a1416';
+  ctx.lineWidth = 7;
+  ctx.lineCap = ctx.lineJoin = 'round';
+  for (const side of [-1, 1]) {
+    // Four legs a side: two up, two down, each bent at the knee.
+    for (const [kx, ky, fx, fy] of [[40, -40, 52, -96], [50, -12, 92, -50], [50, 18, 92, 60], [40, 40, 52, 104]]) {
+      ctx.beginPath();
+      ctx.moveTo(128, 128);
+      ctx.lineTo(128 + side * kx, 128 + ky);
+      ctx.lineTo(128 + side * fx, 128 + fy);
+      ctx.stroke();
+    }
+  }
+  ctx.beginPath();
+  ctx.ellipse(128, 145, 15, 34, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(128, 100, 15, 0, Math.PI * 2);
+  ctx.fill();
+  spider = new THREE.CanvasTexture(canvas);
+  spider.colorSpace = THREE.SRGBColorSpace;
+  return spider;
+}
 
 /** Body proportions (the same for everyone); `limbs` scales arms and legs. */
 const BODY = { shoulders: 0.175, chest: 0.168, waist: 0.155, hips: 0.166, limbs: 1.07 };
@@ -51,17 +106,21 @@ export const DEFAULT_LOOK = {
   beard: 'none', // 'none' | 'stubble' | 'goatee' (the chin) | 'short'
   mustache: 'none', // 'none' | 'stubble' | 'thick'
   beardColor: '#4a3426',
+  // Also 'robe', 'schoolRobe', 'overalls', 'tankTop', 'jersey' and 'heroSuit', worn only by the ready-made characters (presets.ts).
   outfit: 'tshirt', // 'tshirt' | 'sweater' | 'shirt' | 'hoodie' | 'jacket' | 'cardigan' | 'suit' | 'dress'
   bottomStyle: 'trousers', // 'trousers' | 'shorts', not with a dress
   top: '#5b7fb8',
   bottom: '#2f3a56',
   shoes: '#f7f3ee',
-  headwear: 'none', // 'none' | 'cap' | 'beanie' | 'headscarf' | 'wizard'
+  headwear: 'none', // 'none' | 'cap' | 'beanie' | 'headscarf' (and 'wizard', 'plumberCap', 'heroMask', presets.ts)
   headwearColor: '#2f3a56',
-  glasses: 'none', // 'none' | 'round' | 'square' | 'bold' | 'catEye' | 'browline'
+  glasses: 'none', // 'none' | 'round' | 'square' | 'bold' | 'catEye' | 'browline' (and 'sunRound', presets.ts)
   glassesColor: '#2b2d42', // see GLASSES_COLORS (the last one is clear plastic)
   earrings: 'none', // 'none' | 'studs' | 'hoops' | 'drops'
   earringColor: '#ffcf4a',
+  // What the hands hold, only for the ready-made characters (presets.ts): 'none' | 'wand' | 'staff' | 'pistol' (the
+  // left hand), 'pistols' (one in each hand).
+  held: 'none',
 };
 
 /** Everything the visitor sets in « Crée ton perso » (and the scan measures). */
@@ -117,6 +176,7 @@ export class Character {
   arms!: ArmJoints[];
   torso!: THREE.Group;
   head!: THREE.Group;
+  heldItems!: THREE.Group[];
 
   constructor(look: Partial<Look> = {}) {
     this.look = { ...DEFAULT_LOOK, ...look };
@@ -205,12 +265,15 @@ export class Character {
     this.rig.add(this.torso);
 
     // A short neck that shows between the chin and the collar, whatever the face shape.
-    const neck = part(limb(0.055, 0.06, 0.1), mat.skin);
+    // The superhero's suit goes up the neck to his mask, and down to gloves.
+    const hero = outfit === 'heroSuit';
+    const neck = part(limb(0.055, 0.06, 0.1), hero ? mat.top : mat.skin);
     neck.position.y = 0.8;
     this.rig.add(neck);
 
     // Arms: shoulder → elbow → round mitten hand.
     const longSleeves = LONG_SLEEVES.includes(outfit);
+    this.heldItems = [];
     this.arms = [-1, 1].map((side) => {
       const shoulder = joint(side * (f.shoulders - 0.015), SHOULDER_Y);
       shoulder.userData.side = side;
@@ -219,20 +282,37 @@ export class Character {
         shoulder.add(part(limb(0.056 * a, 0.05 * a, UPPER_ARM), mat.top));
       } else {
         shoulder.add(part(limb(0.05 * a, 0.045 * a, UPPER_ARM), mat.skin));
-        shoulder.add(part(limb(0.062 * a, 0.059 * a, 0.06), mat.top));
+        // Tank top and basketball jersey: no sleeves.
+        if (outfit !== 'tankTop' && outfit !== 'jersey') shoulder.add(part(limb(0.062 * a, 0.059 * a, 0.06), mat.top));
       }
       const elbow = joint(0, -UPPER_ARM);
       elbow.add(part(limb(0.046 * a, 0.04 * a, FOREARM), longSleeves ? mat.top : mat.skin));
+      if (outfit === 'robe' || outfit === 'schoolRobe') {
+        // Wide sleeves, flaring to the wrist.
+        const cuff = part(new THREE.CylinderGeometry(0.05 * a, 0.075 * a, 0.07, 18, 1, true), mat.top);
+        cuff.material.side = THREE.DoubleSide;
+        cuff.position.y = -FOREARM + 0.01;
+        elbow.add(cuff);
+      }
       const handGeometry = new THREE.SphereGeometry(1, 16, 12);
       handGeometry.scale(0.046 * a, 0.05 * a, 0.038 * a);
-      const hand = part(handGeometry, mat.skin);
+      // The plumber's overalls come with white gloves.
+      const handMat = outfit === 'overalls' ? cel('#f7f3ee', { rim: 0.2 }) : hero ? mat.top : mat.skin;
+      const hand = part(handGeometry, handMat);
       hand.position.y = -FOREARM - 0.04;
       const thumbGeometry = new THREE.SphereGeometry(1, 10, 8);
       thumbGeometry.scale(0.014 * a, 0.022 * a, 0.014 * a);
-      const thumb = part(thumbGeometry, mat.skin, 0);
+      const thumb = part(thumbGeometry, handMat, 0);
       thumb.position.set(0, -FOREARM - 0.03, 0.03 * a);
       thumb.rotation.x = 0.5;
       elbow.add(hand, thumb);
+      const item = buildHeldItem(this.look.held, side);
+      if (item) {
+        item.position.y = hand.position.y;
+        item.userData.side = side;
+        elbow.add(item);
+        this.heldItems.push(item);
+      }
       shoulder.add(elbow);
       this.rig.add(shoulder);
       return { shoulder, elbow };
@@ -256,7 +336,8 @@ export class Character {
     const trim = cel(shadeHex(this.look.top, -0.14));
 
     // Upper body, from the waist to the neck; its hem comes down over the waistband, like a real top.
-    const hem = outfit === 'dress' ? 0.11 : 0.07;
+    const robe = outfit === 'robe' || outfit === 'schoolRobe';
+    const hem = outfit === 'dress' || robe ? 0.11 : 0.07;
     torso.add(part(smoothLathe([
       [0.0, hem - 0.005], [f.hips * 1.06, hem], [f.waist * 1.08, 0.14], [f.chest, 0.23], [f.shoulders * 0.95, 0.3],
       [f.shoulders * 0.7, 0.34], [0.07, 0.36], [0.0, 0.365],
@@ -320,6 +401,41 @@ export class Character {
       const half = (spread / 2) * (y - bottom) / (0.345 - bottom);
       return [-half, half];
     });
+
+    /** Patch of another colour on the body, from height `bottom` to `top`, `spread` radians wide round `angle` (0 = the front). */
+    const panel = (color: string | THREE.Material, bottom: number, top: number, spread: number, angle = 0, lift = 0) => {
+      const geometry = new THREE.PlaneGeometry(1, 1, Math.ceil(spread * 10), 10);
+      const position = geometry.attributes.position;
+      for (let i = 0; i < position.count; i++) {
+        const y = THREE.MathUtils.lerp(bottom, top, position.getY(i) + 0.5);
+        const a = angle + position.getX(i) * spread;
+        const r = bodyRadius(y) + lift;
+        position.setXYZ(i, r * Math.sin(a), y, r * Math.cos(a));
+      }
+      geometry.computeVertexNormals();
+      return part(geometry, typeof color === 'string' ? cel(color, { side: THREE.DoubleSide }) : color, 0);
+    };
+
+    if (robe) {
+      // Wizard's robe, down to the ankles with a hood on the back: tied with a cord ('robe'), or the
+      // school one ('schoolRobe'), open on a white shirt under a striped scarf.
+      torso.add(part(smoothLathe([
+        [0.0, -0.25], [f.hips * 1.8, -0.245], [f.hips * 1.55, -0.12], [f.hips * 1.2, 0.0], [f.waist * 1.06, 0.13], [0.0, 0.14],
+      ]), top));
+      const hood = part(new THREE.TorusGeometry(0.085, 0.042, 10, 24), top);
+      hood.rotation.x = Math.PI / 2 + 0.5;
+      hood.position.set(0, 0.33, -0.06);
+      torso.add(hood);
+      if (outfit === 'robe') {
+        const cord = part(new THREE.TorusGeometry(f.waist * 1.1, 0.01, 8, 32), cel(shadeHex(this.look.top, -0.3)), 0);
+        cord.rotation.x = Math.PI / 2;
+        cord.position.y = 0.135;
+        torso.add(cord);
+      } else {
+        torso.add(vNeck('#f7f3ee', 0.17, 1.1), this.scarf());
+      }
+      return torso;
+    }
 
     if (outfit === 'hoodie') {
       const hood = part(new THREE.TorusGeometry(0.08, 0.038, 10, 24), top);
@@ -396,8 +512,67 @@ export class Character {
         torso.add(button);
       }
       torso.add(collar(0.072, 0.016, cel(shadeHex(this.look.top, -0.14))));
+    } else if (outfit === 'overalls') {
+      // Dungarees in the « Bas » colour over the top: high waist, a bib on the chest, straps over the
+      // shoulders with a big button each.
+      const denim = this.look.bottom;
+      torso.add(panel(denim, 0.06, 0.14, Math.PI * 2, 0, 0.01), panel(denim, 0.12, 0.27, 0.95, 0, 0.004));
+      for (const side of [-1, 1]) {
+        torso.add(panel(denim, 0.24, 0.335, 0.16, side * 0.42, 0.002), panel(denim, 0.12, 0.335, 0.16, Math.PI - side * 0.42, 0.002));
+        const button = part(new THREE.SphereGeometry(0.014, 12, 8), cel('#f4c04e', { rim: 0.5 }), 0.002);
+        button.scale.z = 0.6;
+        button.position.set(bodyRadius(0.255) * Math.sin(side * 0.4), 0.255, bodyRadius(0.255) * Math.cos(side * 0.4) + 0.004);
+        torso.add(button);
+      }
+      const pocket = panel(shadeHex(denim, -0.12), 0.16, 0.22, 0.4, 0, 0.002);
+      torso.add(pocket);
+    } else if (outfit === 'tankTop') {
+      // The adventurer's tank top, a leather belt round the shorts.
+      const belt = part(new THREE.TorusGeometry(f.hips * 1.03, 0.012, 8, 32), cel('#4a3426', { rim: 0.3 }), 0.002);
+      belt.rotation.x = Math.PI / 2;
+      belt.scale.z = 1.6;
+      belt.position.y = 0.075;
+      const buckle = part(new THREE.BoxGeometry(0.03, 0.026, 0.008), cel('#c9a227', { rim: 0.5 }), 0.002);
+      buckle.position.set(0, 0.075, f.hips * 1.06);
+      torso.add(belt, buckle);
+    } else if (outfit === 'heroSuit') {
+      // The superhero's suit: blue down the sides, a black spider on the chest.
+      const blue = this.look.bottom;
+      for (const side of [-1, 1]) torso.add(panel(blue, 0.07, 0.3, 0.9, side * Math.PI / 2, 0.002));
+      const spider = cel('#ffffff', { map: spiderTexture(), rim: 0, transparent: true, side: THREE.DoubleSide });
+      torso.add(panel(spider, 0.16, 0.3, 0.75, 0, 0.003));
+    } else if (outfit === 'jersey') {
+      // Basketball jersey: white trims round the neck, the number 23 on the front and the back.
+      torso.add(collar(0.072, 0.012, cel('#f7f3ee')));
+      const number = cel('#ffffff', { map: numberTexture('23'), rim: 0, transparent: true, side: THREE.DoubleSide });
+      torso.add(panel(number, 0.13, 0.28, 0.9, 0, 0.003), panel(number, 0.13, 0.28, 0.9, Math.PI, 0.003));
     }
     return torso;
+  }
+
+  /** Scarf in red and gold stripes, wound round the neck, its two ends hanging on the chest (torso units). */
+  scarf(): THREE.Group {
+    const group = new THREE.Group();
+    const stripes = [cel('#b83a44', { rim: 0.2 }), cel('#f4c04e', { rim: 0.2 })];
+    const pieces = 12;
+    for (let i = 0; i < pieces; i++) {
+      const piece = celMesh(new THREE.TorusGeometry(0.085, 0.03, 8, 4, (Math.PI * 2) / pieces + 0.01), stripes[i % 2], { outline: 0.003 });
+      piece.rotation.set(Math.PI / 2, 0, (i * Math.PI * 2) / pieces);
+      piece.position.y = 0.335;
+      group.add(piece);
+    }
+    for (const [x, tilt, length] of [[-0.045, 0.1, 6], [0.035, -0.05, 5]]) {
+      const end = new THREE.Group();
+      for (let i = 0; i < length; i++) {
+        const stripe = celMesh(new THREE.BoxGeometry(0.056, 0.028, 0.014), stripes[i % 2], { outline: 0.003 });
+        stripe.position.y = -0.014 - i * 0.028;
+        end.add(stripe);
+      }
+      end.position.set(x, 0.33, 0.165);
+      end.rotation.set(-0.3, 0, tilt);
+      group.add(end);
+    }
+    return group;
   }
 
   buildHead(mat: BodyMaterials): void {
@@ -408,7 +583,8 @@ export class Character {
     const face = cel('#ffffff', { map: this.faceTexture.texture, rim: 0.2, softness: 0.12, wrap: 0.3 });
     this.head.add(celMesh(headGeometry(params), face, { outline: 0.004 }));
 
-    for (const side of [-1, 1]) {
+    const masked = hidesFace(headwear);
+    for (const side of masked ? [] : [-1, 1]) {
       const earGeometry = new THREE.SphereGeometry(1, 14, 10);
       earGeometry.scale(0.018, 0.036, 0.026);
       const ear = celMesh(earGeometry, mat.skin, { outline: 0.003 });
@@ -417,7 +593,7 @@ export class Character {
       this.head.add(ear);
     }
 
-    this.head.add(buildNose({ skin, params }));
+    if (!masked) this.head.add(buildNose({ skin, params }));
 
     if (!hidesHair(headwear)) this.head.add(buildHair(hairStyle, { color: hair, skin, params, hatted: coversHair(headwear), hatEdge: hatEdge(headwear) }));
     const facialHair = buildFacialHair(beard, mustache, { color: beardColor, params });
@@ -427,9 +603,9 @@ export class Character {
     if (hat) this.head.add(hat);
 
     const { eyeSpacing, eyeSize } = DEFAULT_FACE;
-    const specs = buildGlasses(glasses, { color: glassesColor, params, eyeSpacing, eyeSize });
+    const specs = masked ? null : buildGlasses(glasses, { color: glassesColor, params, eyeSpacing, eyeSize });
     if (specs) this.head.add(specs);
-    const rings = headwear === 'headscarf' ? null : buildEarrings(earrings, { color: earringColor, params });
+    const rings = headwear === 'headscarf' || masked ? null : buildEarrings(earrings, { color: earringColor, params });
     if (rings) this.head.add(rings);
   }
 
@@ -477,7 +653,18 @@ export class Character {
     this.group.rotation.y = this.heading;
 
     this.animate(dt, time);
+    this.straightenHeld();
     this.updateBlink(dt);
+  }
+
+  /** Keeps a held item that stands (the staff) upright in the character's frame, whatever the arm does. */
+  straightenHeld(): void {
+    for (const item of this.heldItems) {
+      const upright = item.userData.upright;
+      if (!upright) continue;
+      const arm = item.parent!.getWorldQuaternion(new THREE.Quaternion());
+      item.quaternion.copy(arm.invert().multiply(this.group.getWorldQuaternion(new THREE.Quaternion())).multiply(upright));
+    }
   }
 
   followPath(dt: number): void {

@@ -222,6 +222,7 @@ export function randomLook(): Look {
     glassesColor: pick(GLASSES_COLORS),
     earrings: Math.random() < 0.6 ? 'none' : pick(EARRINGS),
     earringColor: pick(METAL_COLORS),
+    held: 'none',
   };
 }
 
