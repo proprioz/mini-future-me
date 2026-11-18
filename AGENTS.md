@@ -9,15 +9,22 @@ both PLAN.md and PLAN.fr.md.
 
 - **pnpm only** (never npm/npx): `pnpm install`, `pnpm dev` (http://localhost:5173), `pnpm build`.
 - **`pnpm check` before you call a change done**: types (`pnpm typecheck`), CSS (`pnpm lint:css`), unit tests
-  (`pnpm test`) and the game played in Edge (`pnpm test:e2e`); the CI runs the same on every push. When you
+  (`pnpm test`) and the game played in Edge, then in WebKit and Firefox on the target screen (`pnpm test:e2e`); the CI runs the same on every push. When you
   change a rule of the game (or add one), add or adjust its test in `tests/`.
 - **Check every visual or interactive change in a browser**: open the page, look, click. If your
   assistant can drive a browser (for example through the Playwright MCP server), let it do so itself; see
   "AI agents with browser tools" below.
+- **Target screen: landscape, from 10 inches and 1180 px wide (CSS pixels), in Chrome, Safari and Firefox**
+  (a tablet or a small laptop at the booth). It must always work and look right; optimise for it first.
+  Other formats (portrait, small windows, big screens) stay supported, but come second. The tests tagged
+  `@target` play a whole visit at 1180×820 (an iPad) and 1200×750 in Chromium, WebKit and Firefox and check that no
+  button or card is off screen or cut; a new screen or card goes into that test. Playwright's WebKit is not
+  Safari: some Safari-only layout quirks show only on a real iPad or Mac (the poster card's column sized
+  from its 2480 px image did), so check a layout change there too when you can.
 - **UI sizes in `rem`, never in `px`** (except 1–2 px lines; `pnpm lint:css` checks it): `1rem` follows the screen size (16 px at
   1366×768, ~22 px in full HD, ~30 px at 1440p, see `html` in `src/style.css`), like the 3D scene. What is
   drawn in a UI canvas scales too (`getComputedStyle(document.documentElement).fontSize / 16`). Check at
-  least at 1280×620, 1920×1080 and 3440×1440.
+  least at 1200×750 (the target), 1280×620, 1920×1080 and 3440×1440.
 - **Game texts in French**, addressing the player with "tu" ("Touche le sol pour te déplacer"), inclusive
   (médiamaticien·ne). Code, comments and contributor docs in English.
 - **Docs written respectfully and inclusively**: say what a piece of data about the visitor is used for,

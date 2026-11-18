@@ -19,8 +19,8 @@ pnpm server                  # optional, in a second terminal: the booth server,
 
 Once `pnpm install` has run, you need neither Internet nor photos: "Sans photos, à la main" on the welcome
 screen creates the avatar by hand. Any editor with TypeScript support shows type errors as you type. The
-end-to-end tests also need Microsoft Edge, the booth's browser, or Playwright's Chromium (see "Checking
-your change").
+end-to-end tests also need Microsoft Edge, the booth's browser, or Playwright's Chromium, and Playwright's
+WebKit and Firefox (see "Checking your change").
 
 The game and the design decisions are described in [PLAN.md](PLAN.md); the code layout in the
 [README](README.md#structure).
@@ -45,19 +45,22 @@ The full list is in [AGENTS.md](AGENTS.md). The essentials:
 
 `pnpm check` runs everything the CI runs on your pull request: the types (`pnpm typecheck`), the CSS
 (`pnpm lint:css`), the rules of the game and the contract of every trade (`pnpm test`), then a whole visit
-of every trade in Edge, offline (`pnpm test:e2e`). If you change a rule of the game, add or adjust its test
+of every trade in Edge, offline, and a whole visit on the target screen (landscape, 1180 px wide, see
+[PLAN.md](PLAN.md)) in WebKit and Firefox too (`pnpm test:e2e`). If you change a rule of the game, add or adjust its test
 in `tests/`.
 
-The end-to-end tests open the installed Microsoft Edge. Without Edge (on Linux, for example), install
-Playwright's Chromium once with `pnpm exec playwright install chromium`, then run
-`E2E_BROWSER=chromium pnpm test:e2e` (PowerShell: `$env:E2E_BROWSER="chromium"; pnpm test:e2e`). A failed
+The end-to-end tests open the installed Microsoft Edge, and Playwright's WebKit and Firefox: install them
+once with `pnpm exec playwright install webkit firefox`. Without Edge (on Linux, for example), install
+Playwright's Chromium too (`pnpm exec playwright install chromium`), then run
+`E2E_BROWSER=chromium pnpm test:e2e` (PowerShell: `$env:E2E_BROWSER="chromium"; pnpm test:e2e`); on Linux without a screen, prefix it with
+`xvfb-run` (Firefox needs a window for WebGL). A failed
 test leaves a trace in `test-results/`: `pnpm exec playwright show-trace <its trace.zip>` replays it step by
 step.
 
 The tests don't play the mini-games' gestures nor look at the result: check in a browser too.
 
 - Play the parts you changed, with the mouse and, if you can, with touch.
-- Look at the result at least at 1280×620, 1920×1080 and 3440×1440 (the interface scales with the screen).
+- Look at the result at least at 1180×820 (the target screen, in landscape), 1280×620, 1920×1080 and 3440×1440 (the interface scales with the screen).
 - Keep an eye on the console: no errors.
 - `pnpm build` must pass.
 

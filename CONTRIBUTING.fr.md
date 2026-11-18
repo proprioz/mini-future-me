@@ -21,7 +21,7 @@ pnpm server                  # facultatif, dans un deuxième terminal : le serve
 Une fois `pnpm install` lancé, il n'y a besoin ni d'Internet ni de photo : « Sans photos, à la main », sur
 l'accueil, crée le perso à la main. Tout éditeur qui gère TypeScript montre les erreurs de type pendant la
 frappe. Les tests de bout en bout demandent en plus Microsoft Edge, le navigateur du stand, ou le Chromium
-de Playwright (voir « Vérifier ton changement »).
+de Playwright, ainsi que le WebKit et le Firefox de Playwright (voir « Vérifier ton changement »).
 
 Le jeu et les décisions de conception sont décrits dans [PLAN.fr.md](PLAN.fr.md), l'organisation du code dans
 le [README](README.fr.md#structure).
@@ -47,12 +47,15 @@ La liste complète est dans [AGENTS.md](AGENTS.md) (en anglais). L'essentiel :
 
 `pnpm check` lance tout ce que la CI lance sur ta pull request : les types (`pnpm typecheck`), le CSS
 (`pnpm lint:css`), les règles du jeu et le contrat de chaque filière (`pnpm test`), puis une visite complète
-de chaque filière dans Edge, hors-ligne (`pnpm test:e2e`). Si tu changes une règle du jeu, ajoute ou adapte
+de chaque filière dans Edge, hors-ligne, et une visite complète sur l'écran cible (paysage, 1180 px de
+large, voir [PLAN.fr.md](PLAN.fr.md)) aussi dans WebKit et Firefox (`pnpm test:e2e`). Si tu changes une règle du jeu, ajoute ou adapte
 son test dans `tests/`.
 
-Les tests de bout en bout ouvrent le Microsoft Edge installé. Sans Edge (sous Linux, par exemple), installe
-une fois le Chromium de Playwright avec `pnpm exec playwright install chromium`, puis lance
-`E2E_BROWSER=chromium pnpm test:e2e` (PowerShell : `$env:E2E_BROWSER="chromium"; pnpm test:e2e`). Un test
+Les tests de bout en bout ouvrent le Microsoft Edge installé, et le WebKit et le Firefox de Playwright :
+installe-les une fois avec `pnpm exec playwright install webkit firefox`. Sans Edge (sous Linux, par
+exemple), installe aussi le Chromium de Playwright (`pnpm exec playwright install chromium`), puis lance
+`E2E_BROWSER=chromium pnpm test:e2e` (PowerShell : `$env:E2E_BROWSER="chromium"; pnpm test:e2e`) ; sous Linux sans écran, précède-le de
+`xvfb-run` (Firefox a besoin d'une fenêtre pour le WebGL). Un test
 qui échoue laisse une trace dans `test-results/` : `pnpm exec playwright show-trace <son trace.zip>` la
 rejoue pas à pas.
 
@@ -60,7 +63,7 @@ Les tests ne jouent pas les gestes des mini-jeux et ne regardent pas le résulta
 navigateur.
 
 - Joue les parties que tu as modifiées, à la souris et, si tu peux, au doigt.
-- Regarde le résultat au moins en 1280×620, 1920×1080 et 3440×1440 (l'interface suit la taille de l'écran).
+- Regarde le résultat au moins en 1180×820 (l'écran cible, en paysage), 1280×620, 1920×1080 et 3440×1440 (l'interface suit la taille de l'écran).
 - Surveille la console : aucune erreur.
 - `pnpm build` doit passer.
 

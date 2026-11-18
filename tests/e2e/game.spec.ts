@@ -63,7 +63,13 @@ async function startByHand(page: Page, trade: string, { borne = false } = {}) {
 /** Ids of every trade of src/trades/index.ts, loaded by Vite like the game does. */
 async function tradeIds(page: Page) {
   await page.goto('/');
-  return page.evaluate(async () => (await import('/src/trades/index.ts')).TRADES.map((t) => t.id));
+  return page.evaluate(async () => {
+    const { TRADES } = await import('/src/trades/index.ts');
+    // The page goes on loading the trades' modules after the welcome screen shows: leaving it in the middle
+    // aborts them, which WebKit reports as an error ("Importing a module script failed").
+    await Promise.all(TRADES.map((t) => t.load()));
+    return TRADES.map((t) => t.id);
+  });
 }
 
 /** Records every mini-game that opens, so the test can end it. */
@@ -226,24 +232,80 @@ async function noFace(page: Page) {
   return Buffer.from(bytes);
 }
 
+/**
+ * Visible buttons and dialogs that do not fit: outside the screen, or cut by a box that clips them (a
+ * card's `overflow: hidden`). A box that scrolls only clips sideways: scrolling down to a control is fine.
+ */
+function misfits(page: Page) {
+  return page.evaluate(() => [...document.querySelectorAll('button, [role="dialog"]')]
+    .filter((el) => el.checkVisibility())
+    .filter((el) => {
+      const r = el.getBoundingClientRect();
+      if (r.left < -1 || r.top < -1 || r.right > innerWidth + 1 || r.bottom > innerHeight + 1) return true;
+      for (let box = el.parentElement; box; box = box.parentElement) {
+        const { overflowX, overflowY } = getComputedStyle(box);
+        if (overflowX === 'visible' && overflowY === 'visible') continue;
+        const b = box.getBoundingClientRect();
+        if (r.left < b.left - 1 || r.right > b.right + 1) return true;
+        const scrolls = /auto|scroll/.test(overflowY);
+        if (!scrolls && (r.top < b.top - 1 || r.bottom > b.bottom + 1)) return true;
+      }
+      return false;
+    })
+    .map((el) => el.outerHTML.slice(0, 80)));
+}
+
 for (const [width, height] of [[1280, 620], [1920, 1080], [3440, 1440]]) {
   test(`everything fits on a ${width}×${height} screen`, async ({ page }) => {
     const checks = watch(page);
     await page.setViewportSize({ width, height });
-    const offScreen = () => page.evaluate(() => [...document.querySelectorAll('button, [role="dialog"]')]
-      .filter((el) => el.checkVisibility())
-      .filter((el) => {
-        const r = el.getBoundingClientRect();
-        return r.left < -1 || r.top < -1 || r.right > innerWidth + 1 || r.bottom > innerHeight + 1;
-      })
-      .map((el) => el.outerHTML.slice(0, 80)));
+    await page.goto('/');
+    await expect(page.locator('.welcome-play')).toBeVisible();
+    await expect.poll(() => misfits(page), { message: 'welcome' }).toEqual([]);
+    await startByHand(page, (await tradeIds(page))[0]);
+    await expect(page.locator('.hud')).toBeVisible();
+    await expect.poll(() => misfits(page), { message: 'office' }).toEqual([]); // once the HUD has slid in
+    checks.expectClean();
+  });
+}
+
+// The target screen (AGENTS.md): from 10 inches and 1180 px wide, in landscape, in Chrome, Safari and
+// Firefox. Every project of playwright.config.ts plays these tests, so WebKit and Firefox play them too:
+// a whole visit of the first trade, every screen checked on an iPad and a 16:10 tablet.
+for (const [width, height] of [[1180, 820], [1200, 750]]) {
+  test(`a whole visit fits on a ${width}×${height} landscape tablet`, { tag: '@target' }, async ({ page }) => {
+    test.setTimeout(180_000); // the A4 poster is rendered at 300 dpi, slow without a GPU
+    const checks = watch(page);
+    await page.setViewportSize({ width, height });
+    const fits = (screen: string) => expect.poll(() => misfits(page), { message: screen }).toEqual([]);
 
     await page.goto('/');
     await expect(page.locator('.welcome-play')).toBeVisible();
-    await expect.poll(offScreen, { message: 'welcome' }).toEqual([]);
+    await fits('welcome');
     await startByHand(page, (await tradeIds(page))[0]);
     await expect(page.locator('.hud')).toBeVisible();
-    await expect.poll(offScreen, { message: 'office' }).toEqual([]); // once the HUD has slid in
+    await fits('office');
+
+    await recordMiniGames(page);
+    const tasks = await page.evaluate(() => window.studio.trades[0].tasks.map(({ id, win }) => ({ id, win })));
+    for (const task of tasks) {
+      await page.evaluate((id) => void window.studio.game!.openTask(id), task.id);
+      await expect(page.locator('.minigame .mg-play')).toBeVisible();
+      await fits(`mini-game ${task.id}`);
+      await page.evaluate(() => window.miniGame!.end(true));
+      await expect(page.locator('.mg-result h2')).toHaveText(task.win);
+      await fits(`result of ${task.id}`);
+      await page.locator('.mg-result [data-action="back"]').click();
+      await expect(page.locator('.minigame')).toHaveCount(0);
+    }
+
+    await page.locator('.hud [data-action="poster"]').click();
+    await expect(page.locator('.studio')).toBeVisible();
+    await fits('poster studio');
+    await page.locator('[data-action="finish"]').click();
+    await expect(page.locator('.export-qr canvas')).toBeVisible({ timeout: 60_000 });
+    await expect(page.locator('.export-preview img')).toBeVisible();
+    await fits('poster ready');
     checks.expectClean();
   });
 }
