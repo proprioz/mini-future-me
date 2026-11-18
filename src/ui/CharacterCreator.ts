@@ -318,6 +318,8 @@ export class CharacterCreator {
       this.bodyEl.querySelector(`[data-field="${key}"]`)!.append(this.picker.el);
     }
     this.refreshFields();
+    // Opened near the bottom of the panel, it would hang below the edge.
+    if (this.pickerKey) this.picker.el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }
 
   presetsHtml() {
