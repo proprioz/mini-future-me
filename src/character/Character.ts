@@ -52,6 +52,7 @@ export const DEFAULT_LOOK = {
   mustache: 'none', // 'none' | 'stubble' | 'thick'
   beardColor: '#4a3426',
   outfit: 'tshirt', // 'tshirt' | 'sweater' | 'shirt' | 'hoodie' | 'jacket' | 'cardigan' | 'suit' | 'dress'
+  bottomStyle: 'trousers', // 'trousers' | 'shorts', not with a dress
   top: '#5b7fb8',
   bottom: '#2f3a56',
   shoes: '#f7f3ee',
@@ -169,13 +170,20 @@ export class Character {
     const trousers = outfit === 'suit' ? top : bottom;
     const mat: BodyMaterials = { skin: cel(skin, { rim: 0.2 }), top: cel(top, { rim: 0.2 }), bottom: cel(trousers, { rim: 0.2 }), shoes: cel(shoes, { rim: 0.2 }) };
     const part = (geometry: THREE.BufferGeometry, material: THREE.Material, outline = OUTLINE) => celMesh(geometry, material, { outline });
-    const legMat = outfit === 'dress' ? mat.skin : mat.bottom;
+    const shorts = outfit !== 'dress' && this.look.bottomStyle === 'shorts';
+    const legMat = outfit === 'dress' || shorts ? mat.skin : mat.bottom;
 
     // Legs: hip → knee → foot, short and round.
     this.legs = [-1, 1].map((side) => {
       const hip = joint(side * f.hips * 0.5, HIP_Y);
       const l = f.limbs;
       const thigh = part(limb(0.074 * l, 0.064 * l, THIGH), legMat);
+      if (shorts) {
+        // A leg of the shorts over the thigh, a little wide, its hem just above the knee.
+        const leg = part(new THREE.CylinderGeometry(0.083 * l, 0.081 * l, 0.13, 20), mat.bottom);
+        leg.position.y = -0.05;
+        hip.add(leg);
+      }
       const knee = joint(0, -THIGH);
       const shin = part(limb(0.062 * l, 0.056 * l, SHIN), legMat);
       const ankle = joint(0, -SHIN);

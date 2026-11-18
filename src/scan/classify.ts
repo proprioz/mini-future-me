@@ -1,6 +1,6 @@
 import {
   SKIN_TONES, HAIR_COLORS, EYE_COLORS, GLASSES_COLORS, CLOTH_COLORS, EYE_SHAPES, SKIN_MARKS, HAIR_STYLES, BEARDS, MUSTACHES,
-  HEADWEAR, GLASSES, FACE_SHAPES, OUTFITS, EARRINGS, CLEAR_FRAME, fitLook, lookGender, type Option,
+  HEADWEAR, GLASSES, FACE_SHAPES, OUTFITS, BOTTOMS, EARRINGS, CLEAR_FRAME, fitLook, lookGender, type Option,
 } from '../character/options.ts';
 import {
   frequencies, ageGroup, skinGroup, FREQUENCY_KEYS,
@@ -375,8 +375,8 @@ export const FIELDS = {
   hairStyle: ['Coupe', HAIR_STYLES], hair: ['Cheveux', HAIR_NAMES], beard: ['Barbe', BEARDS],
   mustache: ['Moustache', MUSTACHES], beardColor: ['Couleur de la barbe', HAIR_NAMES], glasses: ['Lunettes', GLASSES],
   glassesColor: ['Monture', GLASSES_NAMES], headwear: ['Sur la tête', HEADWEAR], headwearColor: ['Couleur du couvre-chef', CLOTH_NAMES],
-  earrings: ["Boucles d'oreilles", EARRINGS], outfit: ['Tenue', OUTFITS], top: ['Haut', CLOTH_NAMES], bottom: ['Bas', CLOTH_NAMES],
-  shoes: ['Chaussures', CLOTH_NAMES],
+  earrings: ["Boucles d'oreilles", EARRINGS], outfit: ['Tenue', OUTFITS], top: ['Haut', CLOTH_NAMES], bottomStyle: ['Bas', BOTTOMS],
+  bottom: ['Couleur du bas', CLOTH_NAMES], shoes: ['Chaussures', CLOTH_NAMES],
 } satisfies Partial<Record<keyof Look, [string, Option[] | Record<string, string>]>>;
 
 /** A look key the scan reports on. */
@@ -587,7 +587,7 @@ export function classify(features: Features, views: PhotoViews): Classification 
   // Unknown gender: the one the look itself took (fitLook), applied to what the animation shows too.
   const shown = gender ?? lookGender(result);
   for (const finding of findings) finding.patch = fitLook(finding.patch, shown);
-  for (const key of ['faceShape', 'skinMarks', 'earrings', 'outfit', 'bottom', 'shoes'] as const) {
+  for (const key of ['faceShape', 'skinMarks', 'earrings', 'outfit', 'bottomStyle', 'bottom', 'shoes'] as const) {
     lines.push(reportLine(key, result[key], weigh(key, context)));
   }
 

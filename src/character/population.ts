@@ -167,6 +167,8 @@ const TABLES = {
     }[age],
     ...(gender === 'f' && { dress: 5 }),
   }),
+  // Shorts in the warm months only (the booth runs all year), mostly teenagers.
+  bottomStyle: ({ age }) => ({ trousers: 100, shorts: { teen: 12, adult: 8, senior: 5 }[age] }),
 } satisfies Record<string, (context: TableContext) => Frequencies>;
 
 /** A look key that has frequencies. */

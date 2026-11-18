@@ -4,7 +4,7 @@ import { CharacterStage } from '../render/CharacterStage.ts';
 import { Thumbnailer, type ThumbnailOptions } from '../render/Thumbnailer.ts';
 import {
   SKIN_TONES, EYE_COLORS, LIKELY_HAIR_COLORS, LIKELY_CLOTH_COLORS, GLASSES_COLORS, METAL_COLORS,
-  FACE_SHAPES, EYE_SHAPES, SKIN_MARKS, HAIR_STYLES, BEARDS, MUSTACHES, OUTFITS, HEADWEAR, GLASSES, EARRINGS, CLEAR_FRAME,
+  FACE_SHAPES, EYE_SHAPES, SKIN_MARKS, HAIR_STYLES, BEARDS, MUSTACHES, OUTFITS, BOTTOMS, HEADWEAR, GLASSES, EARRINGS, CLEAR_FRAME,
   randomLook, type Option,
 } from '../character/options.ts';
 import { ColorPicker } from './ColorPicker.ts';
@@ -70,8 +70,12 @@ const TABS: Tab[] = [
     fields: [
       { key: 'outfit', label: 'Style', choices: OUTFITS, thumb: { view: 'body', heading: 0.35 } },
       { key: 'top', label: 'Haut', colors: LIKELY_CLOTH_COLORS },
-      // The trousers of a suit take the colour of its jacket.
-      { key: 'bottom', label: 'Bas', colors: LIKELY_CLOTH_COLORS, showIf: (look) => look.outfit !== 'suit' },
+      {
+        key: 'bottomStyle', label: 'Bas', choices: BOTTOMS, thumb: { view: 'legs', heading: 0.35 },
+        showIf: (look) => look.outfit !== 'dress',
+      },
+      // The trousers or shorts of a suit take the colour of its jacket.
+      { key: 'bottom', label: 'Couleur du bas', colors: LIKELY_CLOTH_COLORS, showIf: (look) => look.outfit !== 'suit' },
       { key: 'shoes', label: 'Chaussures', colors: LIKELY_CLOTH_COLORS },
     ],
   },

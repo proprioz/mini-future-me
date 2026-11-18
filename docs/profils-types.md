@@ -24,9 +24,10 @@ de ce fichier) : ne pas le modifier à la main. L'estimation sert seulement de p
 | Moustache | **Aucune** (100 %) | **Aucune** (100 %) | **Aucune** (100 %) | **Aucune** (87 %) | **Aucune** (87 %) | **Aucune** (87 %) |
 | Boucles d'oreilles | **Puces** (46 %), puis Aucune (32 %) | **Puces** (46 %), puis Aucune (32 %) | **Puces** (46 %), puis Aucune (32 %) | **Aucune** (100 %) | **Aucune** (100 %) | **Aucune** (100 %) |
 | Haut | **noir** (26 %) | **noir** (21 %), puis blanc (14 %) | **bleu marine** (17 %), puis noir (13 %) | **noir** (27 %) | **noir** (22 %), puis blanc (14 %) | **bleu marine** (17 %), puis noir (13 %) |
-| Bas | **bleu marine** (30 %), puis noir (25 %) | **bleu marine** (30 %), puis noir (25 %) | **bleu marine** (30 %), puis noir (25 %) | **bleu marine** (30 %), puis noir (25 %) | **bleu marine** (30 %), puis noir (25 %) | **bleu marine** (30 %), puis noir (25 %) |
+| Couleur du bas | **bleu marine** (30 %), puis noir (25 %) | **bleu marine** (30 %), puis noir (25 %) | **bleu marine** (30 %), puis noir (25 %) | **bleu marine** (30 %), puis noir (25 %) | **bleu marine** (30 %), puis noir (25 %) | **bleu marine** (30 %), puis noir (25 %) |
 | Chaussures | **blanc** (40 %), puis noir (35 %) | **blanc** (40 %), puis noir (35 %) | **blanc** (40 %), puis noir (35 %) | **blanc** (40 %), puis noir (35 %) | **blanc** (40 %), puis noir (35 %) | **blanc** (40 %), puis noir (35 %) |
 | Tenue | **Sweat** (34 %), puis T-shirt (29 %) | **T-shirt** (25 %), puis Pull (20 %) | **Chemise** (26 %), puis Pull (24 %) | **Sweat** (35 %), puis T-shirt (30 %) | **T-shirt** (27 %), puis Pull (21 %) | **Chemise** (27 %), puis Pull (25 %) |
+| Bas | **Pantalon** (89 %) | **Pantalon** (93 %) | **Pantalon** (95 %) | **Pantalon** (89 %) | **Pantalon** (93 %) | **Pantalon** (95 %) |
 
 ## Peau mate
 
@@ -45,9 +46,10 @@ de ce fichier) : ne pas le modifier à la main. L'estimation sert seulement de p
 | Moustache | **Aucune** (100 %) | **Aucune** (100 %) | **Aucune** (100 %) | **Aucune** (87 %) | **Aucune** (87 %) | **Aucune** (87 %) |
 | Boucles d'oreilles | **Puces** (46 %), puis Aucune (32 %) | **Puces** (46 %), puis Aucune (32 %) | **Puces** (46 %), puis Aucune (32 %) | **Aucune** (100 %) | **Aucune** (100 %) | **Aucune** (100 %) |
 | Haut | **noir** (26 %) | **noir** (21 %), puis blanc (14 %) | **bleu marine** (17 %), puis noir (13 %) | **noir** (27 %) | **noir** (22 %), puis blanc (14 %) | **bleu marine** (17 %), puis noir (13 %) |
-| Bas | **bleu marine** (30 %), puis noir (25 %) | **bleu marine** (30 %), puis noir (25 %) | **bleu marine** (30 %), puis noir (25 %) | **bleu marine** (30 %), puis noir (25 %) | **bleu marine** (30 %), puis noir (25 %) | **bleu marine** (30 %), puis noir (25 %) |
+| Couleur du bas | **bleu marine** (30 %), puis noir (25 %) | **bleu marine** (30 %), puis noir (25 %) | **bleu marine** (30 %), puis noir (25 %) | **bleu marine** (30 %), puis noir (25 %) | **bleu marine** (30 %), puis noir (25 %) | **bleu marine** (30 %), puis noir (25 %) |
 | Chaussures | **blanc** (40 %), puis noir (35 %) | **blanc** (40 %), puis noir (35 %) | **blanc** (40 %), puis noir (35 %) | **blanc** (40 %), puis noir (35 %) | **blanc** (40 %), puis noir (35 %) | **blanc** (40 %), puis noir (35 %) |
 | Tenue | **Sweat** (34 %), puis T-shirt (29 %) | **T-shirt** (25 %), puis Pull (20 %) | **Chemise** (26 %), puis Pull (24 %) | **Sweat** (35 %), puis T-shirt (30 %) | **T-shirt** (27 %), puis Pull (21 %) | **Chemise** (27 %), puis Pull (25 %) |
+| Bas | **Pantalon** (89 %) | **Pantalon** (93 %) | **Pantalon** (95 %) | **Pantalon** (89 %) | **Pantalon** (93 %) | **Pantalon** (95 %) |
 
 ## Peau foncée
 
@@ -66,6 +68,7 @@ de ce fichier) : ne pas le modifier à la main. L'estimation sert seulement de p
 | Moustache | **Aucune** (100 %) | **Aucune** (100 %) | **Aucune** (100 %) | **Aucune** (87 %) | **Aucune** (87 %) | **Aucune** (87 %) |
 | Boucles d'oreilles | **Puces** (46 %), puis Aucune (32 %) | **Puces** (46 %), puis Aucune (32 %) | **Puces** (46 %), puis Aucune (32 %) | **Aucune** (100 %) | **Aucune** (100 %) | **Aucune** (100 %) |
 | Haut | **noir** (26 %) | **noir** (21 %), puis blanc (14 %) | **bleu marine** (17 %), puis noir (13 %) | **noir** (27 %) | **noir** (22 %), puis blanc (14 %) | **bleu marine** (17 %), puis noir (13 %) |
-| Bas | **bleu marine** (30 %), puis noir (25 %) | **bleu marine** (30 %), puis noir (25 %) | **bleu marine** (30 %), puis noir (25 %) | **bleu marine** (30 %), puis noir (25 %) | **bleu marine** (30 %), puis noir (25 %) | **bleu marine** (30 %), puis noir (25 %) |
+| Couleur du bas | **bleu marine** (30 %), puis noir (25 %) | **bleu marine** (30 %), puis noir (25 %) | **bleu marine** (30 %), puis noir (25 %) | **bleu marine** (30 %), puis noir (25 %) | **bleu marine** (30 %), puis noir (25 %) | **bleu marine** (30 %), puis noir (25 %) |
 | Chaussures | **blanc** (40 %), puis noir (35 %) | **blanc** (40 %), puis noir (35 %) | **blanc** (40 %), puis noir (35 %) | **blanc** (40 %), puis noir (35 %) | **blanc** (40 %), puis noir (35 %) | **blanc** (40 %), puis noir (35 %) |
 | Tenue | **Sweat** (34 %), puis T-shirt (29 %) | **T-shirt** (25 %), puis Pull (20 %) | **Chemise** (26 %), puis Pull (24 %) | **Sweat** (35 %), puis T-shirt (30 %) | **T-shirt** (27 %), puis Pull (21 %) | **Chemise** (27 %), puis Pull (25 %) |
+| Bas | **Pantalon** (89 %) | **Pantalon** (93 %) | **Pantalon** (95 %) | **Pantalon** (89 %) | **Pantalon** (93 %) | **Pantalon** (95 %) |

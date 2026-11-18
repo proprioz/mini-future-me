@@ -17,6 +17,7 @@ export interface StageView {
 const VIEWS = {
   stage: { target: new THREE.Vector3(0, 0.68, 0), height: 1.65, width: 1.3, lift: 0.3 },
   body: { target: new THREE.Vector3(0, 0.68, 0), height: 1.45, width: 0.95, lift: 0.2 },
+  legs: { target: new THREE.Vector3(0, 0.28, 0), height: 0.66, width: 0.66, lift: 0.1 },
   head: { target: new THREE.Vector3(0, 1.08, 0), height: 0.92, width: 0.92, lift: 0.05 },
   portrait: { target: new THREE.Vector3(0, 1.04, 0), height: 0.7, width: 0.7, lift: 0.03 },
   face: { target: new THREE.Vector3(0, 1.02, 0), height: 0.48, width: 0.48, lift: 0.02 },

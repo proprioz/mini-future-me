@@ -112,6 +112,12 @@ export const OUTFITS: Option[] = [
   { id: 'dress', label: 'Robe', coded: 'f', alt: 'tshirt' },
 ];
 
+// Under every outfit but the dress.
+export const BOTTOMS: Option[] = [
+  { id: 'trousers', label: 'Pantalon' },
+  { id: 'shorts', label: 'Short' },
+];
+
 export const HEADWEAR: Option[] = [
   { id: 'none', label: 'Rien' },
   { id: 'cap', label: 'Casquette' },
@@ -141,7 +147,7 @@ export const EARRINGS: Option[] = [
 /** Look key → its list of options. */
 const CHOICES: Record<string, Option[]> = {
   faceShape: FACE_SHAPES, eyeShape: EYE_SHAPES, skinMarks: SKIN_MARKS, hairStyle: HAIR_STYLES, beard: BEARDS, mustache: MUSTACHES,
-  outfit: OUTFITS, headwear: HEADWEAR, glasses: GLASSES, earrings: EARRINGS,
+  outfit: OUTFITS, bottomStyle: BOTTOMS, headwear: HEADWEAR, glasses: GLASSES, earrings: EARRINGS,
 };
 const COLOR_KEYS = ['hair', 'beardColor', 'top', 'bottom', 'shoes', 'headwearColor', 'glassesColor', 'earringColor'];
 
@@ -205,6 +211,7 @@ export function randomLook(): Look {
     mustache: facialHair && Math.random() < 0.6 ? pick(MUSTACHES.slice(1)) : 'none',
     beardColor: hair,
     outfit: pick(OUTFITS),
+    bottomStyle: pick(BOTTOMS),
     top,
     bottom,
     shoes: pick(CLOTH_COLORS),
@@ -234,8 +241,8 @@ export function likelyLook(gender: Gender): Look {
   const beard = draw('beard', context);
   const look = { ...randomLook(), skin: SKIN_TONES[skinIndex], hair, beardColor: hair, beard };
   look.mustache = draw('mustache', { ...context, beard });
-  for (const key of ['faceShape', 'eyeShape', 'skinMarks', 'hairStyle', 'outfit', 'top', 'bottom', 'shoes', 'headwear', 'glasses',
-    'glassesColor', 'earrings', 'eyeColor'] as const) {
+  for (const key of ['faceShape', 'eyeShape', 'skinMarks', 'hairStyle', 'outfit', 'bottomStyle', 'top', 'bottom', 'shoes', 'headwear',
+    'glasses', 'glassesColor', 'earrings', 'eyeColor'] as const) {
     look[key] = draw(key, { ...context, hair });
   }
   return fitLook(look, gender);
