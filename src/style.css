@@ -1870,6 +1870,10 @@ button {
   -webkit-user-select: text;
 }
 
+.creator-field h2[data-label]::before {
+  content: attr(data-label);
+}
+
 .studio-input:focus {
   border-color: var(--teal);
   background: #fff;

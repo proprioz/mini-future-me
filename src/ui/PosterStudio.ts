@@ -135,11 +135,16 @@ export class PosterStudio {
       if (option) this.change({ [option.dataset.key!]: option.dataset.value });
     });
     this.bodyEl.addEventListener('input', (e) => {
-      if ((e.target as HTMLInputElement).name === 'name') this.settings.name = (e.target as HTMLInputElement).value;
-      if ((e.target as HTMLInputElement).name === 'servedBy') {
-        this.settings.servedBy = (e.target as HTMLInputElement).value;
-        saveServedBy((e.target as HTMLInputElement).value);
+      const input = e.target as HTMLInputElement;
+      if (input.dataset.field === 'name') this.settings.name = input.value;
+      if (input.dataset.field === 'servedBy') {
+        this.settings.servedBy = input.value;
+        saveServedBy(input.value);
       }
+    });
+    // Return closes the on-screen keyboard.
+    this.bodyEl.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && e.target instanceof HTMLInputElement) e.target.blur();
     });
     this.el.querySelector('[data-action="back"]')!.addEventListener('click', () => this.close());
     this.el.querySelector('[data-action="finish"]')!.addEventListener('click', () => this.finish());
@@ -272,10 +277,11 @@ export class PosterStudio {
   }
 
   textHtml() {
+    // « Ton prénom » is drawn by the CSS: next to that word in the page, Safari offers the iPad's contacts.
     return `
       <div class="creator-field">
-        <h2>Ton prénom</h2>
-        <input class="studio-input" name="name" maxlength="${NAME_LENGTH}" autocomplete="off" spellcheck="false"
+        <h2 data-label="Ton prénom"></h2>
+        <input class="studio-input" data-field="name" maxlength="${NAME_LENGTH}" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="done"
           placeholder="Facultatif" value="${escapeAttr(this.settings.name)}">
       </div>
       <div class="creator-field">
@@ -286,7 +292,7 @@ export class PosterStudio {
       </div>
       <div class="creator-field">
         <h2>Servi·e par</h2>
-        <input class="studio-input" name="servedBy" maxlength="${SERVED_BY_LENGTH}" autocomplete="off" spellcheck="false"
+        <input class="studio-input" data-field="servedBy" maxlength="${SERVED_BY_LENGTH}" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="done"
           placeholder="Prénoms de l’équipe du stand" value="${escapeAttr(this.settings.servedBy)}">
       </div>`;
   }
