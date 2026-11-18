@@ -158,12 +158,12 @@ const TABLES = {
   },
   bottom: () => ({ '#2f3a56': 30, '#2b2b2e': 25, '#5b7fb8': 25, '#8e9196': 8, '#cdb497': 8, '#7a5236': 4 }),
   shoes: () => ({ '#f7f3ee': 40, '#2b2b2e': 35, '#8e9196': 10, '#cdb497': 5, '#7a5236': 5, '#2f3a56': 5 }),
-  // Hoodies for teenagers, shirts and sweaters with age.
+  // Hoodies for teenagers, shirts and sweaters with age; a suit now and then for adults.
   outfit: ({ gender, age }) => ({
     ...{
-      teen: { hoodie: 35, tshirt: 30, sweater: 15, jacket: 12, shirt: 3, cardigan: 3 },
-      adult: { tshirt: 28, sweater: 22, shirt: 18, hoodie: 15, jacket: 12, cardigan: 6 },
-      senior: { shirt: 30, sweater: 28, jacket: 18, tshirt: 15, cardigan: 12, hoodie: 2 },
+      teen: { hoodie: 35, tshirt: 30, sweater: 15, jacket: 12, shirt: 3, cardigan: 3, suit: 1 },
+      adult: { tshirt: 28, sweater: 22, shirt: 18, hoodie: 15, jacket: 12, cardigan: 6, suit: 4 },
+      senior: { shirt: 30, sweater: 28, jacket: 18, tshirt: 15, cardigan: 12, suit: 5, hoodie: 2 },
     }[age],
     ...(gender === 'f' && { dress: 5 }),
   }),

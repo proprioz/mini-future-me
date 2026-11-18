@@ -107,6 +107,8 @@ export const OUTFITS: Option[] = [
   { id: 'shirt', label: 'Chemise' },
   { id: 'jacket', label: 'Veste' },
   { id: 'cardigan', label: 'Gilet' },
+  // Jacket, shirt and tie; the trousers take the colour of the jacket.
+  { id: 'suit', label: 'Costume' },
   { id: 'dress', label: 'Robe', coded: 'f', alt: 'tshirt' },
 ];
 

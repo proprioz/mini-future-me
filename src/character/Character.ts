@@ -26,7 +26,7 @@ const SHIN = 0.12;
 const UPPER_ARM = 0.12;
 const FOREARM = 0.1;
 const OUTLINE = 0.005;
-const LONG_SLEEVES = ['hoodie', 'sweater', 'shirt', 'jacket', 'cardigan'];
+const LONG_SLEEVES = ['hoodie', 'sweater', 'shirt', 'jacket', 'cardigan', 'suit'];
 
 /** Body proportions (the same for everyone); `limbs` scales arms and legs. */
 const BODY = { shoulders: 0.175, chest: 0.168, waist: 0.155, hips: 0.166, limbs: 1.07 };
@@ -51,7 +51,7 @@ export const DEFAULT_LOOK = {
   beard: 'none', // 'none' | 'stubble' | 'goatee' (the chin) | 'short'
   mustache: 'none', // 'none' | 'stubble' | 'thick'
   beardColor: '#4a3426',
-  outfit: 'tshirt', // 'tshirt' | 'sweater' | 'shirt' | 'hoodie' | 'jacket' | 'cardigan' | 'dress'
+  outfit: 'tshirt', // 'tshirt' | 'sweater' | 'shirt' | 'hoodie' | 'jacket' | 'cardigan' | 'suit' | 'dress'
   top: '#5b7fb8',
   bottom: '#2f3a56',
   shoes: '#f7f3ee',
@@ -165,7 +165,9 @@ export class Character {
   build(): void {
     const { skin, top, bottom, shoes, outfit } = this.look;
     const f = BODY;
-    const mat: BodyMaterials = { skin: cel(skin, { rim: 0.2 }), top: cel(top, { rim: 0.2 }), bottom: cel(bottom, { rim: 0.2 }), shoes: cel(shoes, { rim: 0.2 }) };
+    // The trousers of a suit match its jacket.
+    const trousers = outfit === 'suit' ? top : bottom;
+    const mat: BodyMaterials = { skin: cel(skin, { rim: 0.2 }), top: cel(top, { rim: 0.2 }), bottom: cel(trousers, { rim: 0.2 }), shoes: cel(shoes, { rim: 0.2 }) };
     const part = (geometry: THREE.BufferGeometry, material: THREE.Material, outline = OUTLINE) => celMesh(geometry, material, { outline });
     const legMat = outfit === 'dress' ? mat.skin : mat.bottom;
 
@@ -286,22 +288,30 @@ export class Character {
       const [r1, y1] = profile[i];
       return THREE.MathUtils.lerp(r0, r1, THREE.MathUtils.clamp((y - y0) / (y1 - y0), 0, 1)) + 0.006 + 0.25 * Math.max(0, y - 0.3);
     };
-    /** V of another colour at the neck (cardigan), from the collar down to `bottom`, `spread` radians wide at the top. */
-    const vNeck = (color: string, bottom: number, spread: number) => {
+    /**
+     * Patch of another colour on the front, from `bottom` up to the collar, between the angles
+     * `edges(y)` (radians, 0 at the middle) at each height, `lift` above the body.
+     */
+    const wrap = (color: string, bottom: number, edges: (y: number) => [number, number], lift = 0) => {
       const top = 0.345;
       const geometry = new THREE.PlaneGeometry(1, 1, 12, 10);
       const position = geometry.attributes.position;
       for (let i = 0; i < position.count; i++) {
         const u = position.getX(i) + 0.5; // 0–1 across
-        const v = position.getY(i) + 0.5; // 0 at the point, 1 at the collar
-        const y = THREE.MathUtils.lerp(bottom, top, v);
-        const a = (u - 0.5) * spread * v;
-        const r = bodyRadius(y);
+        const y = THREE.MathUtils.lerp(bottom, top, position.getY(i) + 0.5);
+        const [from, to] = edges(y);
+        const a = THREE.MathUtils.lerp(from, to, u);
+        const r = bodyRadius(y) + lift;
         position.setXYZ(i, r * Math.sin(a), y, r * Math.cos(a));
       }
       geometry.computeVertexNormals();
       return part(geometry, cel(color, { side: THREE.DoubleSide }), 0);
     };
+    /** V of another colour at the neck (cardigan, suit), from the collar down to `bottom`, `spread` radians wide at the top. */
+    const vNeck = (color: string, bottom: number, spread: number) => wrap(color, bottom, (y) => {
+      const half = (spread / 2) * (y - bottom) / (0.345 - bottom);
+      return [-half, half];
+    });
 
     if (outfit === 'hoodie') {
       const hood = part(new THREE.TorusGeometry(0.08, 0.038, 10, 24), top);
@@ -352,6 +362,32 @@ export class Character {
       band.material.side = THREE.DoubleSide;
       band.position.y = 0.075;
       torso.add(band);
+    } else if (outfit === 'suit') {
+      // Suit jacket buttoned at the waist, open in a V on a shirt and a tie, with lapels along the V.
+      const shirt = this.look.top === '#f7f3ee' ? '#2f3a56' : '#f7f3ee';
+      const tie = this.look.top === '#b83a44' ? '#2f3a56' : '#b83a44';
+      const point = 0.17;
+      const vHalf = (y: number) => 0.55 * (y - point) / (0.345 - point);
+      torso.add(vNeck(shirt, point, 1.1));
+      for (const side of [-1, 1]) {
+        torso.add(wrap(shadeHex(this.look.top, -0.14), point, (y) => {
+          const t = (y - point) / (0.345 - point);
+          const edge = side * vHalf(y);
+          return [edge, edge + side * 0.55 * t * (1.15 - t)];
+        }, 0.002));
+      }
+      // Narrow at the knot, wider below, tucked under the jacket where the V closes.
+      torso.add(wrap(tie, point, (y) => {
+        const half = Math.min(0.9 * vHalf(y), (y > 0.31 ? 0.013 : THREE.MathUtils.mapLinear(y, 0.31, 0.2, 0.008, 0.02)) / bodyRadius(y));
+        return [-half, half];
+      }, 0.003));
+      for (const y of [0.15, 0.11]) {
+        const button = part(new THREE.SphereGeometry(0.01, 10, 8), cel(shadeHex(this.look.top, -0.35)), 0);
+        button.scale.z = 0.6;
+        button.position.set(0, y, bodyRadius(y));
+        torso.add(button);
+      }
+      torso.add(collar(0.072, 0.016, cel(shadeHex(this.look.top, -0.14))));
     }
     return torso;
   }

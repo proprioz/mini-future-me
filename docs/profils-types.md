@@ -26,7 +26,7 @@ de ce fichier) : ne pas le modifier à la main. L'estimation sert seulement de p
 | Haut | **noir** (26 %) | **noir** (21 %), puis blanc (14 %) | **bleu marine** (17 %), puis noir (13 %) | **noir** (27 %) | **noir** (22 %), puis blanc (14 %) | **bleu marine** (17 %), puis noir (13 %) |
 | Bas | **bleu marine** (30 %), puis noir (25 %) | **bleu marine** (30 %), puis noir (25 %) | **bleu marine** (30 %), puis noir (25 %) | **bleu marine** (30 %), puis noir (25 %) | **bleu marine** (30 %), puis noir (25 %) | **bleu marine** (30 %), puis noir (25 %) |
 | Chaussures | **blanc** (40 %), puis noir (35 %) | **blanc** (40 %), puis noir (35 %) | **blanc** (40 %), puis noir (35 %) | **blanc** (40 %), puis noir (35 %) | **blanc** (40 %), puis noir (35 %) | **blanc** (40 %), puis noir (35 %) |
-| Tenue | **Sweat** (34 %), puis T-shirt (29 %) | **T-shirt** (26 %), puis Pull (21 %) | **Chemise** (27 %), puis Pull (25 %) | **Sweat** (36 %), puis T-shirt (31 %) | **T-shirt** (28 %), puis Pull (22 %) | **Chemise** (29 %), puis Pull (27 %) |
+| Tenue | **Sweat** (34 %), puis T-shirt (29 %) | **T-shirt** (25 %), puis Pull (20 %) | **Chemise** (26 %), puis Pull (24 %) | **Sweat** (35 %), puis T-shirt (30 %) | **T-shirt** (27 %), puis Pull (21 %) | **Chemise** (27 %), puis Pull (25 %) |
 
 ## Peau mate
 
@@ -47,7 +47,7 @@ de ce fichier) : ne pas le modifier à la main. L'estimation sert seulement de p
 | Haut | **noir** (26 %) | **noir** (21 %), puis blanc (14 %) | **bleu marine** (17 %), puis noir (13 %) | **noir** (27 %) | **noir** (22 %), puis blanc (14 %) | **bleu marine** (17 %), puis noir (13 %) |
 | Bas | **bleu marine** (30 %), puis noir (25 %) | **bleu marine** (30 %), puis noir (25 %) | **bleu marine** (30 %), puis noir (25 %) | **bleu marine** (30 %), puis noir (25 %) | **bleu marine** (30 %), puis noir (25 %) | **bleu marine** (30 %), puis noir (25 %) |
 | Chaussures | **blanc** (40 %), puis noir (35 %) | **blanc** (40 %), puis noir (35 %) | **blanc** (40 %), puis noir (35 %) | **blanc** (40 %), puis noir (35 %) | **blanc** (40 %), puis noir (35 %) | **blanc** (40 %), puis noir (35 %) |
-| Tenue | **Sweat** (34 %), puis T-shirt (29 %) | **T-shirt** (26 %), puis Pull (21 %) | **Chemise** (27 %), puis Pull (25 %) | **Sweat** (36 %), puis T-shirt (31 %) | **T-shirt** (28 %), puis Pull (22 %) | **Chemise** (29 %), puis Pull (27 %) |
+| Tenue | **Sweat** (34 %), puis T-shirt (29 %) | **T-shirt** (25 %), puis Pull (20 %) | **Chemise** (26 %), puis Pull (24 %) | **Sweat** (35 %), puis T-shirt (30 %) | **T-shirt** (27 %), puis Pull (21 %) | **Chemise** (27 %), puis Pull (25 %) |
 
 ## Peau foncée
 
@@ -68,4 +68,4 @@ de ce fichier) : ne pas le modifier à la main. L'estimation sert seulement de p
 | Haut | **noir** (26 %) | **noir** (21 %), puis blanc (14 %) | **bleu marine** (17 %), puis noir (13 %) | **noir** (27 %) | **noir** (22 %), puis blanc (14 %) | **bleu marine** (17 %), puis noir (13 %) |
 | Bas | **bleu marine** (30 %), puis noir (25 %) | **bleu marine** (30 %), puis noir (25 %) | **bleu marine** (30 %), puis noir (25 %) | **bleu marine** (30 %), puis noir (25 %) | **bleu marine** (30 %), puis noir (25 %) | **bleu marine** (30 %), puis noir (25 %) |
 | Chaussures | **blanc** (40 %), puis noir (35 %) | **blanc** (40 %), puis noir (35 %) | **blanc** (40 %), puis noir (35 %) | **blanc** (40 %), puis noir (35 %) | **blanc** (40 %), puis noir (35 %) | **blanc** (40 %), puis noir (35 %) |
-| Tenue | **Sweat** (34 %), puis T-shirt (29 %) | **T-shirt** (26 %), puis Pull (21 %) | **Chemise** (27 %), puis Pull (25 %) | **Sweat** (36 %), puis T-shirt (31 %) | **T-shirt** (28 %), puis Pull (22 %) | **Chemise** (29 %), puis Pull (27 %) |
+| Tenue | **Sweat** (34 %), puis T-shirt (29 %) | **T-shirt** (25 %), puis Pull (20 %) | **Chemise** (26 %), puis Pull (24 %) | **Sweat** (35 %), puis T-shirt (30 %) | **T-shirt** (27 %), puis Pull (21 %) | **Chemise** (27 %), puis Pull (25 %) |

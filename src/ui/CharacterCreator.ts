@@ -70,7 +70,8 @@ const TABS: Tab[] = [
     fields: [
       { key: 'outfit', label: 'Style', choices: OUTFITS, thumb: { view: 'body', heading: 0.35 } },
       { key: 'top', label: 'Haut', colors: LIKELY_CLOTH_COLORS },
-      { key: 'bottom', label: 'Bas', colors: LIKELY_CLOTH_COLORS },
+      // The trousers of a suit take the colour of its jacket.
+      { key: 'bottom', label: 'Bas', colors: LIKELY_CLOTH_COLORS, showIf: (look) => look.outfit !== 'suit' },
       { key: 'shoes', label: 'Chaussures', colors: LIKELY_CLOTH_COLORS },
     ],
   },
