@@ -31,6 +31,8 @@ async function samplePhotos(id: string) {
   return Object.fromEntries(photos.flat()) as Partial<Record<SlotName, File>>;
 }
 
+const DRAG_TURN = 0.012; // radians per dragged pixel, as in « Crée ton perso »
+
 type ScanState = 'photos' | 'analyzing' | 'done' | 'error';
 
 /** Panel of a state: `go` / `skip` are button labels (HTML). */
@@ -51,7 +53,6 @@ export class ScanScreen {
   el: HTMLDivElement;
   photos: PhotoSlots;
   analysis: AnalysisView;
-  findingsEl: HTMLUListElement;
   instructionEl: HTMLElement;
   hintEl: HTMLElement;
   skipButton: HTMLButtonElement;
@@ -73,7 +74,9 @@ export class ScanScreen {
       <div class="scan-area"></div>
       <section class="scan-panel">
         <h1 class="scan-title">Scanne tes photos</h1>
-        <div class="scan-avatar"></div>
+        <div class="scan-avatar">
+          <span class="scan-avatar-hint" title="Fais-moi tourner">${icon('hand-swipe-right')}</span>
+        </div>
         <p class="scan-instruction" aria-live="polite"></p>
         <p class="scan-hint"></p>
         ${SAMPLE_PEOPLE.length ? `<div class="scan-samples">
@@ -84,7 +87,6 @@ export class ScanScreen {
             </button>`).join('')}
           </div>
         </div>` : ''}
-        <ul class="scan-findings" aria-live="polite"></ul>
         <p class="scan-privacy">${icon('lock-simple')} Les photos restent sur cet appareil et sont oubliées dès que tu continues :
           on garde seulement des couleurs et des formes.</p>
         <footer class="scan-actions">
@@ -105,7 +107,6 @@ export class ScanScreen {
       },
     });
     this.analysis = new AnalysisView(areaEl);
-    this.findingsEl = this.el.querySelector<HTMLUListElement>('.scan-findings')!;
     this.instructionEl = this.el.querySelector<HTMLElement>('.scan-instruction')!;
     this.hintEl = this.el.querySelector<HTMLElement>('.scan-hint')!;
     this.skipButton = this.el.querySelector<HTMLButtonElement>('[data-action="skip"]')!;
@@ -122,6 +123,25 @@ export class ScanScreen {
     this.character = new Character();
     this.stage.scene.add(this.character.group);
     this.timer = new THREE.Timer();
+
+    // Drag (mouse or finger) on the avatar to spin it.
+    let drag: { id: number; x: number } | null = null;
+    avatarEl.addEventListener('pointerdown', (e) => {
+      drag = { id: e.pointerId, x: e.clientX };
+      avatarEl.setPointerCapture(e.pointerId);
+      avatarEl.classList.add('dragging');
+    });
+    avatarEl.addEventListener('pointermove', (e) => {
+      if (drag?.id !== e.pointerId) return;
+      this.character.targetHeading += (e.clientX - drag.x) * DRAG_TURN;
+      drag.x = e.clientX;
+    });
+    const endDrag = () => {
+      drag = null;
+      avatarEl.classList.remove('dragging');
+    };
+    avatarEl.addEventListener('pointerup', endDrag);
+    avatarEl.addEventListener('pointercancel', endDrag);
 
     this.skipButton.addEventListener('click', () => this.onSkip?.());
     this.goButton.addEventListener('click', () => this.onGo?.());
@@ -162,6 +182,9 @@ export class ScanScreen {
    */
   setState(state: ScanState, { instruction, hint = '', go, skip, onGo = null, onSkip = null }: StateOptions) {
     this.el.dataset.state = state;
+    // The photo screen shows the head; the analysis and its result, the whole body.
+    if (state === 'photos') this.stage.setView('head');
+    else this.stage.setView('stage', this.character.group);
     this.onGo = onGo;
     this.onSkip = onSkip;
     this.instructionEl.textContent = instruction;
@@ -226,8 +249,8 @@ export class ScanScreen {
 
   /** Analyses `sources` ({ front, left, right, back }), then replays the findings. */
   async runAnalysis(sources: PhotoSources) {
+    this.character.heading = this.character.targetHeading = 0;
     this.setState('analyzing', { instruction: 'J’analyse tes photos…' });
-    this.findingsEl.replaceChildren();
     this.el.classList.add('busy');
     let result: Awaited<ReturnType<PortraitAnalyzer['analyze']>>;
     try {
@@ -252,15 +275,15 @@ export class ScanScreen {
       return;
     }
 
+    // The avatar starts as the most likely look for the visitor's gender and age, then each finding
+    // refines it.
+    this.look = { ...result.base };
+    this.character.setLook({ ...DEFAULT_LOOK, ...this.look });
     this.setState('analyzing', {
       instruction: 'Regarde ce que je repère sur tes photos…',
       skip: 'Passer l’animation',
       onSkip: () => this.analysis.skip(),
     });
-    // The avatar starts as the most likely look for the visitor's gender and age, then each finding
-    // refines it.
-    this.look = { ...result.base };
-    this.character.setLook({ ...DEFAULT_LOOK, ...this.look });
     await this.analysis.play(result, (finding) => this.addFinding(finding));
     if (this.el.dataset.state !== 'analyzing') return;
 
@@ -269,16 +292,12 @@ export class ScanScreen {
     this.showDone();
   }
 
+  /** Each finding refines the avatar as the animation reaches it. */
   addFinding(finding: Finding) {
-    const item = document.createElement('li');
-    item.innerHTML = `<span class="scan-finding-icon">${icon(finding.icon)}</span>
-      <span><b>${finding.title}</b> ${finding.value}</span>
-      ${finding.color ? `<i class="scan-finding-color" style="--c:${finding.color}"></i>` : ''}`;
-    this.findingsEl.append(item);
-    item.scrollIntoView({ block: 'nearest' });
     if (finding.patch) {
       Object.assign(this.look, finding.patch);
       this.character.setLook({ ...DEFAULT_LOOK, ...this.look });
+      this.stage.setView('stage', this.character.group); // room for headwear
       this.character.setExpression('happy');
     }
     if (finding.final) this.character.hop();
@@ -288,7 +307,6 @@ export class ScanScreen {
   forgetPhotos() {
     this.photos.clear();
     this.analysis.clear();
-    this.findingsEl.replaceChildren();
   }
 
   restart() {
