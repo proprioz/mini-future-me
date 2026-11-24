@@ -1,7 +1,7 @@
 import * as THREE from 'three';
-import { Character } from '../character/Character.ts';
+import { Character, type Look } from '../character/Character.ts';
 import { POSES, applyPose } from '../character/poses.ts';
-import { likelyLook } from '../character/options.ts';
+import { welcomeVisitor } from '../character/presets.ts';
 import { CharacterStage } from '../render/CharacterStage.ts';
 import { sound } from '../kiosk/sound.ts';
 import { kiosk } from '../kiosk/kiosk.ts';
@@ -11,7 +11,7 @@ import { VERSION, versionStamp } from './version.ts';
 import { GAME, scanEnabled } from '../trades/index.ts';
 import type { Trade } from '../trades/types.ts';
 
-const NEW_LOOK_EVERY = 3.5; // seconds between two random characters
+const NEW_LOOK_EVERY = 3.5; // seconds between two characters
 const ABOUT_IDLE = 120; // seconds without a touch before « Dans les coulisses » goes back to the attract screen
 const WAVE = POSES.find((p) => p.id === 'wave');
 // The whole character on its pedestal, with room for the hop.
@@ -42,6 +42,7 @@ export class WelcomeScreen {
   el: HTMLDivElement;
   stage: CharacterStage;
   character: Character;
+  visitor: Look; // the last look welcomeVisitor() gave, so the next famous character is another one
   about: AboutPanel;
   timer: THREE.Timer;
   nextLook: number;
@@ -103,7 +104,8 @@ export class WelcomeScreen {
     this.stage = new CharacterStage();
     this.stage.setView(VIEW);
     this.el.querySelector('.welcome-stage')!.appendChild(this.stage.canvas);
-    this.character = new Character(this.randomVisitor());
+    this.visitor = welcomeVisitor();
+    this.character = new Character(this.visitor);
     this.stage.scene.add(this.character.group);
     this.about = new AboutPanel(this.el.querySelector<HTMLElement>('.welcome-about')!, this.character, this.stage, trades);
     this.timer = new THREE.Timer();
@@ -122,11 +124,6 @@ export class WelcomeScreen {
       this.updateSoundButton();
     });
     this.updateSoundButton();
-  }
-
-  /** A plausible visitor: frequent traits, genders not mixed (only the visitor's « Au hasard » does). */
-  randomVisitor() {
-    return likelyLook(Math.random() < 0.5 ? 'f' : 'm');
   }
 
   updateSoundButton() {
@@ -203,7 +200,8 @@ export class WelcomeScreen {
     this.nextLook -= dt;
     if (this.nextLook <= 0 && this.el.dataset.step === 'attract') {
       this.nextLook = NEW_LOOK_EVERY;
-      this.character.setLook(this.randomVisitor());
+      this.visitor = welcomeVisitor(this.visitor);
+      this.character.setLook(this.visitor);
       this.character.hop();
     }
     // Someone left « Dans les coulisses » open: back to the waving characters.

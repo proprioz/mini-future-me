@@ -4,7 +4,7 @@ import {
   codedFor, fitLook, likelyLook, lookGender, randomLook,
   FACE_SHAPES, EYE_SHAPES, SKIN_MARKS, HAIR_STYLES, BEARDS, MUSTACHES, OUTFITS, HEADWEAR, GLASSES, EARRINGS,
 } from '../../src/character/options.ts';
-import { PRESETS } from '../../src/character/presets.ts';
+import { PRESETS, welcomeVisitor } from '../../src/character/presets.ts';
 import { typicalLook } from '../../src/character/population.ts';
 import type { AgeGroup, Gender, SkinGroup } from '../../src/character/population.ts';
 import { classify } from '../../src/scan/classify.ts';
@@ -116,5 +116,26 @@ describe('the famous characters', () => {
       { ...DEFAULT_LOOK },
     ];
     for (const look of looks) for (const [key, id] of Object.entries(look)) expect(theirs.has(`${key}=${id}`)).toBe(false);
+  });
+
+  test('the welcome screen shows about one in five, whole and never twice in a row', () => {
+    let previous = welcomeVisitor();
+    let famous = 0;
+    for (let i = 0; i < RUNS; i++) {
+      const look = welcomeVisitor(previous);
+      const preset = PRESETS.find((p) => p.look === look);
+      if (preset) {
+        famous++;
+        expect(look).not.toBe(previous);
+      } else {
+        // An ordinary visitor: nothing of theirs, not even one item, and no mix of genders (a famous
+        // character keeps its own look, such as the old wizard's long hair with a beard).
+        expect(exclusive(look)).toEqual([]);
+        expect(codedGenders(look).size).toBeLessThanOrEqual(1);
+      }
+      previous = look;
+    }
+    expect(famous / RUNS).toBeGreaterThan(0.15);
+    expect(famous / RUNS).toBeLessThan(0.25);
   });
 });

@@ -1,11 +1,12 @@
 import { DEFAULT_LOOK, type Look } from './Character.ts';
+import { likelyLook } from './options.ts';
 
 // Ready-made characters, for visitors who would rather not play as themselves: famous characters of
 // films, books and games, never named (only a nickname) and drawn in the game's own style. Their faces
 // and haircuts are options of « Crée ton perso »; what makes each one recognisable (clothes, a hat,
-// what the hand holds, the young wizard's scar) no list offers, so neither « Au hasard », the scan nor
-// the characters of the welcome screen ever give it: a value of a look key missing from its list in
-// options.ts (or `held`, which has none), drawn like any other (Character.ts, accessories.ts, FaceTexture.ts).
+// what the hand holds, the young wizard's scar) no list offers, so neither « Au hasard » nor the scan
+// ever gives it, and the welcome screen shows it only on a whole famous character: a value of a look
+// key missing from its list in options.ts (or `held`, which has none), drawn like any other (Character.ts, accessories.ts, FaceTexture.ts).
 
 /** A ready-made character of the « Célèbres » tab. */
 export interface Preset {
@@ -77,3 +78,15 @@ export const PRESETS: Preset[] = [
     },
   },
 ];
+
+const FAMOUS_SHARE = 0.2; // of the characters the welcome screen shows
+
+/**
+ * The next character the welcome screen shows: about one in five is a famous one (any of PRESETS, never
+ * the `previous` one again), the others plausible visitors (likelyLook).
+ */
+export function welcomeVisitor(previous?: Look): Look {
+  const famous = PRESETS.filter((p) => p.look !== previous);
+  if (famous.length && Math.random() < FAMOUS_SHARE) return famous[Math.floor(Math.random() * famous.length)].look;
+  return likelyLook(Math.random() < 0.5 ? 'f' : 'm');
+}
