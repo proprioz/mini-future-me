@@ -34,11 +34,24 @@ function softwareWebGL() {
   return /swiftshader|llvmpipe|softpipe|software|basic render/i.test(renderer);
 }
 
+/**
+ * Safari, and every browser on an iPad or iPhone (they all run on WebKit): the first analysis on a device
+ * holds the page 20 to 30 s while WebKit compiles its graphics programs, which the CPU path skips.
+ */
+function webKit() {
+  return /AppleWebKit/.test(navigator.userAgent) && !/Chrome\//.test(navigator.userAgent);
+}
+
 let cpuOnly: boolean | null = null;
 
+/** Whether the scan's models run on the processor (CPU) rather than the graphics card. */
+export function onProcessor() {
+  cpuOnly ??= webKit() || softwareWebGL();
+  return cpuOnly;
+}
+
 async function withGpuFallback<T>(create: (delegate: Delegate) => Promise<T>): Promise<T> {
-  cpuOnly ??= softwareWebGL();
-  if (cpuOnly) return create('CPU');
+  if (onProcessor()) return create('CPU');
   try {
     return await create('GPU');
   } catch {

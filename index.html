@@ -3,6 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+    <!-- The page only talks to the device that serves the game: nothing leaves it, not even the usage
+         statistics MediaPipe sends to Google every minute (the browser refuses them). -->
+    <meta http-equiv="Content-Security-Policy" content="connect-src 'self' blob: data:" />
     <title>Mini Future Me</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <!-- Added to the home screen of a tablet, the game opens full screen, without the browser's bars. -->

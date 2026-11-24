@@ -3,6 +3,7 @@
 // the visitor can change everything. It is never displayed, nor kept once the look is chosen.
 import type { NormalizedLandmark } from '@mediapipe/tasks-vision';
 import type { AgeAndGenderPrediction } from '@vladmandic/face-api';
+import { onProcessor } from './vision.ts';
 
 const MODEL_PATH = '/face-api';
 const INPUT = 112;
@@ -23,7 +24,7 @@ function load() {
   loading ??= (async () => {
     const faceapi = await import('@vladmandic/face-api');
     try {
-      await (faceapi.tf as Tf).setBackend('webgl');
+      await (faceapi.tf as Tf).setBackend(onProcessor() ? 'cpu' : 'webgl');
     } catch {
       await (faceapi.tf as Tf).setBackend('cpu');
     }

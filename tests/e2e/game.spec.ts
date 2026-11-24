@@ -247,6 +247,14 @@ test('the photo scan loads its models from the PC', async ({ page }) => {
   await expect(page.getByText('Je ne trouve pas de visage')).toBeVisible({ timeout: 30_000 });
   expect(models.some((url) => url.endsWith('.task'))).toBe(true);
   checks.expectClean();
+
+  // MediaPipe sends usage statistics to Google every minute: the page itself refuses it (index.html),
+  // so the request never even starts, Internet or not.
+  const started: string[] = [];
+  page.on('request', (request) => started.push(request.url()));
+  const sent = await page.evaluate(() => fetch('https://odml.pa.googleapis.com/v1/log', { method: 'POST' }).then(() => true, () => false));
+  expect(sent).toBe(false);
+  expect(started).toEqual([]);
 });
 
 /** A PNG of a sky-blue gradient. */
