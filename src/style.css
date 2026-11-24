@@ -459,7 +459,10 @@ body {
 
 /* ---------- Buttons ---------- */
 
+/* No padding from the browser: Safari before 17 gives every button 1em on each side, which pushes the
+   icon of a small round button (sound, close, restart) to the right. Each button sets its own. */
 button {
+  padding: 0;
   font-family: inherit;
   color: inherit;
   -webkit-tap-highlight-color: transparent;
