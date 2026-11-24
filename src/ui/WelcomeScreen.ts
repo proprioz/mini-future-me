@@ -23,6 +23,8 @@ export type WelcomeStart = 'photos' | 'manual';
 export interface WelcomeResult {
   start: WelcomeStart;
   trade: Trade;
+  /** The character on screen when the visitor chose: the next screens start from it. */
+  look: Look;
 }
 
 type Resolve = (result: WelcomeResult) => void;
@@ -33,8 +35,8 @@ type Resolve = (result: WelcomeResult) => void;
  * photo scan (trades/index.ts), a short consent card explains what the photos are used for.
  * « Dans les coulisses » explains how the game was made, for the booth team to show to curious visitors.
  * `trades`: the trades the stand shows (loaded, see trades/index.ts).
- * `run()` resolves with { start, trade }: `start` is 'photos' (analyse portrait photos) or 'manual'
- * (create the character by hand), `trade` the trade picked.
+ * `run()` resolves with { start, trade, look }: `start` is 'photos' (analyse portrait photos) or 'manual'
+ * (create the character by hand), `trade` the trade picked, `look` the character last shown.
  */
 export class WelcomeScreen {
   trades: Trade[];
@@ -188,7 +190,7 @@ export class WelcomeScreen {
       this.stage.renderer.setAnimationLoop(null);
       this.el.remove();
     }, 450);
-    resolve({ start: choice, trade: this.trade! });
+    resolve({ start: choice, trade: this.trade!, look: { ...this.visitor } });
   }
 
   tick(timestamp: number) {

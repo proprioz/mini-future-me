@@ -49,7 +49,7 @@ const creator = new CharacterCreator(document.body);
 if (import.meta.env.DEV) window.studio = { welcome, scan, creator, kiosk, trades };
 
 const restarted = kiosk.restarted();
-const { start, trade } = await welcome.run(trades.find((t) => t.id === restarted));
+const { start, trade, look: visitor } = await welcome.run(trades.find((t) => t.id === restarted));
 setTrade(trade);
 document.title = trade.title;
 document.querySelector<HTMLLinkElement>('link[rel="icon"]')!.href = `data:image/svg+xml,${encodeURIComponent(logoSvg(trade.icon))}`;
@@ -58,10 +58,11 @@ let scanned: Partial<Look> | null = null;
 if (start === 'photos') {
   // The file picker and the analysis need no touch: more time before "Es-tu là ?".
   const done = kiosk.extend(150);
-  scanned = await scan.run();
+  scanned = await scan.run(visitor);
   done();
 }
-const look = await creator.edit({ ...DEFAULT_LOOK, ...scanned });
+// The character stays the one already on screen: the welcome screen's, or the one the scan found.
+const look = await creator.edit(scanned ? { ...DEFAULT_LOOK, ...scanned } : visitor);
 
 const game = new Game(document.getElementById('app')!, look);
 const posterStudio = new PosterStudio(document.body);

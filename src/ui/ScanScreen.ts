@@ -87,6 +87,7 @@ export class ScanScreen {
   onGo?: (() => void) | null;
   onSkip?: (() => void) | null;
   look!: Partial<Look>;
+  startLook!: Look;
 
   constructor(root: HTMLElement) {
     this.el = document.createElement('div');
@@ -176,12 +177,16 @@ export class ScanScreen {
     }
   }
 
-  /** Shows the screen on the photo slots; resolves with the scanned look parameters, or null. */
-  run() {
+  /**
+   * Shows the screen on the photo slots with `look`, the character already on screen, until the scan
+   * finds the visitor's own; resolves with the scanned look parameters, or null.
+   */
+  run(look: Look) {
+    this.startLook = look;
     // Start loading the models while the visitor picks their photos.
     this.analyzerPromise ??= PortraitAnalyzer.create();
     this.analyzerPromise.catch(() => {}); // reported when it is needed
-    this.character.setLook(DEFAULT_LOOK);
+    this.character.setLook(look);
     if (!this.guided) this.photos.setGuides(renderGuides());
     this.guided = true;
     this.el.hidden = false;
@@ -310,7 +315,7 @@ export class ScanScreen {
       return;
     }
 
-    // The avatar stays the default one: each finding changes only what it found, straight to its final
+    // The avatar stays the one already on screen: each finding changes only what it found, straight to its final
     // value, and what no photo shows (trousers, shoes…) comes at the end.
     this.look = {};
     this.setState('analyzing', {
@@ -330,7 +335,7 @@ export class ScanScreen {
   addFinding(finding: Finding, look: Partial<Look>) {
     if (finding.patch) {
       for (const key of Object.keys(finding.patch) as (keyof Look)[]) Object.assign(this.look, { [key]: look[key] });
-      this.character.setLook({ ...DEFAULT_LOOK, ...this.look });
+      this.character.setLook({ ...this.startLook, ...this.look });
       this.stage.setView('stage', this.character.group); // room for headwear
       this.character.setExpression('happy');
     }
@@ -345,7 +350,7 @@ export class ScanScreen {
 
   restart() {
     this.forgetPhotos();
-    this.character.setLook(DEFAULT_LOOK);
+    this.character.setLook(this.startLook);
     this.showPhotos();
   }
 

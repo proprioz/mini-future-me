@@ -216,6 +216,20 @@ test('every station of every trade can be reached', async ({ page }) => {
   checks.expectClean();
 });
 
+test('the character on screen stays the same from the welcome screen to the office', async ({ page }) => {
+  await page.goto('/');
+  const photos = page.locator('[data-choice="photos"]:visible');
+  await play(page, photos);
+  // The welcome screen stops changing its character once touched: this is the one the visitor saw.
+  const shown = await page.evaluate(() => window.studio.welcome.character.look);
+  await photos.click();
+  expect(await page.evaluate(() => window.studio.scan.character.look)).toEqual(shown);
+  await page.locator('[data-action="skip"]:visible').click();
+  await page.locator('[data-action="done"]:visible').click();
+  await page.waitForFunction(() => window.studio.game);
+  expect(await page.evaluate(() => window.studio.game!.player.look)).toEqual(shown);
+});
+
 test('the photo scan loads its models from the PC', async ({ page }) => {
   const checks = watch(page);
   const models: string[] = [];
