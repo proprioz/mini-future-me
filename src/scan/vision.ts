@@ -11,9 +11,24 @@ type WasmFileset = Awaited<ReturnType<typeof FilesetResolver.forVisionTasks>>;
 
 let runtime: Promise<{ vision: Vision; fileset: WasmFileset }> | null = null;
 
+/**
+ * MediaPipe reports its use to Google about once a minute (task, kind of device, timings), with no option
+ * to turn it off: the game refuses that request itself, before it starts, and MediaPipe then gives up
+ * reporting. (index.html also has the browser refuse any request to another site, but logs it as an error.)
+ */
+function keepUsageReportsOnDevice() {
+  const fetchFromDevice = window.fetch;
+  window.fetch = (input, init) => {
+    const url = input instanceof Request ? input.url : String(input);
+    if (url.startsWith('https://odml.pa.googleapis.com/')) return Promise.reject(new TypeError('Usage reports stay on this device'));
+    return fetchFromDevice(input, init);
+  };
+}
+
 /** The tasks-vision module and its WASM fileset, loaded once and only when a scan starts. */
 function loadRuntime() {
   runtime ??= (async () => {
+    keepUsageReportsOnDevice();
     const vision = await import('@mediapipe/tasks-vision');
     const fileset = await vision.FilesetResolver.forVisionTasks(WASM_PATH);
     return { vision, fileset };

@@ -246,14 +246,15 @@ test('the photo scan loads its models from the PC', async ({ page }) => {
   await page.locator('[data-action="go"]').click();
   await expect(page.getByText('Je ne trouve pas de visage')).toBeVisible({ timeout: 30_000 });
   expect(models.some((url) => url.endsWith('.task'))).toBe(true);
-  checks.expectClean();
 
-  // MediaPipe sends usage statistics to Google every minute: the page itself refuses it (index.html),
-  // so the request never even starts, Internet or not.
+  // Requests to other sites never even start, Internet or not: MediaPipe's usage reports to Google (sent
+  // about a minute after the scan opens) are refused by the game without an error, any other by the browser.
   const started: string[] = [];
   page.on('request', (request) => started.push(request.url()));
-  const sent = await page.evaluate(() => fetch('https://odml.pa.googleapis.com/v1/log', { method: 'POST' }).then(() => true, () => false));
-  expect(sent).toBe(false);
+  const send = (url: string) => page.evaluate((url) => fetch(url, { method: 'POST' }).then(() => true, () => false), url);
+  expect(await send('https://odml.pa.googleapis.com/v1/log')).toBe(false);
+  checks.expectClean();
+  expect(await send('https://example.com/')).toBe(false);
   expect(started).toEqual([]);
 });
 
