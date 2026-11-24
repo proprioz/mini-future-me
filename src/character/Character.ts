@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { shadeHex } from '../render/materials.ts';
 import { cel, celMesh } from '../render/celMaterial.ts';
+import { CharacterStage } from '../render/CharacterStage.ts';
 import { FaceTexture, DEFAULT_FACE } from './FaceTexture.ts';
 import type { Expression, FaceParams } from './FaceTexture.ts';
 import { headGeometry, surface } from './head.ts';
@@ -26,7 +27,11 @@ const SHIN = 0.12;
 const UPPER_ARM = 0.12;
 const FOREARM = 0.1;
 const OUTLINE = 0.005;
-const LONG_SLEEVES = ['hoodie', 'sweater', 'shirt', 'jacket', 'cardigan', 'suit', 'robe', 'schoolRobe', 'overalls', 'heroSuit'];
+const LONG_SLEEVES = ['hoodie', 'sweater', 'shirt', 'jacket', 'cardigan', 'suit', 'robe', 'schoolRobe', 'overalls', 'heroSuit', 'jumpsuit'];
+// Outfits whose arms are bare up to the shoulder (no sleeve).
+const SLEEVELESS = ['tankTop', 'jersey', 'shawl', 'sheath'];
+const STRIPE = '#1a1416'; // the black lines down the sides of the kung-fu master's jumpsuit
+const STRIPE_WIDTH = 0.022;
 
 const numbers = new Map<string, THREE.CanvasTexture>();
 
@@ -106,7 +111,8 @@ export const DEFAULT_LOOK = {
   beard: 'none', // 'none' | 'stubble' | 'goatee' (the chin) | 'trimmed' | 'short'
   mustache: 'none', // 'none' | 'stubble' | 'thick'
   beardColor: '#4a3426',
-  // Also 'robe', 'schoolRobe', 'overalls', 'tankTop', 'jersey' and 'heroSuit', worn only by the ready-made characters (presets.ts).
+  // Also 'robe', 'schoolRobe', 'overalls', 'tankTop', 'jersey', 'heroSuit', 'jumpsuit', 'shawl' and 'sheath', worn only by
+  // the ready-made characters (presets.ts).
   outfit: 'tshirt', // 'tshirt' | 'sweater' | 'shirt' | 'hoodie' | 'jacket' | 'cardigan' | 'suit' | 'dress'
   bottomStyle: 'trousers', // 'trousers' | 'shorts', not with a dress
   top: '#5b7fb8',
@@ -118,8 +124,8 @@ export const DEFAULT_LOOK = {
   glassesColor: '#2b2d42', // see GLASSES_COLORS (the last one is clear plastic)
   earrings: 'none', // 'none' | 'studs' | 'hoops' | 'drops'
   earringColor: '#ffcf4a',
-  // What the hands hold, only for the ready-made characters (presets.ts): 'none' | 'wand' | 'staff' | 'pistol' (the
-  // left hand), 'pistols' (one in each hand).
+  // What the hands hold, only for the ready-made characters (presets.ts): 'none' | 'wand' | 'staff' | 'pistol' |
+  // 'nunchaku' | 'stick' | 'book' (the left hand), 'pistols' (one in each hand).
   held: 'none',
 };
 
@@ -153,6 +159,48 @@ function joint(x: number, y: number, z = 0): THREE.Group {
   const group = new THREE.Group();
   group.position.set(x, y, z);
   return group;
+}
+
+const portraits = new Map<string, HTMLCanvasElement>(); // look → its portrait (the last few)
+let portraitStage: CharacterStage | null = null;
+
+/**
+ * The character of `look`, smiling, head and shoulders on a transparent canvas: the photo on the cover of
+ * the First Lady's book (presets.ts), so it is always her own avatar, even after a change in « Crée ton perso ».
+ */
+function portrait(look: Look): HTMLCanvasElement {
+  const key = JSON.stringify(look);
+  const cached = portraits.get(key);
+  if (cached) return cached;
+  portraitStage ??= new CharacterStage({ pedestal: false, shadows: false });
+  const stage = portraitStage;
+  const model = new Character({ ...look, held: 'none' });
+  model.setExpression('happy');
+  model.setBlinking(false);
+  model.update(0, 0);
+  // The pose of the memoir's cover: leaning in a little, the head tilted, the face resting in the right hand
+  // (arms are built right then left; the arm raised forwards past the horizontal, the forearm folded up and in).
+  model.rig.rotation.x = 0.1;
+  const [right] = model.arms;
+  right.shoulder.rotation.set(-2.0, 0, 0);
+  right.elbow.rotation.set(-1.2, 0, 0.62);
+  model.head.rotation.set(0.06, -0.1, -0.1);
+  stage.scene.add(model.group);
+  stage.renderer.setPixelRatio(1);
+  stage.setSize(288, 400);
+  stage.setView({ target: new THREE.Vector3(0, 0.93, 0), height: 1.08, width: 0.78, lift: 0.04 });
+  stage.render();
+  // Copied right after the render, while the WebGL canvas still holds it.
+  const canvas = document.createElement('canvas');
+  canvas.width = 288;
+  canvas.height = 400;
+  canvas.getContext('2d')!.drawImage(stage.canvas, 0, 0);
+  stage.scene.remove(model.group);
+  dispose(model.group);
+  model.faceTexture.texture.dispose();
+  if (portraits.size >= 4) portraits.delete(portraits.keys().next().value!);
+  portraits.set(key, canvas);
+  return canvas;
 }
 
 /**
@@ -230,22 +278,40 @@ export class Character {
     const trousers = outfit === 'suit' ? top : bottom;
     const mat: BodyMaterials = { skin: cel(skin, { rim: 0.2 }), top: cel(top, { rim: 0.2 }), bottom: cel(trousers, { rim: 0.2 }), shoes: cel(shoes, { rim: 0.2 }) };
     const part = (geometry: THREE.BufferGeometry, material: THREE.Material, outline = OUTLINE) => celMesh(geometry, material, { outline });
-    const shorts = outfit !== 'dress' && this.look.bottomStyle === 'shorts';
-    const legMat = outfit === 'dress' || shorts ? mat.skin : mat.bottom;
+    const skirt = outfit === 'dress' || outfit === 'sheath';
+    const shorts = !skirt && this.look.bottomStyle === 'shorts';
+    const legMat = skirt || shorts ? mat.skin : mat.bottom;
+    const jumpsuit = outfit === 'jumpsuit';
+    /**
+     * Thin black line down the outer side (`side`) of a limb of radii `r0`, `r1` and `length` (the jumpsuit), over
+     * its rounded ends too, so it runs on from one limb to the next; turned a little forwards to show from the front.
+     */
+    const stripe = (r0: number, r1: number, length: number, side: number) => {
+      const width = STRIPE_WIDTH / r0;
+      const sector: [number, number] = [side * (Math.PI / 2 - 0.12) - width / 2, width];
+      return part(limb(r0 + 0.002, r1 + 0.002, length, 4, sector), cel(STRIPE, { side: THREE.DoubleSide }), 0);
+    };
 
     // Legs: hip → knee → foot, short and round.
     this.legs = [-1, 1].map((side) => {
       const hip = joint(side * f.hips * 0.5, HIP_Y);
       const l = f.limbs;
       const thigh = part(limb(0.074 * l, 0.064 * l, THIGH), legMat);
-      if (shorts) {
+      if (shorts && outfit === 'shawl') {
+        // The dhoti under the shawl: loose cloth flaring a little, down over the knee.
+        const leg = part(new THREE.CylinderGeometry(0.083 * l, 0.09 * l, 0.19, 20), mat.bottom);
+        leg.position.y = -0.08;
+        hip.add(leg);
+      } else if (shorts) {
         // A leg of the shorts over the thigh, a little wide, its hem just above the knee.
         const leg = part(new THREE.CylinderGeometry(0.083 * l, 0.081 * l, 0.13, 20), mat.bottom);
         leg.position.y = -0.05;
         hip.add(leg);
       }
+      if (jumpsuit) hip.add(stripe(0.074 * l, 0.064 * l, THIGH, side));
       const knee = joint(0, -THIGH);
       const shin = part(limb(0.062 * l, 0.056 * l, SHIN), legMat);
+      if (jumpsuit) knee.add(stripe(0.062 * l, 0.056 * l, SHIN, side));
       const ankle = joint(0, -SHIN);
       const shoeGeometry = new THREE.SphereGeometry(1, 20, 14);
       shoeGeometry.scale(0.062, 0.05, 0.105);
@@ -280,13 +346,14 @@ export class Character {
       const a = f.limbs;
       if (longSleeves) {
         shoulder.add(part(limb(0.056 * a, 0.05 * a, UPPER_ARM), mat.top));
+        if (jumpsuit) shoulder.add(stripe(0.056 * a, 0.05 * a, UPPER_ARM, side));
       } else {
         shoulder.add(part(limb(0.05 * a, 0.045 * a, UPPER_ARM), mat.skin));
-        // Tank top and basketball jersey: no sleeves.
-        if (outfit !== 'tankTop' && outfit !== 'jersey') shoulder.add(part(limb(0.062 * a, 0.059 * a, 0.06), mat.top));
+        if (!SLEEVELESS.includes(outfit)) shoulder.add(part(limb(0.062 * a, 0.059 * a, 0.06), mat.top));
       }
       const elbow = joint(0, -UPPER_ARM);
       elbow.add(part(limb(0.046 * a, 0.04 * a, FOREARM), longSleeves ? mat.top : mat.skin));
+      if (jumpsuit) elbow.add(stripe(0.046 * a, 0.04 * a, FOREARM, side));
       if (outfit === 'robe' || outfit === 'schoolRobe') {
         // Wide sleeves, flaring to the wrist.
         const cuff = part(new THREE.CylinderGeometry(0.05 * a, 0.075 * a, 0.07, 18, 1, true), mat.top);
@@ -306,7 +373,7 @@ export class Character {
       thumb.position.set(0, -FOREARM - 0.03, 0.03 * a);
       thumb.rotation.x = 0.5;
       elbow.add(hand, thumb);
-      const item = buildHeldItem(this.look.held, side);
+      const item = buildHeldItem(this.look.held, side, () => portrait(this.look));
       if (item) {
         item.position.y = hand.position.y;
         item.userData.side = side;
@@ -337,11 +404,33 @@ export class Character {
 
     // Upper body, from the waist to the neck; its hem comes down over the waistband, like a real top.
     const robe = outfit === 'robe' || outfit === 'schoolRobe';
-    const hem = outfit === 'dress' || robe ? 0.11 : 0.07;
+    const hem = outfit === 'dress' || outfit === 'sheath' || robe ? 0.11 : 0.07;
     torso.add(part(smoothLathe([
       [0.0, hem - 0.005], [f.hips * 1.06, hem], [f.waist * 1.08, 0.14], [f.chest, 0.23], [f.shoulders * 0.95, 0.3],
       [f.shoulders * 0.7, 0.34], [0.07, 0.36], [0.0, 0.365],
     ]), top));
+
+    if (outfit === 'sheath') {
+      // The First Lady's strict sheath dress: fitted, in one colour, straight down to the knee, a string of
+      // pearls round the neck (a little lower in front).
+      // The skirt rises over the hem of the top, without a step, for one clean line from the waist to the knee.
+      torso.add(part(smoothLathe([
+        [0.0, -0.13], [f.hips * 1.28, -0.125], [f.hips * 1.16, 0.0], [f.hips * 1.07, 0.11], [f.waist * 1.0, 0.15], [0.0, 0.155],
+      ]), top));
+      // Up against the base of the neck, a little lower in front. The torso is flattened front to back
+      // (scale.z), the neck is not: the ring is drawn deeper so it stays round about it.
+      const pearl = cel('#fbf7ef', { rim: 0.7 });
+      const count = 18;
+      for (let k = 0; k < count; k++) {
+        const a = (k / count) * Math.PI * 2;
+        const y = 0.372 - 0.014 * (1 + Math.cos(a)) / 2;
+        const bead = part(new THREE.SphereGeometry(0.0135, 12, 10), pearl, 0.0025);
+        bead.scale.z = 1 / torso.scale.z;
+        bead.position.set(0.074 * Math.sin(a), y, (0.074 * Math.cos(a)) / torso.scale.z);
+        torso.add(bead);
+      }
+      return torso;
+    }
 
     if (outfit === 'dress') {
       torso.add(part(smoothLathe([
@@ -546,6 +635,26 @@ export class Character {
       torso.add(collar(0.072, 0.012, cel('#f7f3ee')));
       const number = cel('#ffffff', { map: numberTexture('23'), rim: 0, transparent: true, side: THREE.DoubleSide });
       torso.add(panel(number, 0.13, 0.28, 0.9, 0, 0.003), panel(number, 0.13, 0.28, 0.9, Math.PI, 0.003));
+    } else if (outfit === 'jumpsuit') {
+      // The kung-fu master's jumpsuit: a thin black line down each side, from the armpit on down the legs (and
+      // from the shoulder down the sleeves, see build()), zipped up the front to a round collar.
+      for (const side of [-1, 1]) torso.add(panel(STRIPE, 0.0, 0.31, STRIPE_WIDTH / f.chest, side * (Math.PI / 2 - 0.12), 0.002));
+      torso.add(panel(shadeHex(this.look.top, -0.3), 0.08, 0.34, 0.035, 0, 0.002), collar(0.072, 0.014));
+    } else if (outfit === 'shawl') {
+      // The pacifist's shawl, wrapped round the body and the arms bare: a fold of it thrown over the left
+      // shoulder, across the chest down to the right hip and round the back, over a dhoti (build()).
+      const fold = new THREE.PlaneGeometry(1, 1, 64, 4);
+      const position = fold.attributes.position;
+      for (let i = 0; i < position.count; i++) {
+        const a = (position.getX(i) + 0.5) * Math.PI * 2 - Math.PI;
+        const v = position.getY(i) + 0.5;
+        const y = 0.2 + 0.105 * Math.sin(a) + (v - 0.5) * 0.08;
+        // Thicker along its middle, a rolled fold of cloth.
+        const r = bodyRadius(y) + 0.006 + 0.01 * Math.sin(Math.PI * v);
+        position.setXYZ(i, r * Math.sin(a), y, r * Math.cos(a));
+      }
+      fold.computeVertexNormals();
+      torso.add(part(fold, cel(shadeHex(this.look.top, -0.06), { side: THREE.DoubleSide, rim: 0.2 }), 0.003));
     }
     return torso;
   }

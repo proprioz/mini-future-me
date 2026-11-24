@@ -266,14 +266,15 @@ async function noFace(page: Page) {
 
 /**
  * Visible buttons and dialogs that do not fit: outside the screen, or cut by a box that clips them (a
- * card's `overflow: hidden`). A box that scrolls only clips sideways: scrolling down to a control is fine.
+ * card's `overflow: hidden`). A box that scrolls only clips sideways: scrolling down to a control is fine,
+ * so a control in it may be below (or above) the screen as long as the box itself is on it.
  */
 function misfits(page: Page) {
   return page.evaluate(() => [...document.querySelectorAll('button, [role="dialog"]')]
     .filter((el) => el.checkVisibility())
     .filter((el) => {
-      const r = el.getBoundingClientRect();
-      if (r.left < -1 || r.top < -1 || r.right > innerWidth + 1 || r.bottom > innerHeight + 1) return true;
+      // Past a box that scrolls, what must fit in the boxes around it and on the screen is that box itself.
+      let r = el.getBoundingClientRect();
       for (let box = el.parentElement; box; box = box.parentElement) {
         const { overflowX, overflowY } = getComputedStyle(box);
         if (overflowX === 'visible' && overflowY === 'visible') continue;
@@ -281,8 +282,9 @@ function misfits(page: Page) {
         if (r.left < b.left - 1 || r.right > b.right + 1) return true;
         const scrolls = /auto|scroll/.test(overflowY);
         if (!scrolls && (r.top < b.top - 1 || r.bottom > b.bottom + 1)) return true;
+        if (scrolls) r = b;
       }
-      return false;
+      return r.left < -1 || r.top < -1 || r.right > innerWidth + 1 || r.bottom > innerHeight + 1;
     })
     .map((el) => el.outerHTML.slice(0, 80)));
 }
@@ -322,8 +324,13 @@ for (const [width, height] of [[1180, 820], [1200, 750]]) {
     await expect(page.locator('.photo-slots .scan-info')).toBeVisible();
     await fits('scan photos');
     await page.locator('.scan [data-action="skip"]').click();
+    // The famous characters, then the visit played as the one whose book shows her own avatar on its cover.
+    await page.locator('[data-tab="famous"]').click();
+    await fits('famous characters');
+    await page.locator('[data-preset="first-lady"]').click();
     await page.locator('[data-action="done"]:visible').click();
     await page.waitForFunction(() => window.studio.game);
+    expect(await page.evaluate(() => window.studio.game!.player.look.held)).toBe('book');
     await expect(page.locator('.hud')).toBeVisible();
     await fits('office');
 

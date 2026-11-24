@@ -837,10 +837,125 @@ function pistol(side = 1): THREE.Group {
 }
 
 /**
- * What the hand on `side` holds (+1 the left, −1 the right), or null: 'wand', 'staff' or 'pistol' in
- * the left hand, 'pistols' one in each.
+ * Nunchaku: two black sticks joined by a short chain, one in the fist, the other hanging below it; it
+ * keeps hanging whatever the arm does (Character.straightenHeld()).
  */
-export function buildHeldItem(type: string, side: number): THREE.Group | null {
+function nunchaku(): THREE.Group {
+  const group = new THREE.Group();
+  const length = 0.13;
+  const stick = (top: number, tilt: number) => {
+    const piece = new THREE.Group();
+    const body = prop(new THREE.CylinderGeometry(0.0145, 0.016, length, 12), '#2b2b2e');
+    body.position.y = -length / 2;
+    piece.add(body);
+    // A thin gold ring near each end.
+    for (const y of [-0.014, 0.014 - length]) {
+      const ring = celMesh(new THREE.TorusGeometry(0.016, 0.0028, 6, 16), cel('#c9a227', { rim: 0.5 }), { outline: 0 });
+      ring.rotation.x = Math.PI / 2;
+      ring.position.y = y;
+      piece.add(ring);
+    }
+    piece.position.y = top;
+    piece.rotation.z = tilt;
+    return piece;
+  };
+  const metal = cel('#b8bec6', { rim: 0.5 });
+  const top = 0.04;
+  group.add(stick(top, 0));
+  // Three links from the bottom of the first stick to the top of the second, swinging a little out.
+  const links = 3;
+  for (let k = 0; k < links; k++) {
+    const link = celMesh(new THREE.TorusGeometry(0.0075, 0.0024, 6, 12), metal, { outline: 0.0015 });
+    link.position.set(0.006 * k, top - length - 0.006 - 0.012 * k, 0);
+    link.rotation.y = k % 2 ? Math.PI / 2 : 0;
+    group.add(link);
+  }
+  const second = stick(top - length - 0.006 - 0.012 * links, 0.3);
+  second.position.x = 0.006 * links;
+  group.add(second);
+  group.position.z = 0.012;
+  group.userData.upright = group.quaternion.clone();
+  return group;
+}
+
+/** Tall bamboo walking stick, from the floor to the side of the head, a node every hand's width; stays standing. */
+function stick(): THREE.Group {
+  const group = new THREE.Group();
+  const bamboo = '#c9a66b';
+  const pole = prop(new THREE.CylinderGeometry(0.012, 0.014, 1.15, 12), bamboo);
+  pole.position.y = 0.275;
+  group.add(pole);
+  for (let y = -0.22; y < 0.84; y += 0.17) {
+    const node = celMesh(new THREE.TorusGeometry(0.0135, 0.0028, 6, 16), cel(shadeHex(bamboo, -0.2), { rim: 0.3 }), { outline: 0 });
+    node.rotation.x = Math.PI / 2;
+    node.position.y = y;
+    group.add(node);
+  }
+  // In front of the hand and a little out from the body, like the staff.
+  group.rotation.set(0.05, 0, -0.12);
+  group.position.z = 0.04;
+  group.userData.upright = group.quaternion.clone();
+  return group;
+}
+
+/**
+ * The First Lady's book (presets.ts), in the style of her memoir: on the cover, a close portrait of her
+ * own avatar (`photo`, see Character.ts) smiling on a pale background, under a big, airy title.
+ */
+function coverTexture(photo: HTMLCanvasElement): THREE.CanvasTexture {
+  const canvas = document.createElement('canvas');
+  canvas.width = 288;
+  canvas.height = 400;
+  const ctx = canvas.getContext('2d')!;
+  const light = ctx.createLinearGradient(0, 0, 0, 400);
+  light.addColorStop(0, '#eef0f1');
+  light.addColorStop(1, '#d9dee2');
+  ctx.fillStyle = light;
+  ctx.fillRect(0, 0, 288, 400);
+  ctx.drawImage(photo, 0, 34, 288, 400); // lowered a little, under the title
+  ctx.font = '500 36px "Fredoka Variable", sans-serif';
+  ctx.letterSpacing = '6px';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillStyle = '#3a3f47';
+  ctx.fillText('BECOMING', 147, 58);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.anisotropy = 4;
+  return texture;
+}
+
+/** Hardback book held by its inner edge beside the hip, its cover facing forwards; it stays upright. */
+function book(photo: HTMLCanvasElement): THREE.Group {
+  const group = new THREE.Group();
+  const [w, h, d] = [0.155, 0.215, 0.03];
+  const volume = new THREE.Group();
+  // Two boards and the spine (on the hand's side), the pages between them, the cover on the front board.
+  for (const z of [-1, 1]) {
+    const board = prop(new THREE.BoxGeometry(w, h, 0.004), '#dfe3e6');
+    board.position.z = (z * (d - 0.004)) / 2;
+    volume.add(board);
+  }
+  const spine = prop(new THREE.BoxGeometry(0.004, h, d), '#dfe3e6');
+  spine.position.x = -(w - 0.004) / 2;
+  const pages = prop(new THREE.BoxGeometry(w - 0.008, h - 0.008, d - 0.006), '#f3ead8');
+  const cover = celMesh(new THREE.PlaneGeometry(w, h), cel('#ffffff', { map: coverTexture(photo), rim: 0 }), { outline: 0 });
+  cover.position.z = d / 2 + 0.0005;
+  volume.add(spine, pages, cover);
+  volume.position.set(0.075, 0.06, 0.012);
+  group.add(volume);
+  group.position.z = 0.03;
+  group.userData.upright = group.quaternion.clone();
+  return group;
+}
+
+/**
+ * What the hand on `side` holds (+1 the left, −1 the right), or null: 'wand', 'staff', 'pistol',
+ * 'nunchaku', 'stick' or 'book' (its cover shows `photo()`) in the left hand, 'pistols' one in each.
+ */
+export function buildHeldItem(type: string, side: number, photo: () => HTMLCanvasElement): THREE.Group | null {
   if (type === 'pistols') return pistol(side);
-  return side > 0 ? ({ wand, staff, pistol } as Record<string, () => THREE.Group>)[type]?.() ?? null : null;
+  if (side < 0) return null;
+  if (type === 'book') return book(photo());
+  return ({ wand, staff, pistol, nunchaku, stick } as Record<string, () => THREE.Group>)[type]?.() ?? null;
 }

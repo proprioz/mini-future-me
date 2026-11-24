@@ -4,9 +4,10 @@ import * as THREE from 'three';
 
 /**
  * Rounded, tapered limb along -Y from its joint at the origin: radius r0 at the joint, r1 at the
- * far end, `length` between the two sphere centres.
+ * far end, `length` between the two sphere centres. `sector`: only the part between these two angles
+ * around it ([start, length], 0 towards +Z, π/2 towards +X), such as a stripe down its side.
  */
-export function limb(r0: number, r1: number, length: number, radial = 18): THREE.LatheGeometry {
+export function limb(r0: number, r1: number, length: number, radial = 18, sector: [number, number] = [0, Math.PI * 2]): THREE.LatheGeometry {
   const points: THREE.Vector2[] = [];
   const steps = 8;
   for (let i = 0; i <= steps; i++) {
@@ -22,7 +23,7 @@ export function limb(r0: number, r1: number, length: number, radial = 18): THREE
     points.push(new THREE.Vector2(r1 * Math.cos(a), -length - r1 * Math.sin(a)));
   }
   // LatheGeometry wants the profile from bottom to top.
-  return new THREE.LatheGeometry(points.reverse(), radial);
+  return new THREE.LatheGeometry(points.reverse(), radial, ...sector);
 }
 
 /** Smooth solid of revolution through [radius, y] control points (bottom → top), closed at both ends. */

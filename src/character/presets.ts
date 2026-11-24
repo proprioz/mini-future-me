@@ -77,6 +77,34 @@ export const PRESETS: Preset[] = [
       outfit: 'heroSuit', top: '#b83a44', bottom: '#2f5fb8', shoes: '#b83a44', headwear: 'heroMask', headwearColor: '#b83a44',
     },
   },
+  {
+    // Thick jet-black hair over the ears, yellow jumpsuit with a thin black line down each side, yellow shoes,
+    // nunchaku in hand.
+    id: 'kung-fu', label: 'Le maître du kung-fu',
+    look: {
+      ...DEFAULT_LOOK, skin: '#e2ae86', faceShape: 'square', eyeColor: '#2b1d17', eyeShape: 'almond', hair: '#120d0b', hairStyle: 'midShort',
+      beardColor: '#120d0b', outfit: 'jumpsuit', top: '#f4c04e', bottom: '#f4c04e', shoes: '#f4c04e', held: 'nunchaku',
+    },
+  },
+  {
+    // Bald, round glasses and a small white moustache; a homespun shawl over a dhoti, sandals, a tall bamboo stick.
+    id: 'pacifist', label: 'Le pacifiste',
+    look: {
+      ...DEFAULT_LOOK, skin: '#a8714d', faceShape: 'oval', eyeColor: '#2b1d17', hair: '#d9d4cf', hairStyle: 'bald',
+      mustache: 'thick', beardColor: '#d9d4cf', outfit: 'shawl', bottomStyle: 'shorts', top: '#f1ebdd', bottom: '#f7f3ee', shoes: '#7a5236',
+      glasses: 'round', glassesColor: '#b8bec6', held: 'stick',
+    },
+  },
+  {
+    // A bob, a strict black sheath dress with a string of pearls (Character.ts), pearl studs, and her memoir in hand:
+    // her own avatar smiling on its cover (accessories.ts).
+    id: 'first-lady', label: 'La First Lady',
+    look: {
+      ...DEFAULT_LOOK, skin: '#86563a', faceShape: 'oval', eyeColor: '#2b1d17', eyeShape: 'almond', hair: '#1f1612', hairStyle: 'bob',
+      beardColor: '#1f1612', outfit: 'sheath', top: '#2b2b2e', bottom: '#2b2b2e', shoes: '#2b2b2e',
+      earrings: 'studs', earringColor: '#f7f3ee', held: 'book',
+    },
+  },
 ];
 
 const FAMOUS_SHARE = 0.2; // of the characters the welcome screen shows
