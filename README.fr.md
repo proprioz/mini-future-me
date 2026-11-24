@@ -85,7 +85,7 @@ Les réglages de chaque stand vont dans `.env.local` (ignoré par git ; modèle 
 |---|---|
 | `VITE_TRADES` | filières proposées sur l'accueil, dans l'ordre (ids de `src/trades/index.ts`, séparés par des virgules). Vide : toutes. Avec une seule filière, l'accueil ne propose pas de choix. |
 | `VITE_SCAN` | `false` : pas de scan des photos, l'avatar se crée à la main (sans carte de consentement). Activé par défaut ; une filière peut aussi le couper pour elle seule (`scan: false`). |
-| `VITE_SAMPLE_PHOTOS` | `true` : l'écran des photos du scan propose aussi quatre personnes fictives (photos générées par une IA, sous les quatre angles, dans `public/samples/`) ; en toucher une analyse ses photos comme si c'étaient celles du visiteur ou de la visiteuse, pour qui n'a pas de photos de soi. Désactivé par défaut. |
+| `VITE_SAMPLE_PHOTOS` | `true` : l'écran des photos du scan propose aussi quatre personnes fictives (photos générées par une IA, de face, de profil et de dos, dans `public/samples/`) ; en toucher une analyse ses photos comme si c'étaient celles du visiteur ou de la visiteuse, pour qui n'a pas de photos de soi. Désactivé par défaut. |
 | `VITE_VERSION` | `true` : la version du jeu et la date et l'heure de sa dernière mise à jour, en petit dans un coin de l'accueil ; `partout` : dans un coin de tous les écrans, pour un PC de staging. Désactivé par défaut ; « Le code », dans « Dans les coulisses », la montre toujours. |
 | `VITE_SCHOOL_NAME`, `VITE_SCHOOL_SITE`, `VITE_SCHOOL_URL` | ton école, dans le pied de chaque affiche et de « Dans les coulisses » imprimé (nom, site affiché, lien du QR code). Sans URL, il n'y a pas de bloc école. |
 
@@ -112,8 +112,9 @@ msedge --kiosk http://localhost:3000 --edge-kiosk-type=fullscreen --no-first-run
   sur quelques pages A4. Dans le chapitre Vie privée, « Imprimer la fiche du stand » sort « Tes données sur
   ce stand », une page A4 à poser sur la table du stand : ce que le jeu fait des données du visiteur, des
   photos à l'affiche. Textes dans `src/ui/AboutPanel.ts`, et dans `about.ts` de chaque filière.
-- **Photos** : une photo de face suffit, on peut ajouter les deux profils et le dos (1 à 4 photos), rangés
-  automatiquement à leur place d'après le visage qu'ils montrent. Comment les prendre et les effacer :
+- **Photos** : une photo de face suffit, on peut ajouter un profil (d'un côté ou de l'autre) et le dos (1 à
+  3 photos), rangés automatiquement à leur place d'après le visage qu'ils montrent. Les grandes photos sont
+  réduites sur l'appareil avant l'analyse. Comment les prendre et les effacer :
   [Photos des visiteurs](#photos-des-visiteurs).
 - **Inactivité** : après 60 s sans toucher l'écran, le jeu se met en pause sur « Es-tu là ? » ; « Je suis
   là » le reprend là où il en était. Il ne recommence jamais tout seul. Plus de temps pendant le choix des
@@ -143,7 +144,7 @@ prend, les dépose sur le PC, puis les efface, sur le PC comme sur l'appareil qu
 **Pour chaque visiteur** :
 
 1. Prendre les photos avec le téléphone de l'équipe ou l'appareil photo du stand (de face, et si on veut
-   les deux profils et le dos).
+   un profil et le dos), cadrées en portrait : toute la tête et les épaules, sur un fond uni.
 2. Les déposer dans le dossier des photos, vide jusque-là (par câble, carte SD ou partage sans fil ; si le
    transfert les dépose dans Téléchargements, les déplacer).
 3. Le visiteur les choisit dans le jeu. Une personne de l'équipe reste à côté tant que le sélecteur de

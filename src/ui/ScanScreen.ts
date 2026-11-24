@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { Character, DEFAULT_LOOK, type Look } from '../character/Character.ts';
 import { CharacterStage } from '../render/CharacterStage.ts';
+import { Thumbnailer } from '../render/Thumbnailer.ts';
 import { PortraitAnalyzer } from '../scan/PortraitAnalyzer.ts';
 import { logReport } from '../scan/classify.ts';
 import { PhotoSlots, SLOTS, type PhotoSources, type SlotName } from './PhotoSlots.ts';
@@ -20,7 +21,7 @@ export const SAMPLE_PEOPLE = /^(true|1|on|oui)$/i.test(import.meta.env.VITE_SAMP
     ]
   : [];
 
-/** The photos of the sample person `id`, by slot (front.jpg, left.jpg…; only the front one is required). */
+/** The photos of the sample person `id`, by slot (front.jpg, profile.jpg, back.jpg; only the front one is required). */
 async function samplePhotos(id: string) {
   const photos = await Promise.all(SLOTS.map(async ({ name, required }) => {
     const response = await fetch(`${import.meta.env.BASE_URL}samples/${id}/${name}.jpg`);
@@ -32,6 +33,26 @@ async function samplePhotos(id: string) {
 }
 
 const DRAG_TURN = 0.012; // radians per dragged pixel, as in « Crée ton perso »
+
+// How the avatar turns in each slot's guide: seen from the front, looking towards the left of the photo,
+// and from the back.
+const GUIDE_HEADINGS: Record<SlotName, number> = { front: 0, profile: -Math.PI / 2, back: Math.PI };
+// A portrait: the whole head, a little room above it, and the shoulders.
+const GUIDE_VIEW = { target: new THREE.Vector3(0, 1.01, 0), height: 1.15, width: 1.15, lift: 0.05 };
+
+/** The default avatar framed and turned the way each photo should be (head and shoulders), as image URLs. */
+function renderGuides() {
+  const thumbnailer = new Thumbnailer(512);
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = 512;
+  const guides = Object.fromEntries(SLOTS.map(({ name }) => {
+    thumbnailer.draw(canvas, DEFAULT_LOOK, { view: GUIDE_VIEW, heading: GUIDE_HEADINGS[name], expression: 'neutral' });
+    return [name, canvas.toDataURL('image/png')];
+  })) as Record<SlotName, string>;
+  thumbnailer.stage.renderer.dispose();
+  thumbnailer.stage.renderer.forceContextLoss();
+  return guides;
+}
 
 type ScanState = 'photos' | 'analyzing' | 'done' | 'error';
 
@@ -61,6 +82,7 @@ export class ScanScreen {
   character: Character;
   timer: THREE.Timer;
   analyzerPromise?: Promise<PortraitAnalyzer> | null;
+  guided: boolean;
   finish!: (look: Partial<Look> | null) => void;
   onGo?: (() => void) | null;
   onSkip?: (() => void) | null;
@@ -79,6 +101,7 @@ export class ScanScreen {
         </div>
         <p class="scan-instruction" aria-live="polite"></p>
         <p class="scan-hint"></p>
+        <p class="scan-pick">Touche une case&nbsp;: tu peux choisir plusieurs photos d’un coup.</p>
         ${SAMPLE_PEOPLE.length ? `<div class="scan-samples">
           <p>Pas de photos&nbsp;? Prends une personne inventée par une IA&nbsp;:</p>
           <div class="scan-samples-list">${SAMPLE_PEOPLE.map(({ id, name }) => `
@@ -118,11 +141,14 @@ export class ScanScreen {
     avatarEl.appendChild(this.stage.canvas);
     new ResizeObserver(() => {
       const { clientWidth: w, clientHeight: h } = avatarEl;
-      if (w && h) this.stage.setSize(w, h);
+      if (!w || !h) return;
+      this.stage.setSize(w, h);
+      this.stage.render(); // a resize clears the canvas: no blank frame while the analysis holds the page
     }).observe(avatarEl);
     this.character = new Character();
     this.stage.scene.add(this.character.group);
     this.timer = new THREE.Timer();
+    this.guided = false; // the slots' guides are drawn the first time the screen shows
 
     // Drag (mouse or finger) on the avatar to spin it.
     let drag: { id: number; x: number } | null = null;
@@ -156,6 +182,8 @@ export class ScanScreen {
     this.analyzerPromise ??= PortraitAnalyzer.create();
     this.analyzerPromise.catch(() => {}); // reported when it is needed
     this.character.setLook(DEFAULT_LOOK);
+    if (!this.guided) this.photos.setGuides(renderGuides());
+    this.guided = true;
     this.el.hidden = false;
     this.el.classList.remove('leaving');
     this.timer.reset();
@@ -207,7 +235,7 @@ export class ScanScreen {
 
   showPhotos() {
     this.setState('photos', {
-      instruction: 'Ajoute une photo de toi de face, et si tu veux de profil et de dos. Touche une case : tu peux en choisir plusieurs d’un coup.',
+      instruction: 'Ajoute une photo de toi de face, cadrée comme un portrait\u00a0: toute ta tête et tes épaules.',
       go: `${icon('magnifying-glass')} Analyser`,
       skip: 'Passer',
       onGo: () => this.runAnalysis(this.photos.sources()),
@@ -240,7 +268,10 @@ export class ScanScreen {
   async sortPhotos(bitmaps: ImageBitmap[]) {
     try {
       const analyzer = (await this.analyzerPromise)!;
-      return bitmaps.map((bitmap) => analyzer.guessView(bitmap));
+      return bitmaps.map((bitmap) => {
+        const view = analyzer.guessView(bitmap);
+        return view === 'left' || view === 'right' ? 'profile' : view;
+      });
     } catch (error) {
       console.warn('Tri des photos impossible :', error);
       return bitmaps.map(() => null);
@@ -251,6 +282,7 @@ export class ScanScreen {
   async runAnalysis(sources: PhotoSources) {
     this.character.heading = this.character.targetHeading = 0;
     this.setState('analyzing', { instruction: 'J’analyse tes photos…' });
+    this.analysis.preview(sources);
     this.el.classList.add('busy');
     let result: Awaited<ReturnType<PortraitAnalyzer['analyze']>>;
     try {
@@ -259,7 +291,9 @@ export class ScanScreen {
       // The analysis can hold the page for seconds: the message and its animation go on screen first
       // (Safari needs a little time after the frame to take the animation over).
       await new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve, 100)));
-      result = await analyzer.analyze(sources);
+      // The analyzer reads a profile from either side: the profile goes in as its left view.
+      const { profile, ...others } = sources;
+      result = await analyzer.analyze({ ...others, left: profile });
     } catch (error) {
       console.warn('Analyse impossible :', error);
       this.analyzerPromise = null;
@@ -270,21 +304,21 @@ export class ScanScreen {
     }
     logReport(result.report);
     if (!result.features.face) {
+      this.analysis.clear();
       this.showPhotos();
-      this.hintEl.textContent = 'Je ne trouve pas de visage sur la photo de face : essaie une photo plus nette, bien de face.';
+      this.hintEl.textContent = 'Je ne trouve pas de visage sur la photo de face : essaie une photo plus nette, bien de face, avec toute ta tête.';
       return;
     }
 
-    // The avatar starts as the most likely look for the visitor's gender and age, then each finding
-    // refines it.
-    this.look = { ...result.base };
-    this.character.setLook({ ...DEFAULT_LOOK, ...this.look });
+    // The avatar stays the default one: each finding changes only what it found, straight to its final
+    // value, and what no photo shows (trousers, shoes…) comes at the end.
+    this.look = {};
     this.setState('analyzing', {
       instruction: 'Regarde ce que je repère sur tes photos…',
       skip: 'Passer l’animation',
       onSkip: () => this.analysis.skip(),
     });
-    await this.analysis.play(result, (finding) => this.addFinding(finding));
+    await this.analysis.play({ ...result, views: { ...result.views, profile: result.views.left } }, (finding) => this.addFinding(finding, result.look));
     if (this.el.dataset.state !== 'analyzing') return;
 
     this.look = result.look;
@@ -292,10 +326,10 @@ export class ScanScreen {
     this.showDone();
   }
 
-  /** Each finding refines the avatar as the animation reaches it. */
-  addFinding(finding: Finding) {
+  /** Each finding sets the options it found on the avatar, as in `look`, as the animation reaches it. */
+  addFinding(finding: Finding, look: Partial<Look>) {
     if (finding.patch) {
-      Object.assign(this.look, finding.patch);
+      for (const key of Object.keys(finding.patch) as (keyof Look)[]) Object.assign(this.look, { [key]: look[key] });
       this.character.setLook({ ...DEFAULT_LOOK, ...this.look });
       this.stage.setView('stage', this.character.group); // room for headwear
       this.character.setExpression('happy');

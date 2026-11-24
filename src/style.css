@@ -952,7 +952,8 @@ button {
   pointer-events: none;
 }
 
-.scan[data-state='photos'] .scan-avatar-hint {
+/* While the visitor picks photos, the avatar shows in the slots instead (PhotoSlots' guides). */
+.scan[data-state='photos'] .scan-avatar {
   display: none;
 }
 
@@ -984,15 +985,24 @@ button {
   text-align: center;
 }
 
+.scan:not([data-state='photos']) .scan-pick {
+  display: none;
+}
+
+.scan-pick {
+  flex-shrink: 0;
+  margin: 0 1.5rem;
+  color: var(--ink-soft);
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-align: center;
+}
+
 /* The sample people (VITE_SAMPLE_PHOTOS), for visitors without photos of their own. */
 .scan-samples {
   flex-shrink: 0;
   margin: 0 1.5rem;
   text-align: center;
-}
-
-.scan[data-state='photos']:has(.scan-samples) .scan-avatar {
-  flex-basis: clamp(7.5rem, 22vh, 13.75rem);
 }
 
 .scan:not([data-state='photos']) .scan-samples {
@@ -1097,13 +1107,50 @@ button {
   padding: 0.875rem;
 }
 
-/* A wide area (ultrawide screen) puts the four portraits side by side instead of two by two. */
+/* A wide area (ultrawide screen) puts the slots side by side instead of two by two. */
 @container (min-aspect-ratio: 3 / 2) {
   .photo-slots,
   .analysis {
     grid-template-columns: repeat(4, minmax(0, 1fr));
     grid-template-rows: minmax(0, 1fr);
   }
+}
+
+/* The cell the three photos leave: what makes a good photo, then what the analysis looks at. */
+.scan-info {
+  min-height: 0;
+  padding: 1rem 1.125rem;
+  border-radius: 1.375rem;
+  background: rgba(255, 255, 255, 0.7);
+  overflow-y: auto;
+}
+
+.scan-info h2 {
+  margin: 0 0 0.5rem;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.scan-info :is(ul, p) {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  color: var(--ink-soft);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.scan-info ul {
+  padding-left: 1.125rem;
+}
+
+.scan-info b {
+  color: var(--ink);
+  font-weight: 900;
 }
 
 .photo-slot {
@@ -1146,8 +1193,39 @@ button {
   object-fit: cover;
 }
 
-.photo-slot:not(.filled) img,
+.photo-slot:not(.filled) img:not(.photo-slot-guide),
 .photo-slot:not(.filled) .photo-slot-remove {
+  display: none;
+}
+
+/* The avatar framed and turned like the photo of the slot should be, until a photo fills it. */
+.photo-slot .photo-slot-guide {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center bottom;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* Over the guide: the slot's name at the top, above the avatar's head. */
+.photo-slot:not(.filled):has(.photo-slot-guide[src]) {
+  justify-content: flex-start;
+  padding-top: 0.75rem;
+}
+
+.photo-slot:not(.filled):has(.photo-slot-guide[src]) .photo-slot-label {
+  position: relative;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.photo-slot-guide:not([src]),
+.photo-slot.filled .photo-slot-guide,
+.photo-slot-guide[src] ~ .photo-slot-icon {
   display: none;
 }
 
@@ -1166,12 +1244,37 @@ button {
   opacity: 0.6;
 }
 
+/* What touching an empty slot does, at its foot. */
+.photo-slot-add {
+  position: absolute;
+  bottom: 0.75rem;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.875rem;
+  border-radius: 999px;
+  background: var(--teal);
+  box-shadow: inset 0 -0.1875rem 0 var(--teal-dark);
+  color: #fff;
+  font-size: 0.9375rem;
+  font-weight: 900;
+  white-space: nowrap;
+  transform: translateX(-50%);
+}
+
+.photo-slot-add .icon {
+  --icon-tint: rgba(255, 255, 255, 0.35);
+}
+
+
 .photo-slot.filled {
   border-style: solid;
   border-color: var(--teal);
 }
 
 .photo-slot.filled .photo-slot-icon,
+.photo-slot.filled .photo-slot-add,
 .photo-slot.filled small {
   display: none;
 }
@@ -1222,6 +1325,7 @@ button {
 
 .analysis-card figcaption {
   position: absolute;
+  z-index: 1;
   left: 0.5rem;
   bottom: 0.5rem;
   padding: 0.25rem 0.625rem;
@@ -1233,6 +1337,27 @@ button {
 
 .analysis-card.empty {
   opacity: 0.25;
+}
+
+/* While the models work (AnalysisView.preview()): a loading ring turns over the blurred photo, a transform
+   animation that keeps playing while the analysis holds the page. */
+.analysis-card.loading::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  width: 2.75rem;
+  height: 2.75rem;
+  margin: auto;
+  border: 0.3125rem solid rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: analysis-loading 0.9s linear infinite;
+}
+
+@keyframes analysis-loading {
+  to {
+    transform: rotate(1turn);
+  }
 }
 
 .analysis-card.active {

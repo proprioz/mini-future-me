@@ -142,16 +142,59 @@ export class AnalysisView {
   constructor(root: HTMLElement) {
     this.el = document.createElement('div');
     this.el.className = 'analysis';
-    this.el.innerHTML = SLOTS.map((slot) => `
+    this.el.innerHTML = `${SLOTS.map((slot) => `
       <figure class="analysis-card" data-view="${slot.name}">
         <canvas></canvas>
         <figcaption>${icon(slot.icon)} ${slot.label}</figcaption>
-      </figure>`).join('');
+      </figure>`).join('')}
+      <aside class="scan-info">
+        <h2>Ce que je regarde</h2>
+        <p>Ton teint, tes yeux, la couleur de tes cheveux et ta coupe, tes lunettes ou ta barbe s’il y en a, et
+          la couleur de ton haut. Ensuite, tu pourras tout changer.</p>
+      </aside>`;
     root.appendChild(this.el);
     this.cards = Object.fromEntries([...this.el.querySelectorAll<HTMLElement>('.analysis-card')].map((el) => [el.dataset.view, {
       el, canvas: el.querySelector('canvas')!,
     }])) as Record<SlotName, Card>;
     this.running = false;
+  }
+
+  /**
+   * While the models work: each photo in its card, small and blurred, under a loading ring (style.css).
+   * play() then shows it sharp. Everything comes from a copy 16 times smaller, so it costs next to nothing.
+   */
+  preview(photos: Partial<Record<SlotName, ImageBitmap>>) {
+    this.clear();
+    const dpr = Math.min(window.devicePixelRatio, 2);
+    for (const [name, card] of Object.entries(this.cards)) {
+      const photo = photos[name as SlotName];
+      card.el.classList.toggle('empty', !photo);
+      card.el.classList.toggle('loading', Boolean(photo));
+      card.el.classList.remove('active', 'seen');
+      const w = Math.round(card.canvas.clientWidth * dpr);
+      const h = Math.round(card.canvas.clientHeight * dpr);
+      if (!photo || !w || !h) continue;
+      Object.assign(card.canvas, { width: w, height: h });
+      const ctx = card.canvas.getContext('2d')!;
+      // Fitted like in draw(), over the same backdrop: the photo darkened over the whole card.
+      const scale = Math.min(w / photo.width, h / photo.height);
+      const pw = photo.width * scale;
+      const ph = photo.height * scale;
+      const small = document.createElement('canvas');
+      small.width = Math.max(1, Math.round(pw / 16));
+      small.height = Math.max(1, Math.round(ph / 16));
+      // Read back on the CPU (blurCanvas): a canvas of the GPU would first wait for all its pending work.
+      small.getContext('2d', { willReadFrequently: true })!.drawImage(photo, 0, 0, small.width, small.height);
+      blurCanvas(small, 1);
+      const cover = Math.max(w / pw, h / ph) * 1.15;
+      ctx.drawImage(small, (w - pw * cover) / 2, (h - ph * cover) / 2, pw * cover, ph * cover);
+      ctx.fillStyle = INK;
+      ctx.globalAlpha = 0.45;
+      ctx.fillRect(0, 0, w, h);
+      ctx.globalAlpha = 1;
+      ctx.drawImage(small, (w - pw) / 2, (h - ph) / 2, pw, ph);
+      small.width = 0;
+    }
   }
 
   async play({ views, findings }: AnalysisReplay, onFinding: (finding: Finding) => void) {
@@ -160,7 +203,7 @@ export class AnalysisView {
     for (const [name, card] of Object.entries(this.cards)) {
       const view = views[name as SlotName];
       card.el.classList.toggle('empty', !view);
-      card.el.classList.remove('active', 'seen');
+      card.el.classList.remove('active', 'seen', 'loading');
       Object.assign(card, { view, scan: 0, marks: [], overlay: view && maskCanvas(view), highlights: {}, backdrop: null });
     }
     this.running = true;
@@ -397,6 +440,7 @@ export class AnalysisView {
       if (card.backdrop) card.backdrop.width = 0;
       Object.assign(card, { view: null, overlay: null, marks: [], highlights: {}, label: null, backdrop: null });
       card.canvas.width = 0;
+      card.el.classList.remove('loading');
     }
     this.views = null;
   }

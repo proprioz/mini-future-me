@@ -300,7 +300,16 @@ for (const [width, height] of [[1180, 820], [1200, 750]]) {
     await page.goto('/');
     await expect(page.locator('.welcome-play')).toBeVisible();
     await fits('welcome');
-    await startByHand(page, (await tradeIds(page))[0]);
+    // The photo scan's first screen, then the avatar made by hand.
+    await page.goto(`/?filiere=${(await tradeIds(page))[0]}`);
+    const photos = page.locator('[data-choice="photos"]:visible');
+    await play(page, photos);
+    await photos.click();
+    await expect(page.locator('.photo-slots .scan-info')).toBeVisible();
+    await fits('scan photos');
+    await page.locator('.scan [data-action="skip"]').click();
+    await page.locator('[data-action="done"]:visible').click();
+    await page.waitForFunction(() => window.studio.game);
     await expect(page.locator('.hud')).toBeVisible();
     await fits('office');
 

@@ -89,7 +89,7 @@ export type Mark = { on?: boolean } & (
 
 /** One option of « Crée ton perso » found on a photo, replayed by the analysis animation. */
 export interface Finding {
-  view: ViewName;
+  view: 'front' | 'back'; // the profiles only inform the final hair style
   icon: IconName;
   title: string;
   value: string;
@@ -496,7 +496,7 @@ export function classify(features: Features, views: PhotoViews): Classification 
   // The measured colour behind each palette colour picked: the look gets the real shade (not the skin,
   // which keeps a tone of the palette).
   const measured: Partial<Record<keyof Look, Rgb>> = {};
-  const add = (view: ViewName, finding: Omit<Finding, 'view' | 'marks'> & { marks?: Mark[] }) => {
+  const add = (view: Finding['view'], finding: Omit<Finding, 'view' | 'marks'> & { marks?: Mark[] }) => {
     const patch = fitLook(finding.patch, gender);
     const marks = (finding.marks ?? []).map((m) => normalize(views[view]!, m));
     findings.push({ view, ...finding, patch, marks });

@@ -21,7 +21,24 @@ function loadRuntime() {
   return runtime;
 }
 
+/**
+ * WebGL drawn by the processor (a PC without a graphics card, or with graphics acceleration turned off):
+ * MediaPipe's GPU path then takes seconds per photo, its CPU path five times less.
+ */
+function softwareWebGL() {
+  const gl = document.createElement('canvas').getContext('webgl2');
+  if (!gl) return false; // the GPU path fails, and falls back to the CPU
+  const info = gl.getExtension('WEBGL_debug_renderer_info');
+  const renderer = String(gl.getParameter(info ? info.UNMASKED_RENDERER_WEBGL : gl.RENDERER));
+  gl.getExtension('WEBGL_lose_context')?.loseContext();
+  return /swiftshader|llvmpipe|softpipe|software|basic render/i.test(renderer);
+}
+
+let cpuOnly: boolean | null = null;
+
 async function withGpuFallback<T>(create: (delegate: Delegate) => Promise<T>): Promise<T> {
+  cpuOnly ??= softwareWebGL();
+  if (cpuOnly) return create('CPU');
   try {
     return await create('GPU');
   } catch {

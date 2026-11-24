@@ -1,8 +1,8 @@
 import { icon } from './icons.ts';
 import type { IconName } from './iconPaths.ts';
 
-/** A photo slot, and the view of the visitor it shows. */
-export type SlotName = 'front' | 'left' | 'right' | 'back';
+/** A photo slot, and the view of the visitor it shows (a profile from either side). */
+export type SlotName = 'front' | 'profile' | 'back';
 
 /** The photos given, by slot (only the filled ones). */
 export type PhotoSources = Partial<Record<SlotName, ImageBitmap>>;
@@ -27,10 +27,40 @@ export interface PhotoSlotsOptions {
 
 export const SLOTS: Slot[] = [
   { name: 'front', label: 'De face', icon: 'smiley-blank', required: true },
-  { name: 'left', label: 'Profil gauche', icon: 'arrow-fat-left' },
-  { name: 'right', label: 'Profil droit', icon: 'arrow-fat-right' },
+  { name: 'profile', label: 'De profil', icon: 'arrow-fat-left' },
   { name: 'back', label: 'De dos', icon: 'user' },
 ];
+
+// Bigger photos (a phone's are 3000 to 8000 px) are reduced to this longest side as soon as they are
+// picked: the analysis works at 512 px (PortraitAnalyzer) and a slot shows at most about 700.
+const MAX_SIDE = 1024;
+// Photos taken in one pick: a visitor may bring both profiles, and the second one is left out.
+const MAX_PICKED = 4;
+
+/**
+ * A big photo reduced to MAX_SIDE, as a light JPEG for its slot and a bitmap for the analysis. Halved
+ * step by step, which keeps the detail of a smooth reduction (one big step skips pixels).
+ */
+async function shrink(bitmap: ImageBitmap, file: File): Promise<DecodedPhoto> {
+  let source: ImageBitmap | HTMLCanvasElement = bitmap;
+  let canvas: HTMLCanvasElement;
+  do {
+    const scale = Math.max(0.5, MAX_SIDE / Math.max(source.width, source.height));
+    canvas = document.createElement('canvas');
+    canvas.width = Math.round(source.width * scale);
+    canvas.height = Math.round(source.height * scale);
+    const ctx = canvas.getContext('2d')!;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
+    if (source instanceof HTMLCanvasElement) source.width = 0;
+    source = canvas;
+  } while (Math.max(canvas.width, canvas.height) > MAX_SIDE);
+  bitmap.close();
+  const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.9));
+  const small = await createImageBitmap(canvas);
+  canvas.width = 0;
+  return { bitmap: small, file: new File([blob!], file.name.replace(/\.\w+$/, '.jpg'), { type: 'image/jpeg' }) };
+}
 
 /**
  * The four photo slots. A click opens the file picker, where several photos can be picked at once;
@@ -57,14 +87,26 @@ export class PhotoSlots {
 
     this.el = document.createElement('div');
     this.el.className = 'photo-slots';
-    this.el.innerHTML = SLOTS.map((slot) => `
+    this.el.innerHTML = `${SLOTS.map((slot) => `
       <label class="photo-slot" data-slot="${slot.name}">
         <input type="file" accept="image/*" multiple hidden>
         <img alt="">
+        <img class="photo-slot-guide" alt="">
         <span class="photo-slot-icon">${icon(slot.icon)}</span>
         <span class="photo-slot-label">${slot.label}${slot.required ? '' : ' <small>(facultatif)</small>'}</span>
+        <span class="photo-slot-add">${icon('images')} Ajouter une photo</span>
         <button type="button" class="photo-slot-remove" aria-label="Retirer la photo">${icon('x')}</button>
-      </label>`).join('');
+      </label>`).join('')}
+      <aside class="scan-info">
+        <h2>Pour de bonnes photos</h2>
+        <ul>
+          <li><b>De face</b>&nbsp;: toute ta tête et la couleur de ton haut. Cette photo suffit.</li>
+          <li><b>De profil</b>, pour aider&nbsp;: ta coupe et tes accessoires, comme des boucles d’oreilles.</li>
+          <li><b>De dos</b>, pour aider&nbsp;: la longueur de tes cheveux.</li>
+          <li><b>Sur un fond uni</b> et clair, sans autre personne.</li>
+          <li><b>Nette</b>, d’au moins 600&nbsp;×&nbsp;800 pixels, en JPG ou PNG.</li>
+        </ul>
+      </aside>`;
     root.appendChild(this.el);
 
     for (const slotEl of this.el.querySelectorAll<HTMLElement>('.photo-slot')) {
@@ -98,12 +140,19 @@ export class PhotoSlots {
     });
   }
 
+  /** Shows in each empty slot how its photo should look: `images`, image URLs by slot. */
+  setGuides(images: Record<SlotName, string>) {
+    for (const [name, src] of Object.entries(images)) {
+      this.el.querySelector<HTMLImageElement>(`[data-slot="${name}"] .photo-slot-guide`)!.src = src;
+    }
+  }
+
   /** `files` picked on `slot` (or dropped anywhere): one goes there, several are sorted. */
   async add(files: File[], slot?: SlotName) {
     // Sorted by name, so 01_face, 02_profil_gauche… keep their order when the sorting is unsure.
     const images = files.filter((file) => file.type.startsWith('image/'))
       .sort((a, b) => a.name.localeCompare(b.name))
-      .slice(0, SLOTS.length);
+      .slice(0, MAX_PICKED);
     if (!images.length) return;
     const generation = this.generation;
     this.setSorting(true);
@@ -129,25 +178,27 @@ export class PhotoSlots {
     }
   }
 
-  /** Each photo into its guessed slot; the unsure ones and duplicates fill the slots left. */
+  /** Each photo into its guessed slot, the unsure ones into the slots left; a second photo for a slot is left out. */
   place(photos: DecodedPhoto[], guesses: (SlotName | null)[]) {
     const placed = new Map<SlotName, DecodedPhoto>(); // slot name → photo
     const unsure: DecodedPhoto[] = [];
     photos.forEach((photo, i) => {
       const guess = guesses?.[i];
-      if (guess && !placed.has(guess)) placed.set(guess, photo);
-      else unsure.push(photo);
+      if (!guess) unsure.push(photo);
+      else if (!placed.has(guess)) placed.set(guess, photo);
+      else photo.bitmap.close();
     });
     // Empty slots first, so a second batch doesn't replace the photos of the first one.
     const left = SLOTS.map((s) => s.name).filter((name) => !placed.has(name))
       .sort((a, b) => Number(Boolean(this.photos[a])) - Number(Boolean(this.photos[b])));
-    unsure.forEach((photo, i) => placed.set(left[i], photo));
+    unsure.forEach((photo, i) => (left[i] ? placed.set(left[i], photo) : photo.bitmap.close()));
     for (const [name, photo] of placed) this.show(name, photo);
   }
 
   async decode(file: File): Promise<DecodedPhoto | null> {
     try {
-      return { bitmap: await createImageBitmap(file), file }; // applies the EXIF orientation of phone photos
+      const bitmap = await createImageBitmap(file); // applies the EXIF orientation of phone photos
+      return Math.max(bitmap.width, bitmap.height) > MAX_SIDE ? await shrink(bitmap, file) : { bitmap, file };
     } catch {
       this.onError?.(file);
       return null;
@@ -159,7 +210,7 @@ export class PhotoSlots {
     const url = URL.createObjectURL(file);
     this.photos[name] = { bitmap, url };
     const slotEl = this.el.querySelector(`[data-slot="${name}"]`)!;
-    slotEl.querySelector('img')!.src = url;
+    slotEl.querySelector<HTMLImageElement>('img:not(.photo-slot-guide)')!.src = url;
     slotEl.classList.add('filled');
     this.onChange?.();
   }
@@ -177,7 +228,7 @@ export class PhotoSlots {
     URL.revokeObjectURL(photo.url);
     delete this.photos[name];
     const slotEl = this.el.querySelector(`[data-slot="${name}"]`)!;
-    slotEl.querySelector('img')!.removeAttribute('src');
+    slotEl.querySelector('img:not(.photo-slot-guide)')!.removeAttribute('src');
     slotEl.classList.remove('filled');
     if (!silent) this.onChange?.();
   }
