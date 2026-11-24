@@ -1,20 +1,16 @@
 import { sound } from './sound.ts';
 import { icon } from '../ui/icons.ts';
-import { trade } from '../trades/current.ts';
 
 // Kiosk mode for the stand: a pause when nobody plays any more, a full reset between two visitors,
-// « Recommencer à zéro » (a corner button, also on the pause card, always confirmed, back to creating
-// the character), a hidden reset for the staff, and a soft click on every button.
+// « Recommencer à zéro » (a corner button, also on the pause card, always confirmed), a hidden reset
+// for the staff, and a soft click on every button. Every way of starting over goes back to the
+// welcome screen.
 
 const IDLE_SECONDS = 60; // without any touch, before the game pauses on "Es-tu là ?"
 const STAFF_TAPS = 5; // quick taps in the top-left corner reset the game right away
 const STAFF_WINDOW = 2500; // ms
 const CORNER = 64; // px
 const TAPPABLE = 'button, .choice, .swatch';
-
-// After « Recommencer à zéro », the reloaded page skips the welcome screen and goes straight back
-// to creating the character, in the same trade (its id is all that is kept, for this tab only).
-const RESTART_KEY = 'mfm-restart-trade';
 
 const card = (label: string, body: string) =>
   `<section class="kiosk-warning-card" role="alertdialog" aria-label="${label}">${body}</section>`;
@@ -28,7 +24,7 @@ const CARDS = {
   restart: card('Recommencer à zéro ?', `
     <div class="kiosk-warning-icon" aria-hidden="true">${icon('arrows-counter-clockwise')}</div>
     <h1>Recommencer à zéro ?</h1>
-    <p>Tu reviens à la création de ton perso : ton perso, tes domaines gagnés et ton affiche seront effacés.</p>
+    <p>Tu reviens au début du jeu : ton perso, tes domaines gagnés et ton affiche seront effacés.</p>
     <button class="btn btn-primary" data-answer="restart">Oui, recommencer</button>
     <button class="btn btn-ghost">Non, je continue</button>`),
 };
@@ -72,7 +68,7 @@ class Kiosk {
     this.warning.addEventListener('click', (e) => {
       const answer = (e.target as Element).closest<HTMLElement>('[data-answer]')?.dataset.answer;
       if (answer === 'ask-restart') return this.ask('restart');
-      if (answer === 'restart') return this.restart();
+      if (answer === 'restart') return this.reset();
       this.warning.hidden = true;
       this.poke();
     });
@@ -146,19 +142,6 @@ class Kiosk {
     this.warning.hidden = true;
     this.veil.classList.add('closing');
     setTimeout(() => location.reload(), 450);
-  }
-
-  /** « Recommencer à zéro »: the same reset, but back to creating the character instead of the welcome screen. */
-  restart(): void {
-    sessionStorage.setItem(RESTART_KEY, trade().id);
-    this.reset();
-  }
-
-  /** The trade id when the page was reloaded by « Recommencer à zéro » (once), otherwise null. */
-  restarted(): string | null {
-    const id = sessionStorage.getItem(RESTART_KEY);
-    sessionStorage.removeItem(RESTART_KEY);
-    return id;
   }
 }
 

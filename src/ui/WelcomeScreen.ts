@@ -133,15 +133,10 @@ export class WelcomeScreen {
     this.soundButton.setAttribute('aria-pressed', String(!sound.muted));
   }
 
-  /** `resume`: after « Recommencer à zéro », the trade to start again, straight to creating the character. */
-  run(resume?: Trade) {
+  run() {
     this.timer.reset();
     this.stage.renderer.setAnimationLoop((t) => this.tick(t));
     return new Promise<WelcomeResult>((resolve) => {
-      if (resume) {
-        this.trade = resume;
-        this.afterTrade(resolve);
-      }
       // Anywhere on the attract screen starts; the consent card needs an explicit choice.
       this.el.addEventListener('click', (e) => {
         const choice = (e.target as Element).closest<HTMLElement>('[data-choice]')?.dataset.choice;

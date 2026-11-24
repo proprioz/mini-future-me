@@ -150,7 +150,7 @@ test('a whole visit for every trade, offline', async ({ page }) => {
 });
 
 test('inactivity pauses the game, which goes on where it was or starts over after a confirmation', async ({ page }) => {
-  test.setTimeout(120_000); // the office, then the character creation again after the reset, slow without a GPU
+  test.setTimeout(120_000); // the office, then the welcome screen again after the reset, slow without a GPU
   const checks = watch(page);
   const [id] = await tradeIds(page);
   await startByHand(page, id, { borne: true });
@@ -183,13 +183,13 @@ test('inactivity pauses the game, which goes on where it was or starts over afte
   expect(reloaded).toBe(false);
   expect(await page.evaluate(() => [...window.studio.game!.done])).toEqual([task]);
 
-  // …and the pause card offers it too; « Oui » goes back to creating the character, not the welcome screen.
+  // …and the pause card offers it too; « Oui » goes back to the welcome screen, like every other reset.
   await page.evaluate(() => (window.studio.kiosk.lastActivity -= 10 * 60_000));
   await card.getByRole('button', { name: 'Recommencer à zéro' }).click();
   await confirm.getByRole('button', { name: 'Oui, recommencer' }).click();
   // The page reloads, slowly without a GPU.
-  await expect(page.locator('[data-choice="manual"]:visible').or(page.locator('[data-action="done"]:visible')).first()).toBeVisible({ timeout: 30_000 });
-  await expect(page.locator('.welcome-play')).toBeHidden();
+  await expect(page.getByRole('heading', { name: 'Entre dans le jeu' })).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByRole('dialog', { name: 'Avant de commencer' })).toBeHidden();
   await expect.poll(() => reloaded).toBe(true);
   checks.expectClean();
 });
